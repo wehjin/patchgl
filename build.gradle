@@ -1,0 +1,13 @@
+apply plugin: 'cpp'
+
+model {
+	components {
+		patchgl(NativeExecutableSpec) {
+			binaries.all {
+				cppCompiler.args '-g', '-I/usr/local/include'
+				linker.args '-lglfw3', '-lGL', '-L/usr/local/lib', '-L/System/Library/Frameworks/OpenGL.framework/Libraries'
+			}
+		}
+	}
+}
+
