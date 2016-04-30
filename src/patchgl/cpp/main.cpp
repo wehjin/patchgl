@@ -15,21 +15,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
-class Patch {
-public:
+struct patch {
 	GLfloat left;
 	GLfloat top;
 	GLfloat right;
 	GLfloat bottom;
 	GLfloat near;
-
-	Patch(float left, float top, float right, float bottom, float near) {
-		this->left = left;
-		this->top = top;
-		this->right = right;
-		this->bottom = bottom;
-		this->near = near;
-	}
 };
 
 int main() {
@@ -49,7 +40,11 @@ int main() {
 	glfwSwapInterval(1);
 	glfwSetKeyCallback(window, key_callback);
 
-	Patch p(-.5f, .5f, .5f, -.5f, 0.f);
+	const int patchCount = 2;
+	patch patches[patchCount] = {
+		{-.5f, .5f, .5f, -.5f, 0.f},
+		{-1.f, 1.f, 0.f, .1f, 0.f},
+	};
 
 	while (!glfwWindowShouldClose(window)) {
 		float ratio;
@@ -64,20 +59,24 @@ int main() {
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-		glMatrixMode(GL_MODELVIEW);
 
+		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
 
 		glBegin(GL_QUADS);
-		glColor3f(1.f, 0.f, 0.f);
-		glVertex3f(p.left, p.bottom, p.near);
-		glColor3f(0.f, 1.f, 0.f);
-		glVertex3f(p.left, p.top, p.near);
-		glColor3f(0.f, 1.f, 0.f);
-		glVertex3f(p.right, p.top, p.near);
-		glColor3f(0.f, 0.f, 1.f);
-		glVertex3f(p.right, p.bottom, p.near);
+		patch* p = patches;
+		for (int i=0; i<patchCount; i++) {
+			glColor3f(1.f, 0.f, 0.f);
+			glVertex3f(p->left, p->bottom, p->near);
+			glColor3f(0.f, 1.f, 0.f);
+			glVertex3f(p->left, p->top, p->near);
+			glColor3f(0.f, 1.f, 0.f);
+			glVertex3f(p->right, p->top, p->near);
+			glColor3f(0.f, 0.f, 1.f);
+			glVertex3f(p->right, p->bottom, p->near);
+			p++;
+		}
 		glEnd();
 
 		glfwSwapBuffers(window);
