@@ -14,6 +14,7 @@
 
 #include "rxcpp/rx.hpp"
 #include "screen.h"
+#include "charon.h"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -54,41 +55,20 @@ int main() {
     patch_map[rand()] = patch({-.5f, .5f, .5f, -.5f, 0.f});
     patch_map[rand()] = patch({-1.f, 1.f, 0.f, .1f, 0.f});
 
-    patchgl::BeginPatchResponse response;
-    unsigned int patchId = (unsigned int) rand();
-    cout << "Patch out: " << hex << patchId << endl;
-    response.set_patch(patchId);
-    fstream output("myfile", ios::out | ios::binary);
-    response.SerializeToOstream(&output);
-    output.flush();
-    output.close();
+    schedulers::run_loop runloop;
+    auto mainthread = observe_on_run_loop(runloop);
 
-    {
-        patchgl::BeginPatch beginPatch;
-        beginPatch.mutable_color()->set_red(1.f);
-        beginPatch.mutable_color()->set_green(0.f);
-        beginPatch.mutable_color()->set_blue(0.f);
-        beginPatch.mutable_position()->set_left(0.f);
-        beginPatch.mutable_position()->set_right(300.f);
-        beginPatch.mutable_position()->set_top(10.f);
-        beginPatch.mutable_position()->set_bottom(100.f);
-        beginPatch.
-        fstream outputBeginPatch("beginpatch", ios::out | ios::binary);
-        beginPatch.SerializeToOstream(&outputBeginPatch);
-    }
+    screen screen(window, mainthread);
+    charon charon;
 
-    fstream input("myfile", ios::in | ios::binary);
-    patchgl::BeginPatchResponse responseIn;
-    responseIn.ParseFromIstream(&input);
-    cout << "Patch: " << hex << responseIn.patch() << endl;
-
-    range(1, 10);
-    auto values = from("hello");
-    values.subscribe([](const char *s) { cout << "Value: " << s << endl; });
-
-    screen screen(window);
-    while (!glfwWindowShouldClose(window)) {
+    screen.animation_frame().subscribe([&](double time) {
         screen.refresh(patch_map);
+    });
+
+    while (!glfwWindowShouldClose(window)) {
+        while (!runloop.empty() && runloop.peek().when < runloop.now()) {
+            runloop.dispatch();
+        }
         glfwWaitEvents();
     }
 

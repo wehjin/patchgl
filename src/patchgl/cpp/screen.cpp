@@ -3,9 +3,13 @@
 //
 
 #include <GLFW/glfw3.h>
+#include <chrono>
 #include "screen.h"
 
-screen::screen(struct GLFWwindow *window) : window(window) {
+using namespace std::chrono;
+using namespace rxcpp::sources;
+
+screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread) : window(window), mainthread(mainthread) {
 }
 
 void screen::refresh(std::map<unsigned int, patch> &patch_map) {
@@ -41,5 +45,16 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
     glEnd();
 
     glfwSwapBuffers(window);
+}
+
+observable<double> screen::animation_frame() {
+    return interval(milliseconds(21))
+            .map([](int _) { return glfwGetTime(); })
+            .map([](double time) {
+                glfwPostEmptyEvent();
+                return time;
+            })
+            .subscribe_on(observe_on_new_thread())
+            .observe_on(mainthread);
 }
 

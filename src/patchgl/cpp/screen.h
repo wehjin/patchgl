@@ -7,15 +7,25 @@
 
 #include <map>
 #include "patch.h"
+#include "rxcpp/rx.hpp"
+
+using namespace rxcpp;
+using namespace rxcpp::sources;
+using namespace rxcpp::operators;
+using namespace rxcpp::util;
+using namespace std;
 
 class screen {
 
     struct GLFWwindow *window;
+    observe_on_one_worker &mainthread;
 
 public:
-    screen(struct GLFWwindow *window);
+    screen(GLFWwindow *window, observe_on_one_worker &mainthread);
 
     void refresh(std::map<unsigned int, patch> &patch_map);
+
+    observable<double> animation_frame();
 };
 
 

@@ -8,7 +8,7 @@ set(SOURCE_FILES
         src/patchgl/cpp/patch.cpp src/patchgl/cpp/patch.h
         src/patchgl/cpp/screen.cpp src/patchgl/cpp/screen.h
         src/patchgl/cpp/patchgl.pb.cc src/patchgl/cpp/patchgl.pb.h
-        lib/RxCpp-2.3.0/Rx/v2/src)
+        lib/RxCpp-2.3.0/Rx/v2/src src/patchgl/cpp/charon.cpp src/patchgl/cpp/charon.h)
 
 include_directories(/usr/local/include fern lib/RxCpp-2.3.0/Rx/v2/src)
 
