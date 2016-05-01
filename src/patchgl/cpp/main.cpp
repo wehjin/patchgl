@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <map>
+#include <cstdlib>
+#include <ctime>
+#include <set>
 #include "patch.h"
 
 void error_callback(int error, const char *description) {
@@ -17,6 +20,9 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 }
 
 int main() {
+
+    std::srand(std::time(0));
+
 
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()) {
@@ -33,11 +39,9 @@ int main() {
     glfwSwapInterval(1);
     glfwSetKeyCallback(window, key_callback);
 
-    const int patchCount = 2;
-    patch patch_list[patchCount] = {
-            {-.5f, .5f, .5f, -.5f, 0.f},
-            {-1.f, 1.f, 0.f, .1f,  0.f},
-    };
+    std::map<int, patch> patch_map;
+    patch_map[std::rand()] = patch({-.5f, .5f, .5f, -.5f, 0.f});
+    patch_map[std::rand()] = patch({-1.f, 1.f, 0.f, .1f, 0.f});
 
     while (!glfwWindowShouldClose(window)) {
         float ratio;
@@ -58,17 +62,16 @@ int main() {
         glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
 
         glBegin(GL_QUADS);
-        patch *patch = patch_list;
-        for (int i = 0; i < patchCount; i++) {
+        for (auto &entry : patch_map) {
+            auto &patch = entry.second;
             glColor3f(1.f, 0.f, 0.f);
-            glVertex3f(patch->left, patch->bottom, patch->near);
+            glVertex3f(patch.left, patch.bottom, patch.near);
             glColor3f(0.f, 1.f, 0.f);
-            glVertex3f(patch->left, patch->top, patch->near);
+            glVertex3f(patch.left, patch.top, patch.near);
             glColor3f(0.f, 1.f, 0.f);
-            glVertex3f(patch->right, patch->top, patch->near);
+            glVertex3f(patch.right, patch.top, patch.near);
             glColor3f(0.f, 0.f, 1.f);
-            glVertex3f(patch->right, patch->bottom, patch->near);
-            patch++;
+            glVertex3f(patch.right, patch.bottom, patch.near);
         }
         glEnd();
 
