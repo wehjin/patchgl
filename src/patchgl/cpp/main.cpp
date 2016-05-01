@@ -59,7 +59,7 @@ int main() {
     screen screen(window, mainthread);
 
     screen.animation_frame().subscribe([&](double time) {
-        screen.refresh(patch_map);
+        screen.setShouldRefresh(true);
     });
 
     charon charon;
@@ -71,17 +71,18 @@ int main() {
                 unsigned int patchId = (unsigned int) rand();
                 patch_map[patchId] = patch(position.left(), position.top(), position.right(),
                                            position.bottom(), position.near());
+                screen.setShouldRefresh(true);
 
                 patchgl::BeginPatchResponse response;
                 response.set_patch(patchId);
-
-                screen.refresh(patch_map);
+                charon.sendBeginPatchResponse(response);
             });
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {
             runloop.dispatch();
         }
+        screen.refresh(patch_map);
         glfwWaitEvents();
     }
 

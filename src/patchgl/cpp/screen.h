@@ -19,6 +19,7 @@ class screen {
 
     struct GLFWwindow *window;
     observe_on_one_worker &mainthread;
+    bool shouldRefresh = true;
 
 public:
     screen(GLFWwindow *window, observe_on_one_worker &mainthread);
@@ -26,6 +27,8 @@ public:
     void refresh(std::map<unsigned int, patch> &patch_map);
 
     observable<double> animation_frame();
+
+    void setShouldRefresh(bool shouldRefresh);
 };
 
 

@@ -28,14 +28,38 @@ observable<patchgl::BeginPatch> charon::begin_patch_requests() {
     beginPatch2.mutable_position()->set_right(0.f);
     beginPatch2.mutable_position()->set_bottom(.1f);
 
-    observable<patchgl::BeginPatch> from_io = observable<>::create<patchgl::BeginPatch>(
+    return observable<>::create<patchgl::BeginPatch>(
             [](subscriber<patchgl::BeginPatch> subscriber) {
-                patchgl::BeginPatch beginPatch;
-                if (beginPatch.ParseFromIstream(&cin)) {
-                    subscriber.on_next(beginPatch);
-                } else {
-                    cerr << "Failed to parse BeginPatch." << endl;
+                for (; ;) {
+                    char byte;
+                    cin >> setw(1) >> byte;
+                    if (cin.eof()) {
+                        cerr << "Out of bytes" << endl;
+                        break;
+                    }
+
+                    int size = byte;
+                    cerr << "Size: " << size << endl;
+
+                    char buffer[size];
+                    cin.read(buffer, size);
+                    if (cin.fail()) {
+                        cerr << "Error reading buffer" << endl;
+                        break;
+                    }
+
+                    patchgl::BeginPatch beginPatch;
+                    bool parsed = beginPatch.ParseFromArray(buffer, size);
+                    if (parsed) {
+                        subscriber.on_next(beginPatch);
+                    } else {
+                        cerr << "Failed to parse BeginPatch." << endl;
+                    }
                 }
-            });
-    return from_io.start_with(beginPatch1, beginPatch2);
+            }).start_with(beginPatch1, beginPatch2);
 }
+
+void charon::sendBeginPatchResponse(patchgl::BeginPatchResponse response) {
+}
+
+

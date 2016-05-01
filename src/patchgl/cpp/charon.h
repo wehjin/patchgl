@@ -14,6 +14,8 @@ using namespace std;
 class charon {
 public:
     observable<patchgl::BeginPatch> begin_patch_requests();
+
+    void sendBeginPatchResponse(patchgl::BeginPatchResponse response);
 };
 
 
