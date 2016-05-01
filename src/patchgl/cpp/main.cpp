@@ -12,6 +12,12 @@
 #include "patch.h"
 #include "patchgl.pb.h"
 
+#include "rxcpp/rx.hpp"
+
+using namespace rxcpp;
+using namespace rxcpp::sources;
+using namespace rxcpp::operators;
+using namespace rxcpp::util;
 using namespace std;
 
 void error_callback(int error, const char *description) {
@@ -26,8 +32,7 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
 int main() {
 
-    std::srand(std::time(0));
-
+    srand((unsigned int) std::time(0));
 
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()) {
@@ -61,6 +66,10 @@ int main() {
     patchgl::BeginPatchResponse responseIn;
     responseIn.ParseFromIstream(&input);
     cout << "Patch: " << hex << responseIn.patch() << endl;
+
+    range(1, 10);
+    auto values = from("hello");
+    values.subscribe([](const char *s) { cout << "Value: " << s << endl; });
 
     while (!glfwWindowShouldClose(window)) {
         float ratio;
