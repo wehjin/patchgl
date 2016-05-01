@@ -22,4 +22,15 @@ defmodule Shui do
             :closed
       end
     end
+
+    def start() do
+      pid = spawn(Shui, :open, [])
+    end
+
+    def begin_patch(pid, red, green, blue, left, bottom, right, top) do
+        color = Shui.Messages.color(red, green, blue)
+        position = Shui.Messages.position(left, bottom, right, top)
+        message = Shui.Messages.begin_patch_encoded(color, position)
+        send(pid, {:begin_patch, message})
+    end
 end
