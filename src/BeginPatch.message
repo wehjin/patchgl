@@ -1,0 +1,11 @@
+position {
+  left: 0
+  right: 300
+  top: 10
+  bottom: 100
+}
+color {
+  red: 1
+  green: 0
+  blue: 0
+}

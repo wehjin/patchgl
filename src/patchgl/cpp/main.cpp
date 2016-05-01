@@ -63,6 +63,20 @@ int main() {
     output.flush();
     output.close();
 
+    {
+        patchgl::BeginPatch beginPatch;
+        beginPatch.mutable_color()->set_red(1.f);
+        beginPatch.mutable_color()->set_green(0.f);
+        beginPatch.mutable_color()->set_blue(0.f);
+        beginPatch.mutable_position()->set_left(0.f);
+        beginPatch.mutable_position()->set_right(300.f);
+        beginPatch.mutable_position()->set_top(10.f);
+        beginPatch.mutable_position()->set_bottom(100.f);
+        beginPatch.
+        fstream outputBeginPatch("beginpatch", ios::out | ios::binary);
+        beginPatch.SerializeToOstream(&outputBeginPatch);
+    }
+
     fstream input("myfile", ios::in | ios::binary);
     patchgl::BeginPatchResponse responseIn;
     responseIn.ParseFromIstream(&input);
