@@ -19,3 +19,5 @@ add_subdirectory(lib/RxCpp-2.3.0)
 link_directories(/usr/local/lib /System/Library/Frameworks/OpenGL.framework/Libraries)
 add_executable(patchgl ${SOURCE_FILES})
 target_link_libraries(patchgl glfw3 GL fern protobuf)
+
+install(TARGETS patchgl DESTINATION bin)
