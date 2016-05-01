@@ -52,14 +52,23 @@ int main() {
     glfwSetKeyCallback(window, key_callback);
 
     std::map<unsigned int, patch> patch_map;
-    patch_map[rand()] = patch({-.5f, .5f, .5f, -.5f, 0.f});
-    patch_map[rand()] = patch({-1.f, 1.f, 0.f, .1f, 0.f});
+
+    charon charon;
+
+    charon.begin_patch_requests().subscribe([&](patchgl::BeginPatch beginPatch) {
+        auto &position = beginPatch.position();
+        unsigned int patchId = (unsigned int) rand();
+        patch_map[patchId] = patch(position.left(), position.top(), position.right(),
+                                   position.bottom(), position.near());
+
+        patchgl::BeginPatchResponse response;
+        response.set_patch(patchId);
+    });
 
     schedulers::run_loop runloop;
     auto mainthread = observe_on_run_loop(runloop);
 
     screen screen(window, mainthread);
-    charon charon;
 
     screen.animation_frame().subscribe([&](double time) {
         screen.refresh(patch_map);
