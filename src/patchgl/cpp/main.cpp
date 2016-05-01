@@ -7,7 +7,12 @@
 #include <cstdlib>
 #include <ctime>
 #include <set>
+#include <fstream>
+#include <iostream>
 #include "patch.h"
+#include "patchgl.pb.h"
+
+using namespace std;
 
 void error_callback(int error, const char *description) {
     fputs(description, stderr);
@@ -42,6 +47,20 @@ int main() {
     std::map<int, patch> patch_map;
     patch_map[std::rand()] = patch({-.5f, .5f, .5f, -.5f, 0.f});
     patch_map[std::rand()] = patch({-1.f, 1.f, 0.f, .1f, 0.f});
+
+    patchgl::BeginPatchResponse response;
+    unsigned int patchId = (unsigned int) rand();
+    cout << "Patch out: " << hex << patchId << endl;
+    response.set_patch(patchId);
+    fstream output("myfile", ios::out | ios::binary);
+    response.SerializeToOstream(&output);
+    output.flush();
+    output.close();
+
+    fstream input("myfile", ios::in | ios::binary);
+    patchgl::BeginPatchResponse responseIn;
+    responseIn.ParseFromIstream(&input);
+    cout << "Patch: " << hex << responseIn.patch() << endl;
 
     while (!glfwWindowShouldClose(window)) {
         float ratio;

@@ -1,0 +1,28 @@
+package patchgl;
+
+
+message BeginPatch {
+    message Position {
+        required float left = 1;
+        required float right = 2;
+        required float top = 3;
+        required float bottom = 4;
+        optional float near = 5 [default = 1.0];
+        optional float far = 6 [default = 1.0];
+    }
+    message Color {
+        required float red = 1;
+        required float green = 2;
+        required float blue = 3;
+        optional float alpha = 4 [default = 1.0];
+    }
+
+    required Position position = 1;
+    required Color color = 2;
+    optional fixed32 parent = 3 [default = 0];
+}
+
+message BeginPatchResponse {
+    required fixed32 patch = 1;
+}
+
