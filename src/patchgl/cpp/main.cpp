@@ -53,18 +53,6 @@ int main() {
 
     std::map<unsigned int, patch> patch_map;
 
-    charon charon;
-
-    charon.begin_patch_requests().subscribe([&](patchgl::BeginPatch beginPatch) {
-        auto &position = beginPatch.position();
-        unsigned int patchId = (unsigned int) rand();
-        patch_map[patchId] = patch(position.left(), position.top(), position.right(),
-                                   position.bottom(), position.near());
-
-        patchgl::BeginPatchResponse response;
-        response.set_patch(patchId);
-    });
-
     schedulers::run_loop runloop;
     auto mainthread = observe_on_run_loop(runloop);
 
@@ -73,6 +61,22 @@ int main() {
     screen.animation_frame().subscribe([&](double time) {
         screen.refresh(patch_map);
     });
+
+    charon charon;
+    charon.begin_patch_requests()
+            .subscribe_on(observe_on_new_thread())
+            .observe_on(mainthread)
+            .subscribe([&](patchgl::BeginPatch beginPatch) {
+                auto &position = beginPatch.position();
+                unsigned int patchId = (unsigned int) rand();
+                patch_map[patchId] = patch(position.left(), position.top(), position.right(),
+                                           position.bottom(), position.near());
+
+                patchgl::BeginPatchResponse response;
+                response.set_patch(patchId);
+
+                screen.refresh(patch_map);
+            });
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {

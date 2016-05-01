@@ -1,8 +1,8 @@
 position {
   left: 0
-  right: 300
-  top: 10
-  bottom: 100
+  right: .75
+  top: .8
+  bottom: -.8
 }
 color {
   red: 1
