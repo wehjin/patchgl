@@ -18,10 +18,11 @@ defmodule Shui.Box do
 
   defp on_present_color(color, viewer, director) do
     position = Viewer.position(viewer)
-    Viewer.patch(viewer, color, position)
+    id = Shui.Messages.patch_id()
+    Viewer.patch(viewer, color, position, id)
     receive do
       :dismiss ->
-        :todo_remove_patch
+        Viewer.unpatch(viewer, id)
     end
   end
 end
