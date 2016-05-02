@@ -5,3 +5,5 @@ build/
 .idea/workspace.xml
 *.iml
 *~
+mix.lock
+.idea/mix.xml
