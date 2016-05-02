@@ -52,28 +52,29 @@ defmodule Shui.Messages do
     Shui.Messages.BeginPatch.Position.new(left: left, bottom: bottom, right: right, top: top)
   end
 
-  def begin_patch_command(color, position, id) do
-    begin_patch = Shui.Messages.BeginPatch.new(patch_id: id, color: color, position: position)
-    Shui.Messages.Command.new(requests: {:begin_patch, begin_patch})
-  end
-
-  def end_patch_command(id) do
-    end_patch = Shui.Messages.EndPatch.new(patch_id: id)
-    Shui.Messages.Command.new(requests: {:end_patch, end_patch})
-  end
-
   def packet(encoded) do
     length = byte_size(encoded)
     <<length>> <> encoded
   end
 
   def begin_patch_encoded(color, position, id) do
-    encoded = Shui.Messages.Command.encode(begin_patch_command(color, position, id))
+    begin_patch = Shui.Messages.BeginPatch.new(patch_id: id, color: color, position: position)
+    command = Shui.Messages.Command.new(requests: {:begin_patch, begin_patch})
+    encoded = Shui.Messages.Command.encode(command)
     packet(encoded)
   end
 
   def end_patch_encoded(id) do
-    encoded = Shui.Messages.Command.encode(end_patch_command(id))
+    end_patch = Shui.Messages.EndPatch.new(patch_id: id)
+    command = Shui.Messages.Command.new(requests: {:end_patch, end_patch})
+    encoded = Shui.Messages.Command.encode(command)
+    packet(encoded)
+  end
+
+  def close_encoded() do
+    close = Shui.Messages.Close.new()
+    command = Shui.Messages.Command.new(requests: {:close, close})
+    encoded = Shui.Messages.Command.encode(command)
     packet(encoded)
   end
 end

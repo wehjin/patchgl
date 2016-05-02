@@ -6,7 +6,12 @@ defmodule Shui.Viewer do
     {pid, :root, position}
   end
 
-  def patch({pid, :root, _} = viewer, color, position, id) do
+  def stop({pid, :root, _position}) do
+    message = Shui.Messages.close_encoded()
+    send(pid, {:command, message})
+  end
+
+  def patch({pid, :root, _position} = _viewer, color, position, id) do
     %{:red=>red, :green=>green, :blue=>blue} = color
     %{:left=>left, :bottom=>bottom, :right=>right, :top=>top} = position
     color_message = Shui.Messages.color(red, green, blue)
@@ -15,7 +20,7 @@ defmodule Shui.Viewer do
     send(pid, {:command, message})
   end
 
-  def unpatch({pid, :root, _} = viewer, id) do
+  def unpatch({pid, :root, _} = _viewer, id) do
     send(pid, {:command, Shui.Messages.end_patch_encoded(id)})
   end
 
