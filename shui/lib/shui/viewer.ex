@@ -2,11 +2,16 @@ defmodule Shui.Viewer do
 
   def start() do
     pid = spawn(fn() -> open_window() end)
-    {pid, :root}
+    position = Shui.Position.full()
+    {pid, :root, position}
   end
 
-  def patch({pid, :root} = viewer, color, position) do
+  def patch({pid, :root, _} = viewer, color, position) do
     send_begin_patch(pid, color, position)
+  end
+
+  def position({_, _, position}) do
+    position
   end
 
   def send_begin_patch(pid, color, position) do
