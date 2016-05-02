@@ -9,7 +9,8 @@
 using namespace std::chrono;
 using namespace rxcpp::sources;
 
-screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread) : window(window), mainthread(mainthread) {
+screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread)
+        : window(window), mainthread(mainthread) {
 }
 
 observable<double> screen::animation_frame() {
@@ -48,14 +49,11 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
 
     glBegin(GL_QUADS);
     for (auto &entry : patch_map) {
-        auto &patch = entry.second;
-        glColor3f(1.f, 0.f, 0.f);
+        const patch &patch = entry.second;
+        glColor4f(patch.red, patch.green, patch.blue, patch.alpha);
         glVertex3f(patch.left, patch.bottom, patch.near);
-        glColor3f(0.f, 1.f, 0.f);
         glVertex3f(patch.left, patch.top, patch.near);
-        glColor3f(0.f, 1.f, 0.f);
         glVertex3f(patch.right, patch.top, patch.near);
-        glColor3f(0.f, 0.f, 1.f);
         glVertex3f(patch.right, patch.bottom, patch.near);
     }
     glEnd();

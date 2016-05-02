@@ -7,59 +7,59 @@
 using namespace rxcpp::sources;
 using namespace rxcpp::operators;
 using namespace rxcpp::util;
+using namespace patchgl;
 
-observable<patchgl::BeginPatch> charon::begin_patch_requests() {
+observable<Command> charon::commands() {
 
-    patchgl::BeginPatch beginPatch1;
-    beginPatch1.mutable_color()->set_red(1.f);
-    beginPatch1.mutable_color()->set_green(1.f);
-    beginPatch1.mutable_color()->set_blue(1.f);
-    beginPatch1.mutable_position()->set_left(-.5f);
-    beginPatch1.mutable_position()->set_top(.5f);
-    beginPatch1.mutable_position()->set_right(.5f);
-    beginPatch1.mutable_position()->set_bottom(-.5f);
+    Command command1;
+    command1.mutable_begin_patch()->set_patch_id((unsigned int) rand());
+    command1.mutable_begin_patch()->mutable_color()->set_red(0.f);
+    command1.mutable_begin_patch()->mutable_color()->set_green(1.f);
+    command1.mutable_begin_patch()->mutable_color()->set_blue(0.f);
+    command1.mutable_begin_patch()->mutable_position()->set_left(-.5f);
+    command1.mutable_begin_patch()->mutable_position()->set_top(.5f);
+    command1.mutable_begin_patch()->mutable_position()->set_right(.5f);
+    command1.mutable_begin_patch()->mutable_position()->set_bottom(-.5f);
+    command1.mutable_begin_patch()->mutable_position()->set_near(-.2f);
 
-    patchgl::BeginPatch beginPatch2;
-    beginPatch2.mutable_color()->set_red(1.f);
-    beginPatch2.mutable_color()->set_green(1.f);
-    beginPatch2.mutable_color()->set_blue(1.f);
-    beginPatch2.mutable_position()->set_left(-1.f);
-    beginPatch2.mutable_position()->set_top(1.f);
-    beginPatch2.mutable_position()->set_right(0.f);
-    beginPatch2.mutable_position()->set_bottom(.1f);
+    Command command2;
+    command1.mutable_begin_patch()->set_patch_id((unsigned int) rand());
+    command2.mutable_begin_patch()->mutable_color()->set_red(0.f);
+    command2.mutable_begin_patch()->mutable_color()->set_green(0.f);
+    command2.mutable_begin_patch()->mutable_color()->set_blue(1.f);
+    command2.mutable_begin_patch()->mutable_position()->set_left(-1.f);
+    command2.mutable_begin_patch()->mutable_position()->set_top(1.f);
+    command2.mutable_begin_patch()->mutable_position()->set_right(0.f);
+    command2.mutable_begin_patch()->mutable_position()->set_bottom(.1f);
+    command2.mutable_begin_patch()->mutable_position()->set_near(-.1f);
 
-    return observable<>::create<patchgl::BeginPatch>(
-            [](subscriber<patchgl::BeginPatch> subscriber) {
-                for (; ;) {
-                    char byte;
-                    cin >> setw(1) >> byte;
-                    if (cin.eof()) {
-                        cerr << "Out of bytes" << endl;
-                        break;
-                    }
+    return observable<void, void>::create<Command>([](subscriber<Command> subscriber) {
+        for (; ;) {
+            char byte;
+            cin >> setw(1) >> byte;
+            if (cin.eof()) {
+                cerr << "Out of bytes" << endl;
+                break;
+            }
 
-                    int size = byte;
-                    cerr << "Size: " << size << endl;
+            int size = byte;
+            cerr << "Size: " << size << endl;
 
-                    char buffer[size];
-                    cin.read(buffer, size);
-                    if (cin.fail()) {
-                        cerr << "Error reading buffer" << endl;
-                        break;
-                    }
+            char buffer[size];
+            cin.read(buffer, size);
+            if (cin.fail()) {
+                cerr << "Error reading buffer" << endl;
+                break;
+            }
 
-                    patchgl::BeginPatch beginPatch;
-                    bool parsed = beginPatch.ParseFromArray(buffer, size);
-                    if (parsed) {
-                        subscriber.on_next(beginPatch);
-                    } else {
-                        cerr << "Failed to parse BeginPatch." << endl;
-                    }
-                }
-            }).start_with(beginPatch1, beginPatch2);
+            patchgl::Command command;
+            bool parsed = command.ParseFromArray(buffer, size);
+            if (parsed) {
+                subscriber.on_next(command);
+            } else {
+                cerr << "Failed to parse BeginPatch." << endl;
+            }
+        }
+    }).start_with(command1, command2);
 }
-
-void charon::sendBeginPatchResponse(patchgl::BeginPatchResponse response) {
-}
-
 

@@ -20,6 +20,9 @@ namespace patchgl {
 
 namespace {
 
+const ::google::protobuf::Descriptor* Close_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  Close_reflection_ = NULL;
 const ::google::protobuf::Descriptor* BeginPatch_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   BeginPatch_reflection_ = NULL;
@@ -29,9 +32,17 @@ const ::google::protobuf::internal::GeneratedMessageReflection*
 const ::google::protobuf::Descriptor* BeginPatch_Color_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   BeginPatch_Color_reflection_ = NULL;
-const ::google::protobuf::Descriptor* BeginPatchResponse_descriptor_ = NULL;
+const ::google::protobuf::Descriptor* EndPatch_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
-  BeginPatchResponse_reflection_ = NULL;
+  EndPatch_reflection_ = NULL;
+const ::google::protobuf::Descriptor* Command_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  Command_reflection_ = NULL;
+struct CommandOneofInstance {
+  const ::patchgl::Close* close_;
+  const ::patchgl::BeginPatch* begin_patch_;
+  const ::patchgl::EndPatch* end_patch_;
+}* Command_default_oneof_instance_ = NULL;
 
 }  // namespace
 
@@ -42,11 +53,26 @@ void protobuf_AssignDesc_patchgl_2eproto() {
     ::google::protobuf::DescriptorPool::generated_pool()->FindFileByName(
       "patchgl.proto");
   GOOGLE_CHECK(file != NULL);
-  BeginPatch_descriptor_ = file->message_type(0);
-  static const int BeginPatch_offsets_[3] = {
+  Close_descriptor_ = file->message_type(0);
+  static const int Close_offsets_[1] = {
+  };
+  Close_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      Close_descriptor_,
+      Close::default_instance_,
+      Close_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Close, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Close, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(Close));
+  BeginPatch_descriptor_ = file->message_type(1);
+  static const int BeginPatch_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatch, position_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatch, color_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatch, parent_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatch, patch_id_),
   };
   BeginPatch_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -97,21 +123,41 @@ void protobuf_AssignDesc_patchgl_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(BeginPatch_Color));
-  BeginPatchResponse_descriptor_ = file->message_type(1);
-  static const int BeginPatchResponse_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatchResponse, patch_),
+  EndPatch_descriptor_ = file->message_type(2);
+  static const int EndPatch_offsets_[1] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EndPatch, patch_id_),
   };
-  BeginPatchResponse_reflection_ =
+  EndPatch_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
-      BeginPatchResponse_descriptor_,
-      BeginPatchResponse::default_instance_,
-      BeginPatchResponse_offsets_,
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatchResponse, _has_bits_[0]),
-      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(BeginPatchResponse, _unknown_fields_),
+      EndPatch_descriptor_,
+      EndPatch::default_instance_,
+      EndPatch_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EndPatch, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(EndPatch, _unknown_fields_),
       -1,
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
-      sizeof(BeginPatchResponse));
+      sizeof(EndPatch));
+  Command_descriptor_ = file->message_type(3);
+  static const int Command_offsets_[4] = {
+    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(Command_default_oneof_instance_, close_),
+    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(Command_default_oneof_instance_, begin_patch_),
+    PROTO2_GENERATED_DEFAULT_ONEOF_FIELD_OFFSET(Command_default_oneof_instance_, end_patch_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, requests_),
+  };
+  Command_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      Command_descriptor_,
+      Command::default_instance_,
+      Command_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _unknown_fields_),
+      -1,
+      Command_default_oneof_instance_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Command, _oneof_case_[0]),
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(Command));
 }
 
 namespace {
@@ -125,26 +171,35 @@ inline void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    Close_descriptor_, &Close::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     BeginPatch_descriptor_, &BeginPatch::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     BeginPatch_Position_descriptor_, &BeginPatch_Position::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     BeginPatch_Color_descriptor_, &BeginPatch_Color::default_instance());
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
-    BeginPatchResponse_descriptor_, &BeginPatchResponse::default_instance());
+    EndPatch_descriptor_, &EndPatch::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    Command_descriptor_, &Command::default_instance());
 }
 
 }  // namespace
 
 void protobuf_ShutdownFile_patchgl_2eproto() {
+  delete Close::default_instance_;
+  delete Close_reflection_;
   delete BeginPatch::default_instance_;
   delete BeginPatch_reflection_;
   delete BeginPatch_Position::default_instance_;
   delete BeginPatch_Position_reflection_;
   delete BeginPatch_Color::default_instance_;
   delete BeginPatch_Color_reflection_;
-  delete BeginPatchResponse::default_instance_;
-  delete BeginPatchResponse_reflection_;
+  delete EndPatch::default_instance_;
+  delete EndPatch_reflection_;
+  delete Command::default_instance_;
+  delete Command_default_oneof_instance_;
+  delete Command_reflection_;
 }
 
 void protobuf_AddDesc_patchgl_2eproto() {
@@ -154,25 +209,34 @@ void protobuf_AddDesc_patchgl_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\rpatchgl.proto\022\007patchgl\"\245\002\n\nBeginPatch\022"
-    ".\n\010position\030\001 \002(\0132\034.patchgl.BeginPatch.P"
-    "osition\022(\n\005color\030\002 \002(\0132\031.patchgl.BeginPa"
-    "tch.Color\022\021\n\006parent\030\003 \001(\007:\0010\032e\n\010Position"
-    "\022\014\n\004left\030\001 \002(\002\022\r\n\005right\030\002 \002(\002\022\013\n\003top\030\003 \002"
-    "(\002\022\016\n\006bottom\030\004 \002(\002\022\017\n\004near\030\005 \001(\002:\0011\022\016\n\003f"
-    "ar\030\006 \001(\002:\0011\032C\n\005Color\022\013\n\003red\030\001 \002(\002\022\r\n\005gre"
-    "en\030\002 \002(\002\022\014\n\004blue\030\003 \002(\002\022\020\n\005alpha\030\004 \001(\002:\0011"
-    "\"#\n\022BeginPatchResponse\022\r\n\005patch\030\001 \002(\007", 357);
+    "\n\rpatchgl.proto\022\007patchgl\"\007\n\005Close\"\267\002\n\nBe"
+    "ginPatch\022.\n\010position\030\001 \002(\0132\034.patchgl.Beg"
+    "inPatch.Position\022(\n\005color\030\002 \002(\0132\031.patchg"
+    "l.BeginPatch.Color\022\021\n\006parent\030\003 \001(\007:\0010\022\020\n"
+    "\010patch_id\030\004 \002(\007\032e\n\010Position\022\014\n\004left\030\001 \002("
+    "\002\022\r\n\005right\030\002 \002(\002\022\013\n\003top\030\003 \002(\002\022\016\n\006bottom\030"
+    "\004 \002(\002\022\017\n\004near\030\005 \001(\002:\0011\022\016\n\003far\030\006 \001(\002:\0011\032C"
+    "\n\005Color\022\013\n\003red\030\001 \002(\002\022\r\n\005green\030\002 \002(\002\022\014\n\004b"
+    "lue\030\003 \002(\002\022\020\n\005alpha\030\004 \001(\002:\0011\"\034\n\010EndPatch\022"
+    "\020\n\010patch_id\030\001 \002(\007\"\212\001\n\007Command\022\037\n\005close\030\001"
+    " \001(\0132\016.patchgl.CloseH\000\022*\n\013begin_patch\030\002 "
+    "\001(\0132\023.patchgl.BeginPatchH\000\022&\n\tend_patch\030"
+    "\003 \001(\0132\021.patchgl.EndPatchH\000B\n\n\010requests", 518);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "patchgl.proto", &protobuf_RegisterTypes);
+  Close::default_instance_ = new Close();
   BeginPatch::default_instance_ = new BeginPatch();
   BeginPatch_Position::default_instance_ = new BeginPatch_Position();
   BeginPatch_Color::default_instance_ = new BeginPatch_Color();
-  BeginPatchResponse::default_instance_ = new BeginPatchResponse();
+  EndPatch::default_instance_ = new EndPatch();
+  Command::default_instance_ = new Command();
+  Command_default_oneof_instance_ = new CommandOneofInstance;
+  Close::default_instance_->InitAsDefaultInstance();
   BeginPatch::default_instance_->InitAsDefaultInstance();
   BeginPatch_Position::default_instance_->InitAsDefaultInstance();
   BeginPatch_Color::default_instance_->InitAsDefaultInstance();
-  BeginPatchResponse::default_instance_->InitAsDefaultInstance();
+  EndPatch::default_instance_->InitAsDefaultInstance();
+  Command::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_patchgl_2eproto);
 }
 
@@ -182,6 +246,180 @@ struct StaticDescriptorInitializer_patchgl_2eproto {
     protobuf_AddDesc_patchgl_2eproto();
   }
 } static_descriptor_initializer_patchgl_2eproto_;
+
+// ===================================================================
+
+#ifndef _MSC_VER
+#endif  // !_MSC_VER
+
+Close::Close()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:patchgl.Close)
+}
+
+void Close::InitAsDefaultInstance() {
+}
+
+Close::Close(const Close& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:patchgl.Close)
+}
+
+void Close::SharedCtor() {
+  _cached_size_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+Close::~Close() {
+  // @@protoc_insertion_point(destructor:patchgl.Close)
+  SharedDtor();
+}
+
+void Close::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void Close::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* Close::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return Close_descriptor_;
+}
+
+const Close& Close::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_patchgl_2eproto();
+  return *default_instance_;
+}
+
+Close* Close::default_instance_ = NULL;
+
+Close* Close::New() const {
+  return new Close;
+}
+
+void Close::Clear() {
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool Close::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:patchgl.Close)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+  handle_unusual:
+    if (tag == 0 ||
+        ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+        ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+      goto success;
+    }
+    DO_(::google::protobuf::internal::WireFormat::SkipField(
+          input, tag, mutable_unknown_fields()));
+  }
+success:
+  // @@protoc_insertion_point(parse_success:patchgl.Close)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:patchgl.Close)
+  return false;
+#undef DO_
+}
+
+void Close::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:patchgl.Close)
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:patchgl.Close)
+}
+
+::google::protobuf::uint8* Close::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:patchgl.Close)
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:patchgl.Close)
+  return target;
+}
+
+int Close::ByteSize() const {
+  int total_size = 0;
+
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void Close::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const Close* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const Close*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void Close::MergeFrom(const Close& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void Close::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Close::CopyFrom(const Close& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Close::IsInitialized() const {
+
+  return true;
+}
+
+void Close::Swap(Close* other) {
+  if (other != this) {
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata Close::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = Close_descriptor_;
+  metadata.reflection = Close_reflection_;
+  return metadata;
+}
+
 
 // ===================================================================
 
@@ -954,6 +1192,7 @@ void BeginPatch_Color::Swap(BeginPatch_Color* other) {
 const int BeginPatch::kPositionFieldNumber;
 const int BeginPatch::kColorFieldNumber;
 const int BeginPatch::kParentFieldNumber;
+const int BeginPatch::kPatchIdFieldNumber;
 #endif  // !_MSC_VER
 
 BeginPatch::BeginPatch()
@@ -979,6 +1218,7 @@ void BeginPatch::SharedCtor() {
   position_ = NULL;
   color_ = NULL;
   parent_ = 0u;
+  patch_id_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -1016,15 +1256,29 @@ BeginPatch* BeginPatch::New() const {
 }
 
 void BeginPatch::Clear() {
-  if (_has_bits_[0 / 32] & 7) {
+#define OFFSET_OF_FIELD_(f) (reinterpret_cast<char*>(      \
+  &reinterpret_cast<BeginPatch*>(16)->f) - \
+   reinterpret_cast<char*>(16))
+
+#define ZR_(first, last) do {                              \
+    size_t f = OFFSET_OF_FIELD_(first);                    \
+    size_t n = OFFSET_OF_FIELD_(last) - f + sizeof(last);  \
+    ::memset(&first, 0, n);                                \
+  } while (0)
+
+  if (_has_bits_[0 / 32] & 15) {
+    ZR_(parent_, patch_id_);
     if (has_position()) {
       if (position_ != NULL) position_->::patchgl::BeginPatch_Position::Clear();
     }
     if (has_color()) {
       if (color_ != NULL) color_->::patchgl::BeginPatch_Color::Clear();
     }
-    parent_ = 0u;
   }
+
+#undef OFFSET_OF_FIELD_
+#undef ZR_
+
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -1075,6 +1329,21 @@ bool BeginPatch::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(37)) goto parse_patch_id;
+        break;
+      }
+
+      // required fixed32 patch_id = 4;
+      case 4: {
+        if (tag == 37) {
+         parse_patch_id:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_FIXED32>(
+                 input, &patch_id_)));
+          set_has_patch_id();
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -1121,6 +1390,11 @@ void BeginPatch::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFixed32(3, this->parent(), output);
   }
 
+  // required fixed32 patch_id = 4;
+  if (has_patch_id()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFixed32(4, this->patch_id(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1148,6 +1422,11 @@ void BeginPatch::SerializeWithCachedSizes(
   // optional fixed32 parent = 3 [default = 0];
   if (has_parent()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(3, this->parent(), target);
+  }
+
+  // required fixed32 patch_id = 4;
+  if (has_patch_id()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(4, this->patch_id(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1178,6 +1457,11 @@ int BeginPatch::ByteSize() const {
 
     // optional fixed32 parent = 3 [default = 0];
     if (has_parent()) {
+      total_size += 1 + 4;
+    }
+
+    // required fixed32 patch_id = 4;
+    if (has_patch_id()) {
       total_size += 1 + 4;
     }
 
@@ -1217,6 +1501,9 @@ void BeginPatch::MergeFrom(const BeginPatch& from) {
     if (from.has_parent()) {
       set_parent(from.parent());
     }
+    if (from.has_patch_id()) {
+      set_patch_id(from.patch_id());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -1234,7 +1521,7 @@ void BeginPatch::CopyFrom(const BeginPatch& from) {
 }
 
 bool BeginPatch::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
+  if ((_has_bits_[0] & 0x0000000b) != 0x0000000b) return false;
 
   if (has_position()) {
     if (!this->position().IsInitialized()) return false;
@@ -1250,6 +1537,7 @@ void BeginPatch::Swap(BeginPatch* other) {
     std::swap(position_, other->position_);
     std::swap(color_, other->color_);
     std::swap(parent_, other->parent_);
+    std::swap(patch_id_, other->patch_id_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -1268,85 +1556,85 @@ void BeginPatch::Swap(BeginPatch* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int BeginPatchResponse::kPatchFieldNumber;
+const int EndPatch::kPatchIdFieldNumber;
 #endif  // !_MSC_VER
 
-BeginPatchResponse::BeginPatchResponse()
+EndPatch::EndPatch()
   : ::google::protobuf::Message() {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(constructor:patchgl.EndPatch)
 }
 
-void BeginPatchResponse::InitAsDefaultInstance() {
+void EndPatch::InitAsDefaultInstance() {
 }
 
-BeginPatchResponse::BeginPatchResponse(const BeginPatchResponse& from)
+EndPatch::EndPatch(const EndPatch& from)
   : ::google::protobuf::Message() {
   SharedCtor();
   MergeFrom(from);
-  // @@protoc_insertion_point(copy_constructor:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(copy_constructor:patchgl.EndPatch)
 }
 
-void BeginPatchResponse::SharedCtor() {
+void EndPatch::SharedCtor() {
   _cached_size_ = 0;
-  patch_ = 0u;
+  patch_id_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
-BeginPatchResponse::~BeginPatchResponse() {
-  // @@protoc_insertion_point(destructor:patchgl.BeginPatchResponse)
+EndPatch::~EndPatch() {
+  // @@protoc_insertion_point(destructor:patchgl.EndPatch)
   SharedDtor();
 }
 
-void BeginPatchResponse::SharedDtor() {
+void EndPatch::SharedDtor() {
   if (this != default_instance_) {
   }
 }
 
-void BeginPatchResponse::SetCachedSize(int size) const {
+void EndPatch::SetCachedSize(int size) const {
   GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
   _cached_size_ = size;
   GOOGLE_SAFE_CONCURRENT_WRITES_END();
 }
-const ::google::protobuf::Descriptor* BeginPatchResponse::descriptor() {
+const ::google::protobuf::Descriptor* EndPatch::descriptor() {
   protobuf_AssignDescriptorsOnce();
-  return BeginPatchResponse_descriptor_;
+  return EndPatch_descriptor_;
 }
 
-const BeginPatchResponse& BeginPatchResponse::default_instance() {
+const EndPatch& EndPatch::default_instance() {
   if (default_instance_ == NULL) protobuf_AddDesc_patchgl_2eproto();
   return *default_instance_;
 }
 
-BeginPatchResponse* BeginPatchResponse::default_instance_ = NULL;
+EndPatch* EndPatch::default_instance_ = NULL;
 
-BeginPatchResponse* BeginPatchResponse::New() const {
-  return new BeginPatchResponse;
+EndPatch* EndPatch::New() const {
+  return new EndPatch;
 }
 
-void BeginPatchResponse::Clear() {
-  patch_ = 0u;
+void EndPatch::Clear() {
+  patch_id_ = 0u;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
 
-bool BeginPatchResponse::MergePartialFromCodedStream(
+bool EndPatch::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(parse_start:patchgl.EndPatch)
   for (;;) {
     ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required fixed32 patch = 1;
+      // required fixed32 patch_id = 1;
       case 1: {
         if (tag == 13) {
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_FIXED32>(
-                 input, &patch_)));
-          set_has_patch();
+                 input, &patch_id_)));
+          set_has_patch_id();
         } else {
           goto handle_unusual;
         }
@@ -1368,51 +1656,51 @@ bool BeginPatchResponse::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(parse_success:patchgl.EndPatch)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(parse_failure:patchgl.EndPatch)
   return false;
 #undef DO_
 }
 
-void BeginPatchResponse::SerializeWithCachedSizes(
+void EndPatch::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:patchgl.BeginPatchResponse)
-  // required fixed32 patch = 1;
-  if (has_patch()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFixed32(1, this->patch(), output);
+  // @@protoc_insertion_point(serialize_start:patchgl.EndPatch)
+  // required fixed32 patch_id = 1;
+  if (has_patch_id()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFixed32(1, this->patch_id(), output);
   }
 
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
   }
-  // @@protoc_insertion_point(serialize_end:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(serialize_end:patchgl.EndPatch)
 }
 
-::google::protobuf::uint8* BeginPatchResponse::SerializeWithCachedSizesToArray(
+::google::protobuf::uint8* EndPatch::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // @@protoc_insertion_point(serialize_to_array_start:patchgl.BeginPatchResponse)
-  // required fixed32 patch = 1;
-  if (has_patch()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(1, this->patch(), target);
+  // @@protoc_insertion_point(serialize_to_array_start:patchgl.EndPatch)
+  // required fixed32 patch_id = 1;
+  if (has_patch_id()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(1, this->patch_id(), target);
   }
 
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:patchgl.BeginPatchResponse)
+  // @@protoc_insertion_point(serialize_to_array_end:patchgl.EndPatch)
   return target;
 }
 
-int BeginPatchResponse::ByteSize() const {
+int EndPatch::ByteSize() const {
   int total_size = 0;
 
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required fixed32 patch = 1;
-    if (has_patch()) {
+    // required fixed32 patch_id = 1;
+    if (has_patch_id()) {
       total_size += 1 + 4;
     }
 
@@ -1428,10 +1716,10 @@ int BeginPatchResponse::ByteSize() const {
   return total_size;
 }
 
-void BeginPatchResponse::MergeFrom(const ::google::protobuf::Message& from) {
+void EndPatch::MergeFrom(const ::google::protobuf::Message& from) {
   GOOGLE_CHECK_NE(&from, this);
-  const BeginPatchResponse* source =
-    ::google::protobuf::internal::dynamic_cast_if_available<const BeginPatchResponse*>(
+  const EndPatch* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const EndPatch*>(
       &from);
   if (source == NULL) {
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
@@ -1440,48 +1728,389 @@ void BeginPatchResponse::MergeFrom(const ::google::protobuf::Message& from) {
   }
 }
 
-void BeginPatchResponse::MergeFrom(const BeginPatchResponse& from) {
+void EndPatch::MergeFrom(const EndPatch& from) {
   GOOGLE_CHECK_NE(&from, this);
   if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    if (from.has_patch()) {
-      set_patch(from.patch());
+    if (from.has_patch_id()) {
+      set_patch_id(from.patch_id());
     }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
-void BeginPatchResponse::CopyFrom(const ::google::protobuf::Message& from) {
+void EndPatch::CopyFrom(const ::google::protobuf::Message& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void BeginPatchResponse::CopyFrom(const BeginPatchResponse& from) {
+void EndPatch::CopyFrom(const EndPatch& from) {
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool BeginPatchResponse::IsInitialized() const {
+bool EndPatch::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
 
   return true;
 }
 
-void BeginPatchResponse::Swap(BeginPatchResponse* other) {
+void EndPatch::Swap(EndPatch* other) {
   if (other != this) {
-    std::swap(patch_, other->patch_);
+    std::swap(patch_id_, other->patch_id_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
   }
 }
 
-::google::protobuf::Metadata BeginPatchResponse::GetMetadata() const {
+::google::protobuf::Metadata EndPatch::GetMetadata() const {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::Metadata metadata;
-  metadata.descriptor = BeginPatchResponse_descriptor_;
-  metadata.reflection = BeginPatchResponse_reflection_;
+  metadata.descriptor = EndPatch_descriptor_;
+  metadata.reflection = EndPatch_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+const int Command::kCloseFieldNumber;
+const int Command::kBeginPatchFieldNumber;
+const int Command::kEndPatchFieldNumber;
+#endif  // !_MSC_VER
+
+Command::Command()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:patchgl.Command)
+}
+
+void Command::InitAsDefaultInstance() {
+  Command_default_oneof_instance_->close_ = const_cast< ::patchgl::Close*>(&::patchgl::Close::default_instance());
+  Command_default_oneof_instance_->begin_patch_ = const_cast< ::patchgl::BeginPatch*>(&::patchgl::BeginPatch::default_instance());
+  Command_default_oneof_instance_->end_patch_ = const_cast< ::patchgl::EndPatch*>(&::patchgl::EndPatch::default_instance());
+}
+
+Command::Command(const Command& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+  // @@protoc_insertion_point(copy_constructor:patchgl.Command)
+}
+
+void Command::SharedCtor() {
+  _cached_size_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  clear_has_requests();
+}
+
+Command::~Command() {
+  // @@protoc_insertion_point(destructor:patchgl.Command)
+  SharedDtor();
+}
+
+void Command::SharedDtor() {
+  if (has_requests()) {
+    clear_requests();
+  }
+  if (this != default_instance_) {
+  }
+}
+
+void Command::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* Command::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return Command_descriptor_;
+}
+
+const Command& Command::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_patchgl_2eproto();
+  return *default_instance_;
+}
+
+Command* Command::default_instance_ = NULL;
+
+Command* Command::New() const {
+  return new Command;
+}
+
+void Command::clear_requests() {
+  switch(requests_case()) {
+    case kClose: {
+      delete requests_.close_;
+      break;
+    }
+    case kBeginPatch: {
+      delete requests_.begin_patch_;
+      break;
+    }
+    case kEndPatch: {
+      delete requests_.end_patch_;
+      break;
+    }
+    case REQUESTS_NOT_SET: {
+      break;
+    }
+  }
+  _oneof_case_[0] = REQUESTS_NOT_SET;
+}
+
+
+void Command::Clear() {
+  clear_requests();
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool Command::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:patchgl.Command)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoff(127);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // optional .patchgl.Close close = 1;
+      case 1: {
+        if (tag == 10) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_close()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(18)) goto parse_begin_patch;
+        break;
+      }
+
+      // optional .patchgl.BeginPatch begin_patch = 2;
+      case 2: {
+        if (tag == 18) {
+         parse_begin_patch:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_begin_patch()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(26)) goto parse_end_patch;
+        break;
+      }
+
+      // optional .patchgl.EndPatch end_patch = 3;
+      case 3: {
+        if (tag == 26) {
+         parse_end_patch:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_end_patch()));
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectAtEnd()) goto success;
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0 ||
+            ::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:patchgl.Command)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:patchgl.Command)
+  return false;
+#undef DO_
+}
+
+void Command::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:patchgl.Command)
+  // optional .patchgl.Close close = 1;
+  if (has_close()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      1, this->close(), output);
+  }
+
+  // optional .patchgl.BeginPatch begin_patch = 2;
+  if (has_begin_patch()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      2, this->begin_patch(), output);
+  }
+
+  // optional .patchgl.EndPatch end_patch = 3;
+  if (has_end_patch()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      3, this->end_patch(), output);
+  }
+
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+  // @@protoc_insertion_point(serialize_end:patchgl.Command)
+}
+
+::google::protobuf::uint8* Command::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  // @@protoc_insertion_point(serialize_to_array_start:patchgl.Command)
+  // optional .patchgl.Close close = 1;
+  if (has_close()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        1, this->close(), target);
+  }
+
+  // optional .patchgl.BeginPatch begin_patch = 2;
+  if (has_begin_patch()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        2, this->begin_patch(), target);
+  }
+
+  // optional .patchgl.EndPatch end_patch = 3;
+  if (has_end_patch()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        3, this->end_patch(), target);
+  }
+
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:patchgl.Command)
+  return target;
+}
+
+int Command::ByteSize() const {
+  int total_size = 0;
+
+  switch (requests_case()) {
+    // optional .patchgl.Close close = 1;
+    case kClose: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->close());
+      break;
+    }
+    // optional .patchgl.BeginPatch begin_patch = 2;
+    case kBeginPatch: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->begin_patch());
+      break;
+    }
+    // optional .patchgl.EndPatch end_patch = 3;
+    case kEndPatch: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->end_patch());
+      break;
+    }
+    case REQUESTS_NOT_SET: {
+      break;
+    }
+  }
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void Command::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const Command* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const Command*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void Command::MergeFrom(const Command& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  switch (from.requests_case()) {
+    case kClose: {
+      mutable_close()->::patchgl::Close::MergeFrom(from.close());
+      break;
+    }
+    case kBeginPatch: {
+      mutable_begin_patch()->::patchgl::BeginPatch::MergeFrom(from.begin_patch());
+      break;
+    }
+    case kEndPatch: {
+      mutable_end_patch()->::patchgl::EndPatch::MergeFrom(from.end_patch());
+      break;
+    }
+    case REQUESTS_NOT_SET: {
+      break;
+    }
+  }
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void Command::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Command::CopyFrom(const Command& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Command::IsInitialized() const {
+
+  if (has_begin_patch()) {
+    if (!this->begin_patch().IsInitialized()) return false;
+  }
+  if (has_end_patch()) {
+    if (!this->end_patch().IsInitialized()) return false;
+  }
+  return true;
+}
+
+void Command::Swap(Command* other) {
+  if (other != this) {
+    std::swap(requests_, other->requests_);
+    std::swap(_oneof_case_[0], other->_oneof_case_[0]);
+    std::swap(_has_bits_[0], other->_has_bits_[0]);
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata Command::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = Command_descriptor_;
+  metadata.reflection = Command_reflection_;
   return metadata;
 }
 

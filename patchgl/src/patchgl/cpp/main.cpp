@@ -10,7 +10,6 @@
 #include <fstream>
 #include <iostream>
 #include "patch.h"
-#include "patchgl.pb.h"
 
 #include "rxcpp/rx.hpp"
 #include "screen.h"
@@ -63,24 +62,32 @@ int main() {
     });
 
     charon charon;
-    charon.begin_patch_requests()
+    charon.commands()
             .subscribe_on(observe_on_new_thread())
             .observe_on(mainthread)
-            .subscribe([&](patchgl::BeginPatch beginPatch) {
-                auto &position = beginPatch.position();
-                unsigned int patchId = (unsigned int) rand();
-                patch_map[patchId] = patch(position.left(), position.top(), position.right(),
-                                           position.bottom(), position.near());
-                screen.setShouldRefresh(true);
-
-                patchgl::BeginPatchResponse response;
-                response.set_patch(patchId);
-                charon.sendBeginPatchResponse(response);
+            .subscribe([&](Command command) {
+                if (command.has_close()) {
+                    glfwSetWindowShouldClose(window, GL_TRUE);
+                } else if (command.has_begin_patch()) {
+                    const BeginPatch &beginPatch = command.begin_patch();
+                    const BeginPatch_Position &position = beginPatch.position();
+                    const BeginPatch_Color &color = beginPatch.color();
+                    unsigned int patchId = beginPatch.patch_id();
+                    patch_map[patchId] = patch(position, color);
+                    screen.setShouldRefresh(true);
+                } else if (command.has_end_patch()) {
+                    unsigned int patchId = command.end_patch().patch_id();
+                    patch_map.erase(patchId);
+                    screen.setShouldRefresh(true);
+                }
             });
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {
             runloop.dispatch();
+        }
+        if (glfwWindowShouldClose(window)) {
+            break;
         }
         screen.refresh(patch_map);
         glfwWaitEvents();

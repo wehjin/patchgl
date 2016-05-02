@@ -10,12 +10,11 @@
 
 using namespace rxcpp;
 using namespace std;
+using namespace patchgl;
 
 class charon {
 public:
-    observable<patchgl::BeginPatch> begin_patch_requests();
-
-    void sendBeginPatchResponse(patchgl::BeginPatchResponse response);
+    observable<Command> commands();
 };
 
 

@@ -4,5 +4,15 @@
 
 #include "patch.h"
 
-patch::patch(GLfloat left, GLfloat top, GLfloat right, GLfloat bottom, GLfloat near) : left(left), top(top), right(right),
-                                                                                       bottom(bottom), near(near) { }
+patch::patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginPatch_Color &color)
+        : left(position.left()),
+          bottom(position.bottom()),
+          right(position.right()),
+          top(position.top()),
+          near(position.near()),
+          red(color.red()),
+          green(color.green()),
+          blue(color.blue()),
+          alpha(color.alpha()) { }
+
+

@@ -7,18 +7,18 @@
 
 
 #include <OpenGL/OpenGL.h>
+#include "patchgl.pb.h"
 
 class patch {
 public:
-    GLfloat left;
-    GLfloat top;
-    GLfloat right;
-    GLfloat bottom;
-    GLfloat near;
 
     patch() { }
 
-    patch(GLfloat left, GLfloat top, GLfloat right, GLfloat bottom, GLfloat near);
+    patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginPatch_Color &color);
+
+    GLfloat left = -1.f, bottom = -1.f, right = 1.f, top = 1.f;
+    GLfloat near = 0.f;
+    GLfloat red = 1.f, green = 1.f, blue = 1.f, alpha = 1.f;
 };
 
 

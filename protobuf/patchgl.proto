@@ -1,5 +1,7 @@
 package patchgl;
 
+message Close {
+}
 
 message BeginPatch {
     message Position {
@@ -20,9 +22,17 @@ message BeginPatch {
     required Position position = 1;
     required Color color = 2;
     optional fixed32 parent = 3 [default = 0];
+    required fixed32 patch_id = 4;
 }
 
-message BeginPatchResponse {
-    required fixed32 patch = 1;
+message EndPatch {
+    required fixed32 patch_id = 1;
 }
 
+message Command {
+    oneof requests {
+        Close close = 1;
+        BeginPatch begin_patch = 2;
+        EndPatch end_patch = 3;
+    }
+}
