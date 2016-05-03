@@ -13,16 +13,16 @@ defmodule Shui.Box do
 
   def color_box(red, green, blue) do
     color = Color.color(red, green, blue)
-    box(fn(viewer, director) -> on_present_color(color, viewer, director) end)
+    box(fn(viewer, director) ->
+      position = Viewer.position(viewer)
+      id = Shui.Messages.patch_id()
+      Viewer.patch(viewer, color, position, id)
+      receive do
+        :dismiss ->
+          Viewer.unpatch(viewer, id)
+      end
+    end)
   end
+  def color_box(), do: color_box(:random.uniform(), :random.uniform(), :random.uniform())
 
-  defp on_present_color(color, viewer, director) do
-    position = Viewer.position(viewer)
-    id = Shui.Messages.patch_id()
-    Viewer.patch(viewer, color, position, id)
-    receive do
-      :dismiss ->
-        Viewer.unpatch(viewer, id)
-    end
-  end
 end
