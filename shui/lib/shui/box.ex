@@ -1,13 +1,13 @@
 defmodule Shui.Box do
-  alias Shui.Presenter, as: Presenter
-  alias Shui.Viewer, as: Viewer
-  alias Shui.Color, as: Color
+  alias Shui.Presenter
+  alias Shui.Viewer
+  alias Shui.Color
 
   def box(on_present) do
-    {on_present}
+    {:box, on_present}
   end
 
-  def present({on_present} = box, viewer, director) do
+  def present({:box, on_present}, viewer, director) do
     Presenter.start(on_present, viewer, director)
   end
 
