@@ -1,7 +1,10 @@
 defmodule Shui.Position do
 
   def position(left, bottom, right, top) do
-    %{:left => left, :bottom=>bottom, :right =>right, :top=>top}
+    position(left, bottom, right, top, 0.0)
+  end
+  def position(left, bottom, right, top, near) do
+    %{:left => left, :bottom=>bottom, :right =>right, :top=>top, :near=>near}
   end
 
   def full() do
@@ -11,8 +14,8 @@ defmodule Shui.Position do
   def split_horizontal(position) do
     split_horizontal(position, 0.5)
   end
-  def split_horizontal(%{:left => left, :bottom=>bottom, :right =>right, :top=>top}, degree) do
+  def split_horizontal(%{:left => left, :bottom=>bottom, :right =>right, :top=>top, :near=>near}, degree) do
     split = left + (right - left) * degree
-    {position(left, bottom, split, top), position(split, bottom, right, top)}
+    {position(left, bottom, split, top, near), position(split, bottom, right, top, near)}
   end
 end
