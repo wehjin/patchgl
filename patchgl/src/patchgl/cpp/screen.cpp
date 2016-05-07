@@ -22,10 +22,6 @@ screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread)
 observable<double> screen::animation_frame() {
     return interval(milliseconds(21))
             .map([](int _) { return glfwGetTime(); })
-            .map([](double time) {
-                glfwPostEmptyEvent();
-                return time;
-            })
             .subscribe_on(observe_on_new_thread())
             .observe_on(mainthread);
 }
@@ -83,6 +79,9 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
 
 void screen::setShouldRefresh(bool shouldRefresh) {
     this->shouldRefresh = shouldRefresh;
+    if (shouldRefresh) {
+        glfwPostEmptyEvent();
+    }
 }
 
 
