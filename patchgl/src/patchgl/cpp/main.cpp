@@ -62,16 +62,18 @@ int main() {
     patch_color.set_green(1.f);
     patch_color.set_blue(1.f);
     patch_color.set_alpha(1.f);
-    patch_map[237] = patch(patch_position, patch_color, L'M');
+    patch_map[237] = patch(patch_position, patch_color, L'I');
 
     schedulers::run_loop runloop;
     auto mainthread = observe_on_run_loop(runloop);
 
     screen screen(window, mainthread);
 
+    /*
     screen.animation_frame().subscribe([&](double time) {
         screen.setShouldRefresh(true);
     });
+     */
 
     charon charon;
     charon.commands()
