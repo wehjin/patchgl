@@ -51,6 +51,18 @@ int main() {
     glfwSetKeyCallback(window, key_callback);
 
     std::map<unsigned int, patch> patch_map;
+    BeginPatch_Position patch_position;
+    patch_position.set_left(-.5f);
+    patch_position.set_right(.5f);
+    patch_position.set_bottom(-.5f);
+    patch_position.set_top(.5f);
+    patch_position.set_near(-0.5f);
+    BeginPatch_Color patch_color;
+    patch_color.set_red(1.f);
+    patch_color.set_green(1.f);
+    patch_color.set_blue(1.f);
+    patch_color.set_alpha(1.f);
+    patch_map[237] = patch(patch_position, patch_color, L'M');
 
     schedulers::run_loop runloop;
     auto mainthread = observe_on_run_loop(runloop);

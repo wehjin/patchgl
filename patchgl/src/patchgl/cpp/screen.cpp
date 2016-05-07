@@ -5,12 +5,18 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include "screen.h"
+#include "font.h"
 
 using namespace std::chrono;
 using namespace rxcpp::sources;
 
 screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread)
-        : window(window), mainthread(mainthread) {
+        : window(window), mainthread(mainthread), font(Font_ttf, Font_ttf_len) {
+    FT_Error error = font.Error();
+    if (error) {
+        throw new bad_alloc();
+    }
+    font.FaceSize(32);
 }
 
 observable<double> screen::animation_frame() {
@@ -45,18 +51,32 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
+    //glRotatef((float) glfwGetTime() * 50.f, 0.f, 0.f, 1.f);
 
     glBegin(GL_QUADS);
     for (auto &entry : patch_map) {
-        const patch &patch = entry.second;
-        glColor4f(patch.red, patch.green, patch.blue, patch.alpha);
-        glVertex3f(patch.left, patch.bottom, patch.near);
-        glVertex3f(patch.left, patch.top, patch.near);
-        glVertex3f(patch.right, patch.top, patch.near);
-        glVertex3f(patch.right, patch.bottom, patch.near);
+        patch &patch = entry.second;
+        if (patch.shape == patch::FULL_BLOCK) {
+            glColor4f(patch.red, patch.green, patch.blue, patch.alpha);
+            glVertex3f(patch.left, patch.bottom, patch.near);
+            glVertex3f(patch.left, patch.top, patch.near);
+            glVertex3f(patch.right, patch.top, patch.near);
+            glVertex3f(patch.right, patch.bottom, patch.near);
+        }
     }
     glEnd();
+
+    for (auto &entry : patch_map) {
+        patch &patch = entry.second;
+        if (patch.shape != patch::FULL_BLOCK) {
+            glColor4f(patch.red, patch.green, patch.blue, patch.alpha);
+            glPushMatrix();
+            glTranslatef(patch.left, patch.bottom, 0.f);
+            glScalef(0.124f * (patch.right - patch.left) / 2.f, 0.1f * (patch.top - patch.bottom) / 2.f, 1.f);
+            font.Render(wstring(&patch.shape, 1).data());
+            glPopMatrix();
+        }
+    }
 
     glfwSwapBuffers(window);
 }

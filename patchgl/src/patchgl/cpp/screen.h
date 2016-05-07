@@ -8,6 +8,7 @@
 #include <map>
 #include "patch.h"
 #include "rxcpp/rx.hpp"
+#include <FTGL/ftgl.h>
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -20,6 +21,7 @@ class screen {
     struct GLFWwindow *window;
     observe_on_one_worker &mainthread;
     bool shouldRefresh = true;
+    FTGLPolygonFont font;
 
 public:
     screen(GLFWwindow *window, observe_on_one_worker &mainthread);
@@ -29,6 +31,7 @@ public:
     observable<double> animation_frame();
 
     void setShouldRefresh(bool shouldRefresh);
+
 };
 
 

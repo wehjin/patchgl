@@ -4,7 +4,7 @@
 
 #include "patch.h"
 
-patch::patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginPatch_Color &color)
+patch::patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginPatch_Color &color, const wchar_t shape)
         : left(position.left()),
           bottom(position.bottom()),
           right(position.right()),
@@ -13,6 +13,7 @@ patch::patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginP
           red(color.red()),
           green(color.green()),
           blue(color.blue()),
-          alpha(color.alpha()) { }
+          alpha(color.alpha()),
+          shape(shape) { }
 
 
