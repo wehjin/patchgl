@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(patchgl)
-
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
@@ -18,8 +18,14 @@ add_subdirectory(fern)
 add_subdirectory(fern_tests)
 add_subdirectory(lib/RxCpp-2.3.0)
 
-link_directories(/usr/local/lib /System/Library/Frameworks/OpenGL.framework/Libraries)
+link_directories(/usr/local/lib)
 add_executable(patchgl ${SOURCE_FILES})
-target_link_libraries(patchgl glfw3 GL fern protobuf ftgl)
+find_package(GLFW REQUIRED)
+find_package(OpenGL REQUIRED)
+include_directories(${GLFW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
+target_link_libraries(patchgl
+    ${GLFW_LIBRARIES}
+    ${OPENGL_LIBRARIES}
+    fern protobuf ftgl)
 
 install(TARGETS patchgl DESTINATION bin)
