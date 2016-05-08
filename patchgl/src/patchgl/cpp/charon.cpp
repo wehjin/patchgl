@@ -20,7 +20,7 @@ observable<Command> charon::commands() {
     command1.mutable_begin_patch()->mutable_position()->set_top(.5f);
     command1.mutable_begin_patch()->mutable_position()->set_right(.5f);
     command1.mutable_begin_patch()->mutable_position()->set_bottom(-.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_near(-.2f);
+    command1.mutable_begin_patch()->mutable_position()->set_near(-0.4f);
 
     Command command2;
     command1.mutable_begin_patch()->set_patch_id((unsigned int) rand());
@@ -31,7 +31,7 @@ observable<Command> charon::commands() {
     command2.mutable_begin_patch()->mutable_position()->set_top(1.f);
     command2.mutable_begin_patch()->mutable_position()->set_right(0.f);
     command2.mutable_begin_patch()->mutable_position()->set_bottom(.1f);
-    command2.mutable_begin_patch()->mutable_position()->set_near(-.1f);
+    command2.mutable_begin_patch()->mutable_position()->set_near(-.5f);
 
     return observable<void, void>::create<Command>([](subscriber<Command> subscriber) {
         for (; ;) {

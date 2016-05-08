@@ -17,6 +17,8 @@ screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread)
         throw new bad_alloc();
     }
     font.FaceSize(32);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_DEPTH_TEST);
 }
 
 observable<double> screen::animation_frame() {
@@ -39,11 +41,11 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
     ratio = width / (float) height;
 
     glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+    glOrtho(-ratio, ratio, -1.f, 1.f, -1.f, 1.f);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -67,7 +69,7 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
         if (patch.shape != patch::FULL_BLOCK) {
             glColor4f(patch.red, patch.green, patch.blue, patch.alpha);
             glPushMatrix();
-            glTranslatef(patch.left, patch.bottom, 0.f);
+            glTranslatef(patch.left, patch.bottom, patch.near);
             glScalef(0.124f * (patch.right - patch.left) / 2.f, 0.1f * (patch.top - patch.bottom) / 2.f, 1.f);
             font.Render(wstring(&patch.shape, 1).data());
             glPopMatrix();
