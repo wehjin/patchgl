@@ -21,4 +21,12 @@ defmodule PositionTest do
     assert l[:top] == 100 && r[:top] == 100
     assert l[:near] == 50 && r[:near] == 50
   end
+
+  test "add_distance" do
+    base = Position.position(1,2,3,4,5)
+    next = base |> Position.add_distance(-1)
+    assert base[:left] == next[:left] && base[:right] == next[:right]
+    assert base[:bottom] == next[:bottom] && base[:top] == next[:top]
+    assert next[:near] == (base[:near] - 1)
+  end
 end

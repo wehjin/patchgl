@@ -35,9 +35,9 @@ defmodule Shui.Viewer do
   end
   def patch({:root, pid, _position}, color, position, id) do
     %{:red=>red, :green=>green, :blue=>blue} = color
-    %{:left=>left, :bottom=>bottom, :right=>right, :top=>top} = position
+    %{:left=>left, :bottom=>bottom, :right=>right, :top=>top, :near=>near} = position
     color_message = Messages.color(red, green, blue)
-    position_message = Messages.position(left, bottom, right, top)
+    position_message = Messages.position(left, bottom, right, top, near)
     message = Messages.begin_patch_encoded(color_message, position_message, id)
     send(pid, {:command, message})
   end
@@ -89,18 +89,18 @@ defmodule Shui.Viewer do
   defp loop_window(port) do
     receive do
       {:command, data} ->
-          send(port, {self, {:command, data}})
-          loop_window(port)
-      {^port, {:data, data}} ->
-          IO.puts(data)
-          loop_window(port)
+        send(port, {self, {:command, data}})
+        loop_window(port)
       :close ->
-          IO.puts("Closing port")
-          Port.close(port)
+        IO.puts("Closing port")
+        Port.close(port)
+      {^port, {:data, data}} ->
+        IO.inspect(data)
+        loop_window(port)
       {^port, {:exit_status, status}} ->
-          status
+        status
       {^port, :closed} ->
-          :closed
+        :closed
     end
   end
 end

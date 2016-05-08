@@ -14,7 +14,23 @@ defmodule Shui.Box do
     Presenter.start(on_present, viewer, director)
   end
 
-  def split_r(l_box, r_box) do
+  def stack_n({:box,_} = f_box, {:box,_} = n_box, distance) do
+    create fn viewer, director ->
+      f_position = Viewer.position(viewer)
+      n_position = f_position |> Position.add_distance(distance)
+      {f_viewer, n_viewer} = {viewer, Viewer.reposition(viewer, n_position)}
+      {f_presentation, n_presentation} = {
+        f_box |> present(f_viewer, director), n_box |> present(n_viewer, director)
+      }
+      receive do
+        :dismiss ->
+          Presentation.dismiss(f_presentation)
+          Presentation.dismiss(n_presentation)
+      end
+    end
+  end
+
+  def split_r({:box,_}=l_box, {:box,_}=r_box) do
     split_r(l_box, r_box, 0.5)
   end
   def split_r(l_box, r_box, degree) do

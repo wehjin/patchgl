@@ -48,8 +48,8 @@ defmodule Shui.Messages do
     Shui.Messages.BeginPatch.Color.new(red: red, green: green, blue: blue)
   end
 
-  def position(left, bottom, right, top) do
-    Shui.Messages.BeginPatch.Position.new(left: left, bottom: bottom, right: right, top: top)
+  def position(left, bottom, right, top, near) do
+    Shui.Messages.BeginPatch.Position.new(left: left, bottom: bottom, right: right, top: top, near: near)
   end
 
   def packet(encoded) do
@@ -60,6 +60,7 @@ defmodule Shui.Messages do
   def begin_patch_encoded(color, position, id) do
     begin_patch = Shui.Messages.BeginPatch.new(patch_id: id, color: color, position: position)
     command = Shui.Messages.Command.new(requests: {:begin_patch, begin_patch})
+    IO.inspect(command)
     encoded = Shui.Messages.Command.encode(command)
     packet(encoded)
   end

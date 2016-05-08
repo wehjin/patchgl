@@ -27,10 +27,34 @@ defmodule ShuiBoxTest do
       after 250 -> flunk("timeout")
     end
     receive do
-      {:patch, _id, patch} ->
+      {:patch, _id, _patch} ->
         flunk("too many patches")
       other -> IO.inspect(other)
       after 250 -> :expected
     end
   end
+
+  test "stack_n" do
+    recorder = Viewer.start_proxy(self)
+    distance = 0.1
+    f_color = Color.color(0.1, 0.2, 0.3)
+    n_color = Color.color(0.4,0.5,0.6)
+    f_position = Position.full()
+    n_position = f_position |> Position.add_distance(distance)
+
+    Box.color(f_color) |> Box.stack_n(Box.color(n_color), distance) |> Box.present(recorder, :d)
+    receive do
+      {:patch, _id, patch} ->
+        assert patch == %{color: f_color, position: f_position}
+      other -> IO.inspect(other)
+      after 250 -> flunk("timeout")
+    end
+    receive do
+      {:patch, _id, patch} ->
+        assert patch == %{color: n_color, position: n_position}
+      other -> IO.inspect(other)
+      after 250 -> flunk("timeout")
+    end
+  end
+
 end
