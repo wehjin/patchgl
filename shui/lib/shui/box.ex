@@ -34,25 +34,25 @@ defmodule Shui.Box do
   end
 
   def pad_r(box, degree) do
-    box |> split_r(create_empty(), degree)
+    box |> split_r(empty(), degree)
   end
 
-  def create_empty() do
+  def empty() do
     create fn(viewer, director) ->
     end
   end
 
-  def color_box(red, green, blue) do
+  def color(color) do
     create fn(viewer, director) ->
       position = Viewer.position(viewer)
       id = Messages.patch_id()
-      Viewer.patch(viewer, Color.color(red, green, blue), position, id)
+      Viewer.patch(viewer, color, position, id)
       receive do
         :dismiss ->
           Viewer.unpatch(viewer, id)
       end
     end
   end
-  def color_box(), do: color_box(:random.uniform(), :random.uniform(), :random.uniform())
+  def color(), do: color(Color.color(:random.uniform(), :random.uniform(), :random.uniform()))
 
 end

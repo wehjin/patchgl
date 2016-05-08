@@ -7,4 +7,5 @@ defmodule Shui do
     Shui.Viewer.patch(viewer, color, position)
     viewer
   end
+
 end
