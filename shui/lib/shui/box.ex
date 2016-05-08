@@ -33,6 +33,15 @@ defmodule Shui.Box do
     end
   end
 
+  def pad_r(box, degree) do
+    box |> split_r(create_empty(), degree)
+  end
+
+  def create_empty() do
+    create fn(viewer, director) ->
+    end
+  end
+
   def color_box(red, green, blue) do
     create fn(viewer, director) ->
       position = Viewer.position(viewer)
