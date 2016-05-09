@@ -17,24 +17,22 @@ include_directories(/usr/local/include fern lib/RxCpp-2.3.0/Rx/v2/src)
 add_subdirectory(fern)
 add_subdirectory(fern_tests)
 add_subdirectory(lib/RxCpp-2.3.0)
+add_subdirectory(lib/glfw-3.1.2)
 
 link_directories(/usr/local/lib)
 add_executable(patchgl ${SOURCE_FILES})
-find_package(GLFW REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(Protobuf REQUIRED)
 
-include_directories(${GLFW_INCLUDE_DIR}
-                    ${OPENGL_INCLUDE_DIR}
+include_directories(${OPENGL_INCLUDE_DIR}
                     ${FREETYPE_INCLUDE_DIRS}
                     ${PROTOBUF_INCLUDE_DIRS})
 
 target_link_libraries(patchgl
-    ${GLFW_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${FREETYPE_LIBRARIES}
     ${PROTOBUF_LIBRARIES}
-    fern ftgl)
+    glfw3 fern ftgl)
 
 install(TARGETS patchgl DESTINATION bin)
