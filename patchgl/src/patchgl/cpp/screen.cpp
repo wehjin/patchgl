@@ -16,7 +16,7 @@ screen::screen(GLFWwindow *window, observe_on_one_worker &mainthread)
     if (error) {
         throw new bad_alloc();
     }
-    font.FaceSize(32);
+    font.FaceSize(72);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
 }
@@ -64,13 +64,15 @@ void screen::refresh(std::map<unsigned int, patch> &patch_map) {
     }
     glEnd();
 
+    const float textScaleX = 0.041f * 1.f / .72f;
+    const float textScaleY = 0.0321f * 1.f / .72f;
     for (auto &entry : patch_map) {
         patch &patch = entry.second;
         if (patch.shape != patch::FULL_BLOCK) {
             glColor4f(patch.red, patch.green, patch.blue, patch.alpha);
             glPushMatrix();
             glTranslatef(patch.left, patch.bottom, patch.near);
-            glScalef(0.124f * (patch.right - patch.left) / 2.f, 0.1f * (patch.top - patch.bottom) / 2.f, 1.f);
+            glScalef(textScaleX * (patch.right - patch.left) / 2.f, textScaleY * (patch.top - patch.bottom) / 2.f, 1.f);
             font.Render(wstring(&patch.shape, 1).data());
             glPopMatrix();
         }

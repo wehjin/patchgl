@@ -52,10 +52,11 @@ int main() {
 
     std::map<unsigned int, patch> patch_map;
     BeginPatch_Position patch_position;
-    patch_position.set_left(-.5f);
-    patch_position.set_right(.5f);
-    patch_position.set_bottom(-.5f);
-    patch_position.set_top(.5f);
+    float isize = .07f;
+    patch_position.set_left(-isize/2);
+    patch_position.set_right(isize/2);
+    patch_position.set_bottom(-isize/2);
+    patch_position.set_top(isize/2);
     patch_position.set_near(-.1f);
     BeginPatch_Color patch_color;
     patch_color.set_red(1.f);

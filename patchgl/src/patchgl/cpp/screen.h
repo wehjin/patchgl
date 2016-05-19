@@ -21,7 +21,7 @@ class screen {
     struct GLFWwindow *window;
     observe_on_one_worker &mainthread;
     bool shouldRefresh = true;
-    FTGLPolygonFont font;
+    FTGLTextureFont font;
 
 public:
     screen(GLFWwindow *window, observe_on_one_worker &mainthread);
