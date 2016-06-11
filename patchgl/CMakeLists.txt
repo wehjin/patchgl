@@ -10,7 +10,12 @@ set(SOURCE_FILES
         src/patchgl/cpp/patch.cpp src/patchgl/cpp/patch.h
         src/patchgl/cpp/screen.cpp src/patchgl/cpp/screen.h
         src/patchgl/cpp/patchgl.pb.cc src/patchgl/cpp/patchgl.pb.h
-        src/patchgl/cpp/charon.cpp src/patchgl/cpp/charon.h)
+        src/patchgl/cpp/charon.cpp src/patchgl/cpp/charon.h
+        src/patchgl/cpp/removable/Removable.h
+        src/patchgl/cpp/removable/BooleanRemovable.cpp src/patchgl/cpp/removable/BooleanRemovable.h
+        src/patchgl/cpp/gx/Display.h
+        src/patchgl/cpp/gx/Shape.h
+        src/patchgl/cpp/gx/Frame.h src/patchgl/cpp/gx/Argb.h src/patchgl/cpp/gx/GlfwDisplay.cpp src/patchgl/cpp/gx/GlfwDisplay.h src/patchgl/cpp/removable/RemovedRemovable.h)
 
 include_directories(/usr/local/include fern lib/RxCpp-2.3.0/Rx/v2/src)
 
@@ -26,13 +31,13 @@ find_package(Freetype REQUIRED)
 find_package(Protobuf REQUIRED)
 
 include_directories(${OPENGL_INCLUDE_DIR}
-                    ${FREETYPE_INCLUDE_DIRS}
-                    ${PROTOBUF_INCLUDE_DIRS})
+        ${FREETYPE_INCLUDE_DIRS}
+        ${PROTOBUF_INCLUDE_DIRS})
 
 target_link_libraries(patchgl
-    ${OPENGL_LIBRARIES}
-    ${FREETYPE_LIBRARIES}
-    ${PROTOBUF_LIBRARIES}
-    glfw3 fern ftgl)
+        ${OPENGL_LIBRARIES}
+        ${FREETYPE_LIBRARIES}
+        ${PROTOBUF_LIBRARIES}
+        glfw3 fern ftgl)
 
 install(TARGETS patchgl DESTINATION bin)

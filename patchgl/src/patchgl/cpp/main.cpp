@@ -1,8 +1,6 @@
 #define GLFW_INCLUDE_GLU
 
-#include <GLFW/glfw3.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <map>
 #include <cstdlib>
 #include <ctime>
@@ -12,8 +10,8 @@
 #include "patch.h"
 
 #include "rxcpp/rx.hpp"
-#include "screen.h"
 #include "charon.h"
+#include "gx/GlfwDisplay.h"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -21,95 +19,46 @@ using namespace rxcpp::operators;
 using namespace rxcpp::util;
 using namespace std;
 
-void error_callback(int error, const char *description) {
-    fputs(description, stderr);
-}
-
-void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    }
-}
 
 int main() {
 
     srand((unsigned int) std::time(0));
 
-    glfwSetErrorCallback(error_callback);
-    if (!glfwInit()) {
-        exit(1);
-    }
+    GlfwDisplay display = GlfwDisplay();
 
-    GLFWwindow *window = glfwCreateWindow(640, 480, "My Title", NULL, NULL);
-    if (!window) {
-        glfwTerminate();
-        exit(1);
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-    glfwSetKeyCallback(window, key_callback);
-
-    std::map<unsigned int, patch> patch_map;
     BeginPatch_Position patch_position;
     float isize = .07f;
-    patch_position.set_left(-isize/2);
-    patch_position.set_right(isize/2);
-    patch_position.set_bottom(-isize/2);
-    patch_position.set_top(isize/2);
+    patch_position.set_left(-isize / 2);
+    patch_position.set_right(isize / 2);
+    patch_position.set_bottom(-isize / 2);
+    patch_position.set_top(isize / 2);
     patch_position.set_near(-.1f);
     BeginPatch_Color patch_color;
     patch_color.set_red(1.f);
     patch_color.set_green(1.f);
     patch_color.set_blue(1.f);
     patch_color.set_alpha(1.f);
-    patch_map[237] = patch(patch_position, patch_color, L'I');
-
-    schedulers::run_loop runloop;
-    auto mainthread = observe_on_run_loop(runloop);
-
-    screen screen(window, mainthread);
-
-    /*
-    screen.animation_frame().subscribe([&](double time) {
-        screen.setShouldRefresh(true);
-    });
-     */
+    display.addPatch(237, patch(patch_position, patch_color, L'I'));
 
     charon charon;
     charon.commands()
             .subscribe_on(observe_on_new_thread())
-            .observe_on(mainthread)
+            .observe_on(display.scheduler)
             .subscribe([&](Command command) {
                 if (command.has_close()) {
-                    glfwSetWindowShouldClose(window, GL_TRUE);
+                    display.close();
                 } else if (command.has_begin_patch()) {
                     const BeginPatch &beginPatch = command.begin_patch();
                     const BeginPatch_Position &position = beginPatch.position();
                     const BeginPatch_Color &color = beginPatch.color();
-                    unsigned int patchId = beginPatch.patch_id();
-                    patch_map[patchId] = patch(position, color);
-                    screen.setShouldRefresh(true);
+                    display.addPatch(beginPatch.patch_id(), patch(position, color));
                 } else if (command.has_end_patch()) {
-                    unsigned int patchId = command.end_patch().patch_id();
-                    patch_map.erase(patchId);
-                    screen.setShouldRefresh(true);
+                    display.removePatch(command.end_patch().patch_id());
                 }
             });
 
-    while (!glfwWindowShouldClose(window)) {
-        while (!runloop.empty() && runloop.peek().when < runloop.now()) {
-            runloop.dispatch();
-        }
-        if (glfwWindowShouldClose(window)) {
-            break;
-        }
-        screen.refresh(patch_map);
-        glfwWaitEvents();
-    }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    display.awaitClose();
+    display.remove();
     exit(0);
 
 }
