@@ -7,7 +7,15 @@
 
 
 class Shape {
+public:
+    Shape(wchar_t letter);
+
+    wchar_t letter;
 };
+
+inline Shape::Shape(wchar_t letter)
+        : letter(letter) {
+}
 
 
 #endif //PATCHGL_SHAPE_H

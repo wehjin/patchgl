@@ -51,8 +51,10 @@ void GlfwDisplay::onRemove() {
     glfwTerminate();
 }
 
-Removable GlfwDisplay::addPatch(Frame frame1, Shape shape1, Argb argb1) {
-    return RemovedRemovable();
+std::shared_ptr<Removable> GlfwDisplay::addPatch(unsigned int id, Frame frame, Shape shape, Argb argb) {
+    addPatch(id, patch(frame, argb, shape));
+    std::shared_ptr<Removable> ptr(new PatchRemovable(this, id));
+    return ptr;
 }
 
 void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
@@ -93,9 +95,6 @@ void GlfwDisplay::awaitClose() {
     }
 }
 
-
-
-
-
-
-
+ShiftDisplay GlfwDisplay::withShift(float horizontal, float vertical) {
+    return ShiftDisplay(*this, horizontal, vertical);
+}

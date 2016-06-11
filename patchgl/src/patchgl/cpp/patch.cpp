@@ -16,4 +16,15 @@ patch::patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginP
           alpha(color.alpha()),
           shape(shape) { }
 
-
+patch::patch(const Frame &frame, const Argb &argb, const Shape &shape)
+        : left(frame.left),
+          bottom(frame.bottom),
+          right(frame.right),
+          top(frame.top),
+          near(frame.near),
+          red(argb.red),
+          green(argb.green),
+          blue(argb.blue),
+          alpha(argb.alpha),
+          shape(shape.letter) {
+}

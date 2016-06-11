@@ -27,18 +27,22 @@ int main() {
     GlfwDisplay display = GlfwDisplay();
 
     BeginPatch_Position patch_position;
-    float isize = .07f;
-    patch_position.set_left(-isize / 2);
-    patch_position.set_right(isize / 2);
-    patch_position.set_bottom(-isize / 2);
-    patch_position.set_top(isize / 2);
+    float letterSize = .5f;
+    patch_position.set_left(-letterSize / 2);
+    patch_position.set_right(letterSize / 2);
+    patch_position.set_bottom(-letterSize / 2);
+    patch_position.set_top(letterSize / 2);
     patch_position.set_near(-.1f);
+    const Frame frame(patch_position.left(), patch_position.right(), patch_position.bottom(), patch_position.top(),
+                      patch_position.near(), patch_position.near());
     BeginPatch_Color patch_color;
     patch_color.set_red(1.f);
     patch_color.set_green(1.f);
     patch_color.set_blue(1.f);
     patch_color.set_alpha(1.f);
-    display.addPatch(237, patch(patch_position, patch_color, L'I'));
+    const Argb argb(patch_color.alpha(), patch_color.red(), patch_color.green(), patch_color.blue());
+    const Shape shape(L'I');
+    display.withShift(-.5f, .5f).addPatch(237, frame, shape, argb);
 
     charon charon;
     charon.commands()

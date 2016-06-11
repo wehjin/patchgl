@@ -10,12 +10,27 @@
 #include <cstdlib>
 #include <cstdio>
 #include "Display.h"
-#include "../removable/RemovedRemovable.h"
+#include "../removable/EmptyRemovable.h"
 #include "../screen.h"
+#include "ShiftDisplay.h"
 
 
 class GlfwDisplay final : Display, public BooleanRemovable {
 public:
+    class PatchRemovable : public BooleanRemovable {
+        GlfwDisplay *glfwDisplay;
+        unsigned int patchId;
+
+    public:
+        inline PatchRemovable(GlfwDisplay *glfwDisplay, unsigned int patchId)
+                : glfwDisplay(glfwDisplay), patchId(patchId) { }
+
+    protected:
+        inline virtual void onRemove() override {
+            glfwDisplay->removePatch(patchId);
+        }
+    };
+
     GLFWwindow *window;
     screen myScreen;
     const observe_on_one_worker &scheduler;
@@ -26,11 +41,13 @@ public:
 
     void awaitClose();
 
-    virtual Removable addPatch(Frame frame1, Shape shape1, Argb argb1);
+    virtual std::shared_ptr<Removable> addPatch(unsigned int id, Frame frame1, Shape shape1, Argb argb1);
 
     void addPatch(unsigned int patchId, const patch &myPatch);
 
     void removePatch(unsigned int patchId);
+
+    ShiftDisplay withShift(float horizontal, float vertical);
 
 private:
     std::map<unsigned int, patch> patch_map;

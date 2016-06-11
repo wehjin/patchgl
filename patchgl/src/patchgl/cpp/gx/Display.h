@@ -11,10 +11,11 @@
 #include "Frame.h"
 #include "Argb.h"
 #include "../removable/BooleanRemovable.h"
+#include "../removable/EmptyRemovable.h"
 
 class Display {
-
-    virtual Removable addPatch(Frame, Shape, Argb) = 0;
+public:
+    virtual std::shared_ptr<Removable> addPatch(unsigned int id, Frame, Shape, Argb) = 0;
 };
 
 

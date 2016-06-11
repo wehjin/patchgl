@@ -8,7 +8,7 @@
 
 #include "Removable.h"
 
-class RemovedRemovable : public Removable {
+class EmptyRemovable : public Removable {
 
 public:
     virtual bool isRemoved() const override {

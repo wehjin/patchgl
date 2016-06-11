@@ -8,8 +8,13 @@
 
 class Argb {
 public:
+    Argb(float alpha, float red, float green, float blue);
+
     float red, green, blue, alpha;
 };
 
+inline Argb::Argb(float alpha, float red, float green, float blue)
+        : alpha(alpha), red(red), green(green), blue(blue) {
+}
 
 #endif //PATCHGL_ARGB_H

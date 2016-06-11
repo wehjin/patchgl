@@ -7,6 +7,9 @@
 
 #include <OpenGL/OpenGL.h>
 #include "patchgl.pb.h"
+#include "gx/Frame.h"
+#include "gx/Argb.h"
+#include "gx/Shape.h"
 
 class patch {
 public:
@@ -17,6 +20,8 @@ public:
 
     patch(const patchgl::BeginPatch_Position &position, const patchgl::BeginPatch_Color &color,
           const wchar_t shape = FULL_BLOCK);
+
+    patch(const Frame &frame, const Argb &argb, const Shape &shape);
 
     GLfloat left = -1.f, bottom = -1.f, right = 1.f, top = 1.f;
     GLfloat near = 0.f;
