@@ -15,7 +15,9 @@
 
 class Display {
 public:
-    virtual std::shared_ptr<Removable> addPatch(unsigned int id, Frame, Shape, Argb) = 0;
+    virtual void addPatch(unsigned int patchId, Frame, Shape, Argb) = 0;
+
+    virtual void removePatch(unsigned int patchId) = 0;
 };
 
 

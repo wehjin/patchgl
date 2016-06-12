@@ -8,19 +8,35 @@
 
 class Frame {
 public:
-    Frame(float left, float right, float bottom, float top, float near, float far);
 
     float left, right, top, bottom, near, far;
 
-    Frame withShift(float horizontal, float vertical);
+    inline Frame(const float left = 0.0f, const float right = 0.0f, const float bottom = 0.0f, const float top = 0.0f,
+                 const float near = 0.0f, const float far = 0.0f)
+            : left(left), right(right), bottom(bottom), top(top), near(near), far(far) {
+    }
+
+    inline Frame(const Frame &other)
+            : left(other.left),
+              right(other.right),
+              bottom(other.bottom),
+              top(other.top),
+              near(other.near),
+              far(other.far) { }
+
+    inline Frame &operator=(const Frame &other) {
+        left = other.left;
+        right = other.right;
+        bottom = other.bottom;
+        top = other.top;
+        near = other.near;
+        far = other.far;
+        return *this;
+    }
+
+    inline Frame withShift(float horizontal, float vertical) {
+        return Frame(left + horizontal, right + horizontal, bottom + vertical, top + vertical, near, far);
+    }
 };
-
-inline Frame::Frame(float left, float right, float bottom, float top, float near, float far)
-        : left(left), right(right), bottom(bottom), top(top), near(near), far(far) {
-}
-
-inline Frame Frame::withShift(float horizontal, float vertical) {
-    return Frame(left + horizontal, right + horizontal, bottom + vertical, top + vertical, near, far);
-}
 
 #endif //PATCHGL_FRAME_H

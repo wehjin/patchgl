@@ -10,46 +10,36 @@
 
 class ShiftDisplay : public Display {
 
-    class PatchSettings {
-    public:
-        Frame frame;
-        Shape shape;
-        Argb argb;
-        unsigned int id;
-
-        inline PatchSettings(const Frame &frame, const Shape &shape, const Argb &argb, const unsigned int id)
-                : frame(frame), shape(shape), argb(argb), id(id) {
-        };
-
-        inline bool operator<(const PatchSettings &rhs) const {
-            return id < rhs.id;
-        }
-    };
-
-    class PatchSettingsRemovable : public BooleanRemovable {
-        ShiftDisplay *pDisplay;
-        const PatchSettings &patchSettings;
-
-    public:
-        inline PatchSettingsRemovable(ShiftDisplay *pDisplay, const PatchSettings &patchSettings)
-                : pDisplay(pDisplay), patchSettings(patchSettings) {
-        }
-
-    protected:
-        inline virtual void onRemove() override {
-            pDisplay->patch_map[patchSettings]->remove();
-            pDisplay->patch_map.erase(patchSettings);
-        }
-    };
-
     Display &originalDisplay;
     float horizontal, vertical;
-    std::map<PatchSettings, std::shared_ptr<Removable>> patch_map;
+    std::map<unsigned int, std::tuple<Frame, Shape, Argb>> patches;
 
 public:
-    ShiftDisplay(Display &originalDisplay, float horizontalStart, float verticalStart);
+    inline ShiftDisplay(Display &originalDisplay, float horizontalStart, float verticalStart)
+            : originalDisplay(originalDisplay), horizontal(horizontalStart), vertical(verticalStart) {
+    }
 
-    virtual std::shared_ptr<Removable> addPatch(unsigned int id, Frame frame, Shape shape, Argb argb);
+    inline virtual void addPatch(unsigned int patchId, Frame frame, Shape shape, Argb argb) override {
+        patches[patchId] = std::make_tuple(frame, shape, argb);
+        originalDisplay.addPatch(patchId, frame.withShift(horizontal, vertical), shape, argb);
+    }
+
+    inline virtual void removePatch(unsigned int patchId) override {
+        patches.erase(patchId);
+        originalDisplay.removePatch(patchId);
+    }
+
+    void setShift(float horizontal, float vertical) {
+        this->horizontal = horizontal;
+        this->vertical = vertical;
+        for (auto entry : patches) {
+            unsigned int patchId = entry.first;
+            Frame &frame = std::get<0>(entry.second);
+            Shape &shape = std::get<1>(entry.second);
+            Argb &argb = std::get<2>(entry.second);
+            originalDisplay.addPatch(patchId, frame.withShift(horizontal, vertical), shape, argb);
+        }
+    }
 };
 
 

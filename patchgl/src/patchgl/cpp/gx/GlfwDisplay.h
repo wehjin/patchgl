@@ -15,21 +15,8 @@
 #include "ShiftDisplay.h"
 
 
-class GlfwDisplay final : Display, public BooleanRemovable {
+class GlfwDisplay final : Display {
 public:
-    class PatchRemovable : public BooleanRemovable {
-        GlfwDisplay *glfwDisplay;
-        unsigned int patchId;
-
-    public:
-        inline PatchRemovable(GlfwDisplay *glfwDisplay, unsigned int patchId)
-                : glfwDisplay(glfwDisplay), patchId(patchId) { }
-
-    protected:
-        inline virtual void onRemove() override {
-            glfwDisplay->removePatch(patchId);
-        }
-    };
 
     GLFWwindow *window;
     screen myScreen;
@@ -41,11 +28,11 @@ public:
 
     void awaitClose();
 
-    virtual std::shared_ptr<Removable> addPatch(unsigned int id, Frame frame1, Shape shape1, Argb argb1);
-
     void addPatch(unsigned int patchId, const patch &myPatch);
 
-    void removePatch(unsigned int patchId);
+    virtual void addPatch(unsigned int patchId, Frame frame1, Shape shape1, Argb argb1);
+
+    virtual void removePatch(unsigned int patchId);
 
     ShiftDisplay withShift(float horizontal, float vertical);
 
@@ -53,9 +40,6 @@ private:
     std::map<unsigned int, patch> patch_map;
 
     void refreshWhenIdle();
-
-protected:
-    virtual void onRemove();
 };
 
 

@@ -46,20 +46,13 @@ GlfwDisplay::GlfwDisplay()
         : window(createWindow()), scheduler(myWorker), myScreen(screen(window, myWorker)) {
 }
 
-void GlfwDisplay::onRemove() {
-    glfwDestroyWindow(window);
-    glfwTerminate();
-}
-
-std::shared_ptr<Removable> GlfwDisplay::addPatch(unsigned int id, Frame frame, Shape shape, Argb argb) {
-    addPatch(id, patch(frame, argb, shape));
-    std::shared_ptr<Removable> ptr(new PatchRemovable(this, id));
-    return ptr;
-}
-
 void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     patch_map[patchId] = myPatch;
     refreshWhenIdle();
+}
+
+void GlfwDisplay::addPatch(unsigned int patchId, Frame frame, Shape shape, Argb argb) {
+    addPatch(patchId, patch(frame, argb, shape));
 }
 
 void GlfwDisplay::removePatch(unsigned int patchId) {
@@ -93,6 +86,9 @@ void GlfwDisplay::awaitClose() {
         myScreen.refresh(patch_map);
         glfwWaitEvents();
     }
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }
 
 ShiftDisplay GlfwDisplay::withShift(float horizontal, float vertical) {

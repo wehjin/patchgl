@@ -42,7 +42,9 @@ int main() {
     patch_color.set_alpha(1.f);
     const Argb argb(patch_color.alpha(), patch_color.red(), patch_color.green(), patch_color.blue());
     const Shape shape(L'I');
-    display.withShift(-.5f, .5f).addPatch(237, frame, shape, argb);
+    ShiftDisplay shiftDisplay = display.withShift(-.5f, .5f);
+    shiftDisplay.addPatch(237, frame, shape, argb);
+    shiftDisplay.setShift(0.f, -.5f);
 
     charon charon;
     charon.commands()
@@ -62,7 +64,6 @@ int main() {
             });
 
     display.awaitClose();
-    display.remove();
     exit(0);
 
 }

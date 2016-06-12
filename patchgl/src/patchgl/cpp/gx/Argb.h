@@ -8,13 +8,22 @@
 
 class Argb {
 public:
-    Argb(float alpha, float red, float green, float blue);
-
     float red, green, blue, alpha;
-};
 
-inline Argb::Argb(float alpha, float red, float green, float blue)
-        : alpha(alpha), red(red), green(green), blue(blue) {
-}
+    inline Argb(const float alpha = 1.f, const float red = 1.f, const float green = 1.f, const float blue = 1.f)
+            : alpha(alpha), red(red), green(green), blue(blue) {
+    };
+
+    inline Argb(const Argb &other)
+            : red(other.red), green(other.green), blue(other.blue), alpha(other.alpha) { }
+
+    inline Argb &operator=(const Argb &other) {
+        red = other.red;
+        green = other.green;
+        blue = other.blue;
+        alpha = other.alpha;
+        return *this;
+    }
+};
 
 #endif //PATCHGL_ARGB_H
