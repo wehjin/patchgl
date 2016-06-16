@@ -33,15 +33,22 @@ add_executable(patchgl ${SOURCE_FILES})
 find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(Protobuf REQUIRED)
+find_package(GLEW REQUIRED)
 
-include_directories(${OPENGL_INCLUDE_DIR}
+include_directories(
+        ${OPENGL_INCLUDE_DIR}
+        ${GLEW_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
-        ${PROTOBUF_INCLUDE_DIRS})
+        ${PROTOBUF_INCLUDE_DIRS}
+)
 
-target_link_libraries(patchgl
+target_link_libraries(
+        patchgl
         ${OPENGL_LIBRARIES}
+        ${GLEW_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
-        glfw3 fern ftgl)
+        glfw3 fern ftgl
+)
 
 install(TARGETS patchgl DESTINATION bin)

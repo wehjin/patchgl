@@ -5,7 +5,6 @@
 #ifndef PATCHGL_GL_DISPLAY_H
 #define PATCHGL_GL_DISPLAY_H
 
-
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstdio>
