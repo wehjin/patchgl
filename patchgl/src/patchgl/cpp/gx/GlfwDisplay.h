@@ -13,8 +13,8 @@
 #include "../screen.h"
 #include "ShiftDisplay.h"
 
-
 class GlfwDisplay final : Display {
+
 public:
 
     GLFWwindow *window;
@@ -39,6 +39,40 @@ private:
     std::map<unsigned int, patch> patch_map;
 
     void refreshWhenIdle();
+
+    typedef struct {
+        GLfloat x, y, z;
+    } PositionSpan;
+
+    typedef struct {
+        GLfloat r, g, b;
+    } ColorSpan;
+
+    typedef struct {
+        PositionSpan position;
+        ColorSpan color;
+    } VertexSpan;
+
+#pragma pack(1)
+    typedef struct {
+        VertexSpan bl, br, tr;
+    } BottomRightTriangle;
+
+#pragma pack(1)
+    typedef struct {
+        VertexSpan tr, tl, bl;
+    } TopLeftTriangle;
+
+#pragma pack(1)
+    typedef struct {
+        BottomRightTriangle bottomRight;
+        TopLeftTriangle topLeft;
+    } PatchSpan;
+
+    static const unsigned int patchSpanCount = 1000;
+    static const unsigned int triangleSpanCount = patchSpanCount * 2;
+    static const unsigned int vertexSpanCount = triangleSpanCount * 3;
+    PatchSpan screenSpan[patchSpanCount];
 };
 
 

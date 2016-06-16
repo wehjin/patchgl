@@ -16,7 +16,7 @@ using namespace rxcpp::util;
 using namespace std;
 
 // Shaders
-const GLchar* vertexShaderSource = "#version 330 core\n"
+const GLchar *vertexShaderSource = "#version 330 core\n"
         "layout (location = 0) in vec3 position;\n"
         "layout (location = 1) in vec3 color;\n"
         "out vec3 ourColor;\n"
@@ -25,7 +25,7 @@ const GLchar* vertexShaderSource = "#version 330 core\n"
         "gl_Position = vec4(position, 1.0);\n"
         "ourColor = color;\n"
         "}\0";
-const GLchar* fragmentShaderSource = "#version 330 core\n"
+const GLchar *fragmentShaderSource = "#version 330 core\n"
         "in vec3 ourColor;\n"
         "out vec4 color;\n"
         "void main()\n"
@@ -149,18 +149,26 @@ void GlfwDisplay::awaitClose() {
     glDeleteShader(fragmentShader);
 
     // Set up vertex data (and buffer(s)) and attribute pointers
-    unsigned int rectangles = 1;
-    unsigned int triangles = rectangles * 2;
-    unsigned int vertexCount = triangles * 3;
-    GLfloat vertices[] = {
-            // Positions        //Colors
-            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,// Bottom Left
-            0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,// Bottom Right
-            0.5f, 0.5f, 0.0f,  0.0f, 1.0f, 0.0f,// Top Right
-            0.5f, 0.5f, 0.0f,  0.0f, 1.0f, 0.0f,// Top Right
-            -0.5f, 0.5f, 0.0f,  0.0f, 1.0f, 0.0f,// Top Left
-            -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,// Bottom Left
+    ColorSpan colorSpan2 = {0.2f, 0.3f, 0.3f};
+    ColorSpan colorSpan = {1.0f, 0.5f, 0.2f};
+    PositionSpan bottomLeftPosition = {-0.5f, -0.5f, 0.0f};
+    PositionSpan topRightPosition = {0.5f, 0.5f, 0.0f};
+    PositionSpan bottomRightPosition = {0.5f, -0.5f, 0.0f};
+    PositionSpan topLeftPosition = {-0.5f, 0.5f, 0.0f};
+    VertexSpan bottomLeftVertex = {bottomLeftPosition,
+                                   colorSpan2};
+    VertexSpan bottomRightVertex = {bottomRightPosition,
+                                    colorSpan2};
+    VertexSpan topLeftVertex = {topLeftPosition,
+                                colorSpan};
+    VertexSpan topRightVertex = {topRightPosition,
+                                 colorSpan};
+
+    screenSpan[1] = (PatchSpan) {
+            {bottomLeftVertex, bottomRightVertex, topRightVertex},
+            {topRightVertex,   topLeftVertex,     bottomLeftVertex}
     };
+
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -168,14 +176,14 @@ void GlfwDisplay::awaitClose() {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_STATIC_DRAW);
 
     // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) 0);
     glEnableVertexAttribArray(0);
 
     // Color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid *) (3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) sizeof(PositionSpan));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -201,7 +209,7 @@ void GlfwDisplay::awaitClose() {
         // Draw our first triangle
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+        glDrawArrays(GL_TRIANGLES, 0, vertexSpanCount);
         glBindVertexArray(0);
 
         // Swap the screen buffers
