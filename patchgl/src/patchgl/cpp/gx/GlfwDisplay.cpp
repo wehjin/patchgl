@@ -46,6 +46,12 @@ void error_callback(int error, const char *description) {
 schedulers::run_loop runloop;
 observe_on_one_worker myWorker = observe_on_run_loop(runloop);
 
+ColorSpan emptyColor = {0.f, 0.f, 0.f};
+PositionSpan emptyPosition = {0.f, 0.f, 0.f};
+VertexSpan emptyVertex = {emptyPosition, emptyColor};
+PatchSpan emptyPatch = {{emptyVertex, emptyVertex, emptyVertex},
+                        {emptyVertex, emptyVertex, emptyVertex}};
+
 GLFWwindow *createWindow() {
     glfwSetErrorCallback(error_callback);
     if (!glfwInit()) {
@@ -79,10 +85,43 @@ GLFWwindow *createWindow() {
 
 GlfwDisplay::GlfwDisplay()
         : window(createWindow()), scheduler(myWorker), myScreen(screen(window, myWorker)) {
+    for (unsigned int i = 0; i < patchSpanCount; i++) {
+        freeStack[i] = i + 1;
+        screenSpan[i] = emptyPatch;
+    }
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 }
 
 void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
-    patch_map[patchId] = myPatch;
+    if (freeStackTop >= patchSpanCount)
+        return;
+
+    unsigned int spanIndex;
+    if (patch_map.find(patchId) == patch_map.end()) {
+        spanIndex = freeStackTop;
+        freeStackTop = freeStack[freeStackTop];
+        patch_map[patchId] = spanIndex;
+    } else {
+        spanIndex = patch_map[patchId];
+    }
+
+    ColorSpan colorSpan = {myPatch.red, myPatch.green, myPatch.blue};
+    PositionSpan bottomLeftPosition = {myPatch.left, myPatch.bottom, (myPatch.near)};
+    PositionSpan topRightPosition = {myPatch.right, myPatch.top, (myPatch.near)};
+    PositionSpan bottomRightPosition = {myPatch.right, myPatch.bottom, (myPatch.near)};
+    PositionSpan topLeftPosition = {myPatch.left, myPatch.top, (myPatch.near)};
+    VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan};
+    VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan};
+    VertexSpan topLeftVertex = {topLeftPosition, colorSpan};
+    VertexSpan topRightVertex = {topRightPosition, colorSpan};
+    screenSpan[spanIndex].bottomRight.bl = bottomLeftVertex;
+    screenSpan[spanIndex].bottomRight.br = bottomRightVertex;
+    screenSpan[spanIndex].bottomRight.tr = topRightVertex;
+    screenSpan[spanIndex].topLeft.tr = topRightVertex;
+    screenSpan[spanIndex].topLeft.tl = topLeftVertex;
+    screenSpan[spanIndex].topLeft.bl = bottomLeftVertex;
     refreshWhenIdle();
 }
 
@@ -91,7 +130,14 @@ void GlfwDisplay::addPatch(unsigned int patchId, Frame frame, Shape shape, Argb 
 }
 
 void GlfwDisplay::removePatch(unsigned int patchId) {
+    if (patch_map.find(patchId) == patch_map.end())
+        return;
+
+    unsigned int spanIndex = patch_map[patchId];
     patch_map.erase(patchId);
+    screenSpan[spanIndex] = emptyPatch;
+    freeStack[spanIndex] = freeStackTop;
+    freeStackTop = spanIndex;
     refreshWhenIdle();
 }
 
@@ -149,26 +195,6 @@ void GlfwDisplay::awaitClose() {
     glDeleteShader(fragmentShader);
 
     // Set up vertex data (and buffer(s)) and attribute pointers
-    ColorSpan colorSpan2 = {0.2f, 0.3f, 0.3f};
-    ColorSpan colorSpan = {1.0f, 0.5f, 0.2f};
-    PositionSpan bottomLeftPosition = {-0.5f, -0.5f, 0.0f};
-    PositionSpan topRightPosition = {0.5f, 0.5f, 0.0f};
-    PositionSpan bottomRightPosition = {0.5f, -0.5f, 0.0f};
-    PositionSpan topLeftPosition = {-0.5f, 0.5f, 0.0f};
-    VertexSpan bottomLeftVertex = {bottomLeftPosition,
-                                   colorSpan2};
-    VertexSpan bottomRightVertex = {bottomRightPosition,
-                                    colorSpan2};
-    VertexSpan topLeftVertex = {topLeftPosition,
-                                colorSpan};
-    VertexSpan topRightVertex = {topRightPosition,
-                                 colorSpan};
-
-    screenSpan[1] = (PatchSpan) {
-            {bottomLeftVertex, bottomRightVertex, topRightVertex},
-            {topRightVertex,   topLeftVertex,     bottomLeftVertex}
-    };
-
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -176,7 +202,7 @@ void GlfwDisplay::awaitClose() {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_STATIC_DRAW);
+    //glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_DYNAMIC_DRAW);
 
     // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) 0);
@@ -185,9 +211,6 @@ void GlfwDisplay::awaitClose() {
     // Color attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) sizeof(PositionSpan));
     glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {
@@ -202,15 +225,13 @@ void GlfwDisplay::awaitClose() {
 
         glfwGetFramebufferSize(window, &width, &height);
         ratio = width / (float) height;
-
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw our first triangle
         glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_DYNAMIC_DRAW);
         glDrawArrays(GL_TRIANGLES, 0, vertexSpanCount);
-        glBindVertexArray(0);
 
         // Swap the screen buffers
         glfwSwapBuffers(window);

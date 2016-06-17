@@ -11,28 +11,6 @@ using namespace patchgl;
 
 observable<Command> charon::commands() {
 
-    Command command1;
-    command1.mutable_begin_patch()->set_patch_id((unsigned int) rand());
-    command1.mutable_begin_patch()->mutable_color()->set_red(0.f);
-    command1.mutable_begin_patch()->mutable_color()->set_green(1.f);
-    command1.mutable_begin_patch()->mutable_color()->set_blue(0.f);
-    command1.mutable_begin_patch()->mutable_position()->set_left(-.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_top(.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_right(.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_bottom(-.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_near(-0.4f);
-
-    Command command2;
-    command1.mutable_begin_patch()->set_patch_id((unsigned int) rand());
-    command2.mutable_begin_patch()->mutable_color()->set_red(0.f);
-    command2.mutable_begin_patch()->mutable_color()->set_green(0.f);
-    command2.mutable_begin_patch()->mutable_color()->set_blue(1.f);
-    command2.mutable_begin_patch()->mutable_position()->set_left(-1.f);
-    command2.mutable_begin_patch()->mutable_position()->set_top(1.f);
-    command2.mutable_begin_patch()->mutable_position()->set_right(0.f);
-    command2.mutable_begin_patch()->mutable_position()->set_bottom(.1f);
-    command2.mutable_begin_patch()->mutable_position()->set_near(-.5f);
-
     return observable<void, void>::create<Command>([](subscriber<Command> subscriber) {
         for (; ;) {
             char byte;
@@ -60,6 +38,6 @@ observable<Command> charon::commands() {
                 cerr << "Failed to parse BeginPatch." << endl;
             }
         }
-    }).start_with(command1, command2);
+    });
 }
 
