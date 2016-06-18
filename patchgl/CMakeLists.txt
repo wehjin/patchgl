@@ -19,7 +19,10 @@ set(SOURCE_FILES
         src/patchgl/cpp/gx/Argb.h
         src/patchgl/cpp/gx/GlfwDisplay.cpp src/patchgl/cpp/gx/GlfwDisplay.h
         src/patchgl/cpp/removable/EmptyRemovable.h
-        src/patchgl/cpp/gx/ShiftDisplay.cpp src/patchgl/cpp/gx/ShiftDisplay.h src/patchgl/cpp/gx/Shader.h)
+        src/patchgl/cpp/gx/ShiftDisplay.cpp src/patchgl/cpp/gx/ShiftDisplay.h
+        src/patchgl/cpp/gx/Shader.h
+        src/patchgl/cpp/gx/Scribe.cpp src/patchgl/cpp/gx/Scribe.h
+        )
 
 include_directories(
         /usr/local/include

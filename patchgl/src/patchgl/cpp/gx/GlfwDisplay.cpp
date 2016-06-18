@@ -7,10 +7,13 @@
 #define GLEW_STATIC
 
 #include <GL/glew.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include "GlfwDisplay.h"
 #include "Shader.h"
 #include "../data/vertex_glsl.h"
 #include "../data/fragment_glsl.h"
+#include "Scribe.h"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -33,7 +36,11 @@ observe_on_one_worker myWorker = observe_on_run_loop(runloop);
 
 ColorSpan emptyColor = {0.f, 0.f, 0.f};
 PositionSpan emptyPosition = {0.f, 0.f, 0.f};
-VertexSpan emptyVertex = {emptyPosition, emptyColor};
+TextureCoordinateSpan bottomLeftTextureCoordinate = {0.f, 0.f};
+TextureCoordinateSpan bottomRightTextureCoordinate = {1.f, 0.f};
+TextureCoordinateSpan topLeftTextureCoordinate = {0.f, 1.f};
+TextureCoordinateSpan topRightTextureCoordinate = {1.f, 1.f};
+VertexSpan emptyVertex = {emptyPosition, emptyColor, bottomLeftTextureCoordinate};
 PatchSpan emptyPatch = {{emptyVertex, emptyVertex, emptyVertex},
                         {emptyVertex, emptyVertex, emptyVertex}};
 
@@ -69,7 +76,10 @@ GLFWwindow *createWindow() {
 }
 
 GlfwDisplay::GlfwDisplay()
-        : window(createWindow()), scheduler(myWorker), myScreen(screen(window, myWorker)) {
+        : window(createWindow()),
+          scheduler(myWorker),
+          myScreen(screen(window, myWorker)) {
+
     for (unsigned int i = 0; i < patchSpanCount; i++) {
         freeStack[i] = i + 1;
         screenSpan[i] = emptyPatch;
@@ -77,6 +87,9 @@ GlfwDisplay::GlfwDisplay()
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
@@ -97,10 +110,10 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     PositionSpan topRightPosition = {myPatch.right, myPatch.top, (myPatch.near)};
     PositionSpan bottomRightPosition = {myPatch.right, myPatch.bottom, (myPatch.near)};
     PositionSpan topLeftPosition = {myPatch.left, myPatch.top, (myPatch.near)};
-    VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan};
-    VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan};
-    VertexSpan topLeftVertex = {topLeftPosition, colorSpan};
-    VertexSpan topRightVertex = {topRightPosition, colorSpan};
+    VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan, bottomLeftTextureCoordinate};
+    VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan, bottomRightTextureCoordinate};
+    VertexSpan topLeftVertex = {topLeftPosition, colorSpan, topLeftTextureCoordinate};
+    VertexSpan topRightVertex = {topRightPosition, colorSpan, topRightTextureCoordinate};
     screenSpan[spanIndex].bottomRight.bl = bottomLeftVertex;
     screenSpan[spanIndex].bottomRight.br = bottomRightVertex;
     screenSpan[spanIndex].bottomRight.tr = topRightVertex;
@@ -142,6 +155,9 @@ void GlfwDisplay::awaitClose() {
     });
     */
 
+    Scribe scribe;
+
+
     // Build and compile our shader program
     Shader shader(std::string((const char *) vertex_glsl, vertex_glsl_len),
                   std::string((const char *) fragment_glsl, fragment_glsl_len));
@@ -150,19 +166,27 @@ void GlfwDisplay::awaitClose() {
     GLuint VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
     glBindVertexArray(VAO);
-
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_DYNAMIC_DRAW);
-
-    // Position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) 0);
     glEnableVertexAttribArray(0);
-
-    // Color attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) sizeof(PositionSpan));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(VertexSpan),
+                          (GLvoid *) (sizeof(PositionSpan) + sizeof(ColorSpan)));
+    glEnableVertexAttribArray(2);
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, scribe.getWidth(), scribe.getHeight(), 0, GL_RED, GL_UNSIGNED_BYTE,
+                 scribe.getImage());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 0.2f, 0.3f, 0.3f, 0.5f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {

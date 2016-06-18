@@ -22,8 +22,13 @@ typedef struct {
 } ColorSpan;
 
 typedef struct {
+    GLfloat s, t;
+} TextureCoordinateSpan;
+
+typedef struct {
     PositionSpan position;
     ColorSpan color;
+    TextureCoordinateSpan texture;
 } VertexSpan;
 
 #pragma pack(1)
