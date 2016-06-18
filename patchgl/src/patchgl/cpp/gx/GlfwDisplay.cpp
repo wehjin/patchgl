@@ -9,30 +9,14 @@
 #include <GL/glew.h>
 #include "GlfwDisplay.h"
 #include "Shader.h"
+#include "../data/vertex_glsl.h"
+#include "../data/fragment_glsl.h"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
 using namespace rxcpp::operators;
 using namespace rxcpp::util;
 using namespace std;
-
-// Shaders
-const std::string vertexShaderSource = "#version 330 core\n"
-        "layout (location = 0) in vec3 position;\n"
-        "layout (location = 1) in vec3 color;\n"
-        "out vec3 ourColor;\n"
-        "void main()\n"
-        "{\n"
-        "gl_Position = vec4(position, 1.0);\n"
-        "ourColor = color;\n"
-        "}\0";
-const std::string fragmentShaderSource = "#version 330 core\n"
-        "in vec3 ourColor;\n"
-        "out vec4 color;\n"
-        "void main()\n"
-        "{\n"
-        "color = vec4(ourColor, 1.0f);\n"
-        "}\n\0";
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -159,7 +143,8 @@ void GlfwDisplay::awaitClose() {
     */
 
     // Build and compile our shader program
-    Shader shader(vertexShaderSource, fragmentShaderSource);
+    Shader shader(std::string((const char *) vertex_glsl, vertex_glsl_len),
+                  std::string((const char *) fragment_glsl, fragment_glsl_len));
 
     // Set up vertex data (and buffer(s)) and attribute pointers
     GLuint VBO, VAO;

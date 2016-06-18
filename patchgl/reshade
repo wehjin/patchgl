@@ -1,0 +1,6 @@
+#/bin/sh
+cd src/patchgl/glsl/
+xxd -i vertex.glsl > ../cpp/data/vertex_glsl.h
+cat ../cpp/data/vertex_glsl.h
+xxd -i fragment.glsl > ../cpp/data/fragment_glsl.h
+cat ../cpp/data/fragment_glsl.h

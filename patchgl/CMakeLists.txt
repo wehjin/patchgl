@@ -21,7 +21,11 @@ set(SOURCE_FILES
         src/patchgl/cpp/removable/EmptyRemovable.h
         src/patchgl/cpp/gx/ShiftDisplay.cpp src/patchgl/cpp/gx/ShiftDisplay.h src/patchgl/cpp/gx/Shader.h)
 
-include_directories(/usr/local/include fern lib/RxCpp-2.3.0/Rx/v2/src)
+include_directories(
+        /usr/local/include
+        fern
+        lib/RxCpp-2.3.0/Rx/v2/src
+)
 
 add_subdirectory(fern)
 add_subdirectory(fern_tests)
