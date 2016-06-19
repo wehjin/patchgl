@@ -49,6 +49,7 @@ int main() {
     command1.mutable_begin_patch()->mutable_position()->set_bottom(-.5f);
     command1.mutable_begin_patch()->mutable_position()->set_near(-0.4f);
     command1.mutable_begin_patch()->set_patch_id((unsigned int) patchId1);
+    command1.mutable_begin_patch()->set_shape("%");
 
     Command command2;
     int patchId2 = rand();
@@ -73,7 +74,10 @@ int main() {
                     const BeginPatch &beginPatch = command.begin_patch();
                     const BeginPatch_Position &position = beginPatch.position();
                     const BeginPatch_Color &color = beginPatch.color();
-                    display.addPatch(beginPatch.patch_id(), patch(position, color));
+                    const string &utf8 = beginPatch.shape();
+                    const std::wstring utf16(utf8.begin(), utf8.end());
+                    display.addPatch(beginPatch.patch_id(),
+                                     patch(position, color, utf16.empty() ? L'\u2588' : utf16[0]));
                 } else if (command.has_end_patch()) {
                     display.removePatch(command.end_patch().patch_id());
                 }

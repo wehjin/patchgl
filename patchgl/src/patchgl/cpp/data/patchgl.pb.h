@@ -437,6 +437,18 @@ class BeginPatch : public ::google::protobuf::Message {
   inline ::google::protobuf::uint32 patch_id() const;
   inline void set_patch_id(::google::protobuf::uint32 value);
 
+  // optional string shape = 5 [default = ""];
+  inline bool has_shape() const;
+  inline void clear_shape();
+  static const int kShapeFieldNumber = 5;
+  inline const ::std::string& shape() const;
+  inline void set_shape(const ::std::string& value);
+  inline void set_shape(const char* value);
+  inline void set_shape(const char* value, size_t size);
+  inline ::std::string* mutable_shape();
+  inline ::std::string* release_shape();
+  inline void set_allocated_shape(::std::string* shape);
+
   // @@protoc_insertion_point(class_scope:patchgl.BeginPatch)
  private:
   inline void set_has_position();
@@ -447,6 +459,8 @@ class BeginPatch : public ::google::protobuf::Message {
   inline void clear_has_parent();
   inline void set_has_patch_id();
   inline void clear_has_patch_id();
+  inline void set_has_shape();
+  inline void clear_has_shape();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -456,6 +470,7 @@ class BeginPatch : public ::google::protobuf::Message {
   ::patchgl::BeginPatch_Color* color_;
   ::google::protobuf::uint32 parent_;
   ::google::protobuf::uint32 patch_id_;
+  ::std::string* shape_;
   friend void  protobuf_AddDesc_patchgl_2eproto();
   friend void protobuf_AssignDesc_patchgl_2eproto();
   friend void protobuf_ShutdownFile_patchgl_2eproto();
@@ -1047,6 +1062,82 @@ inline void BeginPatch::set_patch_id(::google::protobuf::uint32 value) {
   set_has_patch_id();
   patch_id_ = value;
   // @@protoc_insertion_point(field_set:patchgl.BeginPatch.patch_id)
+}
+
+// optional string shape = 5 [default = ""];
+inline bool BeginPatch::has_shape() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void BeginPatch::set_has_shape() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void BeginPatch::clear_has_shape() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void BeginPatch::clear_shape() {
+  if (shape_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shape_->clear();
+  }
+  clear_has_shape();
+}
+inline const ::std::string& BeginPatch::shape() const {
+  // @@protoc_insertion_point(field_get:patchgl.BeginPatch.shape)
+  return *shape_;
+}
+inline void BeginPatch::set_shape(const ::std::string& value) {
+  set_has_shape();
+  if (shape_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shape_ = new ::std::string;
+  }
+  shape_->assign(value);
+  // @@protoc_insertion_point(field_set:patchgl.BeginPatch.shape)
+}
+inline void BeginPatch::set_shape(const char* value) {
+  set_has_shape();
+  if (shape_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shape_ = new ::std::string;
+  }
+  shape_->assign(value);
+  // @@protoc_insertion_point(field_set_char:patchgl.BeginPatch.shape)
+}
+inline void BeginPatch::set_shape(const char* value, size_t size) {
+  set_has_shape();
+  if (shape_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shape_ = new ::std::string;
+  }
+  shape_->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:patchgl.BeginPatch.shape)
+}
+inline ::std::string* BeginPatch::mutable_shape() {
+  set_has_shape();
+  if (shape_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    shape_ = new ::std::string;
+  }
+  // @@protoc_insertion_point(field_mutable:patchgl.BeginPatch.shape)
+  return shape_;
+}
+inline ::std::string* BeginPatch::release_shape() {
+  clear_has_shape();
+  if (shape_ == &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    return NULL;
+  } else {
+    ::std::string* temp = shape_;
+    shape_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return temp;
+  }
+}
+inline void BeginPatch::set_allocated_shape(::std::string* shape) {
+  if (shape_ != &::google::protobuf::internal::GetEmptyStringAlreadyInited()) {
+    delete shape_;
+  }
+  if (shape) {
+    set_has_shape();
+    shape_ = shape;
+  } else {
+    clear_has_shape();
+    shape_ = const_cast< ::std::string*>(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  }
+  // @@protoc_insertion_point(field_set_allocated:patchgl.BeginPatch.shape)
 }
 
 // -------------------------------------------------------------------

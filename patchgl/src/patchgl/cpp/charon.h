@@ -5,7 +5,7 @@
 #ifndef PATCHGL_CHARON_H
 #define PATCHGL_CHARON_H
 
-#include "patchgl.pb.h"
+#include "data/patchgl.pb.h"
 #include "rxcpp/rx.hpp"
 
 using namespace rxcpp;

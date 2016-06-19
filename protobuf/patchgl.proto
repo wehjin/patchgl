@@ -23,6 +23,7 @@ message BeginPatch {
     required Color color = 2;
     optional fixed32 parent = 3 [default = 0];
     required fixed32 patch_id = 4;
+    optional string shape = 5 [default = ""];
 }
 
 message EndPatch {

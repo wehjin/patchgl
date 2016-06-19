@@ -1,0 +1,2 @@
+#!/bin/sh
+protoc --cpp_out ../patchgl/src/patchgl/cpp/data patchgl.proto

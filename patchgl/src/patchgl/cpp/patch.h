@@ -6,7 +6,7 @@
 #define PATCHGL_PATCH_H
 
 #include <OpenGL/OpenGL.h>
-#include "patchgl.pb.h"
+#include "data/patchgl.pb.h"
 #include "gx/Frame.h"
 #include "gx/Argb.h"
 #include "gx/Shape.h"
