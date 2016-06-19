@@ -12,6 +12,7 @@
 #include "../removable/EmptyRemovable.h"
 #include "../screen.h"
 #include "ShiftDisplay.h"
+#include "Scribe.h"
 
 typedef struct {
     GLfloat x, y, z;
@@ -81,6 +82,7 @@ private:
     PatchSpan screenSpan[patchSpanCount];
     unsigned int freeStack[patchSpanCount];
     unsigned int freeStackTop = 0;
+    Scribe scribe;
 };
 
 

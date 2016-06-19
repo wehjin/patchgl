@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 #include "Scribe.h"
 #include "../font.h"
@@ -40,28 +41,41 @@ Scribe::Scribe() {
         if (error) {
             throw std::runtime_error(getErrorMessage("FT_Set_Char_Size", error));
         }
-        FT_UInt glyph_index = FT_Get_Char_Index(face, 'M');
-        error = FT_Load_Glyph(face, glyph_index, FT_LOAD_DEFAULT);
-        if (error) {
-            throw std::runtime_error(getErrorMessage("FT_Load_Glyph", error));
-        }
-        error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
-        if (error) {
-            throw std::runtime_error(getErrorMessage("FT_Render_Glyph", error));
-        }
 
-        FT_GlyphSlot slot = face->glyph;
-        FT_Bitmap &bitmap = slot->bitmap;
-        std::cout << "Bitmap width: " << bitmap.width << std::endl;
-        std::cout << "Bitmap rows: " << bitmap.rows << std::endl;
-        for (int i = 0; i < bitmap.rows; i++) {
-            unsigned int rowStart = i * bitmap.width;
-            for (int j = 0; j < bitmap.width; j++) {
-                std::cout << ((int) bitmap.buffer[rowStart + j]) << " ";
+        atlasWidth = 0;
+        atlasHeight = 0;
+        for (unsigned long i = 32; i < 128; i++) {
+            error = FT_Load_Char(face, i, FT_LOAD_RENDER);
+            if (error) {
+                throw std::runtime_error(getErrorMessage("FT_Load_Char", error));
             }
-            std::cout << std::endl;
+            FT_GlyphSlot glyphSlot = face->glyph;
+            printBitmap(glyphSlot->bitmap);
+            characterInfoArray[i].advanceX = glyphSlot->advance.x >> 6;
+            characterInfoArray[i].advanceY = glyphSlot->advance.y >> 6;
+            characterInfoArray[i].bitmapWidth = glyphSlot->bitmap.width;
+            characterInfoArray[i].bitmapHeight = glyphSlot->bitmap.rows;
+            characterInfoArray[i].bitmapLeft = glyphSlot->bitmap_left;
+            characterInfoArray[i].bitmapTop = glyphSlot->bitmap_top;
+            characterInfoArray[i].atlasXInt = atlasWidth;
+            atlasWidth += glyphSlot->bitmap.width;
+            atlasHeight = std::max(atlasHeight, glyphSlot->bitmap.rows);
+            atlasTop = std::max(atlasTop, glyphSlot->bitmap_top);
         }
+        for (unsigned long i = 32; i < 128; i++) {
+            characterInfoArray[i].atlasX = ((float) characterInfoArray[i].atlasXInt) / atlasWidth;
+        }
+        std::cout << "Atlas top: " << atlasTop << std::endl;
+        std::cout << "Atlas height: " << atlasHeight << std::endl;
         initialized = true;
+    }
+}
+
+
+void Scribe::setIndex(unsigned long index) {
+    FT_Error error = FT_Load_Char(face, index, FT_LOAD_RENDER);
+    if (error) {
+        throw std::runtime_error(getErrorMessage("FT_Load_Char", error));
     }
 }
 
@@ -77,6 +91,20 @@ int Scribe::getHeight() const {
 void *Scribe::getImage() const {
     return face->glyph->bitmap.buffer;
 }
+
+void Scribe::printBitmap(const FT_Bitmap &bitmap) const {
+    std::__1::cout << "Bitmap width: " << bitmap.width << std::__1::endl;
+    std::__1::cout << "Bitmap rows: " << bitmap.rows << std::__1::endl;
+    for (int i = 0; i < bitmap.rows; i++) {
+        unsigned int rowStart = i * bitmap.width;
+        for (int j = 0; j < bitmap.width; j++) {
+            std::__1::cout << ((int) bitmap.buffer[rowStart + j]) << " ";
+        }
+        std::__1::cout << std::__1::endl;
+    }
+}
+
+
 
 
 

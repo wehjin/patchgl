@@ -41,14 +41,11 @@ observe_on_one_worker myWorker = observe_on_run_loop(runloop);
 
 ColorSpan emptyColor = {0.f, 0.f, 0.f};
 PositionSpan emptyPosition = {0.f, 0.f, 0.f};
-TextureCoordinateSpan bottomLeftTextureCoordinate = {0.f, 0.f};
-TextureCoordinateSpan bottomRightTextureCoordinate = {1.f, 0.f};
-TextureCoordinateSpan topLeftTextureCoordinate = {0.f, 1.f};
-TextureCoordinateSpan topRightTextureCoordinate = {1.f, 1.f};
+TextureCoordinateSpan emptyTextureCoordinate = {0.f, 0.f};
 int emptyTextureUnit = -1;
 VertexSpan emptyVertex = {emptyPosition,
                           emptyColor,
-                          bottomLeftTextureCoordinate,
+                          emptyTextureCoordinate,
                           emptyTextureUnit};
 PatchSpan emptyPatch = {{emptyVertex, emptyVertex, emptyVertex},
                         {emptyVertex, emptyVertex, emptyVertex}};
@@ -98,7 +95,6 @@ GlfwDisplay::GlfwDisplay()
     glDepthFunc(GL_LESS);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
@@ -115,11 +111,38 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     }
 
     ColorSpan colorSpan = {myPatch.red, myPatch.green, myPatch.blue};
-    PositionSpan bottomLeftPosition = {myPatch.left, myPatch.bottom, (myPatch.near)};
-    PositionSpan topRightPosition = {myPatch.right, myPatch.top, (myPatch.near)};
-    PositionSpan bottomRightPosition = {myPatch.right, myPatch.bottom, (myPatch.near)};
-    PositionSpan topLeftPosition = {myPatch.left, myPatch.top, (myPatch.near)};
-    GLint textureUnit = myPatch.shape == patch::FULL_BLOCK ? emptyTextureUnit : 0;
+    GLfloat positionBottom = myPatch.bottom;
+    GLfloat positionTop = myPatch.top;
+    GLint textureUnit = (myPatch.shape == patch::FULL_BLOCK || myPatch.shape < 32 || myPatch.shape >= 128)
+                        ? emptyTextureUnit : 0;
+    TextureCoordinateSpan bottomLeftTextureCoordinate = emptyTextureCoordinate;
+    TextureCoordinateSpan bottomRightTextureCoordinate = emptyTextureCoordinate;
+    TextureCoordinateSpan topLeftTextureCoordinate = emptyTextureCoordinate;
+    TextureCoordinateSpan topRightTextureCoordinate = emptyTextureCoordinate;
+    if (textureUnit != emptyTextureUnit) {
+        unsigned char c = (unsigned char) myPatch.shape;
+        Scribe::character_info &info = scribe.characterInfoArray[c];
+        float leftTexel = info.atlasX;
+        float slop = 1.f / 128.f * .05f;
+        float rightTexel = c == 127 ? 1.f : (scribe.characterInfoArray[c + 1].atlasX - slop);
+        float topTexel = 1.f;
+        float bottomTexel = 1.f - info.bitmapHeight / (float) scribe.getAtlasHeight();
+        bottomLeftTextureCoordinate = {leftTexel, (bottomTexel)};
+        bottomRightTextureCoordinate = {rightTexel, (bottomTexel)};
+        topLeftTextureCoordinate = {leftTexel, (topTexel)};
+        topRightTextureCoordinate = {rightTexel, (topTexel)};
+
+        positionTop = positionBottom + (positionTop - positionBottom) * info.bitmapTop / scribe.atlasTop;
+
+        float positionShift = -(1.f - info.bitmapTop / info.bitmapHeight) * (positionTop - positionBottom);
+        positionBottom += positionShift;
+        positionTop += positionShift;
+    }
+    PositionSpan bottomLeftPosition = {myPatch.left, positionBottom, (myPatch.near)};
+    PositionSpan topRightPosition = {myPatch.right, positionTop, (myPatch.near)};
+    PositionSpan bottomRightPosition = {myPatch.right, positionBottom, (myPatch.near)};
+    PositionSpan topLeftPosition = {myPatch.left, positionTop, (myPatch.near)};
+
     VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan, bottomLeftTextureCoordinate, textureUnit};
     VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan, bottomRightTextureCoordinate, textureUnit};
     VertexSpan topLeftVertex = {topLeftPosition, colorSpan, topLeftTextureCoordinate, textureUnit};
@@ -165,9 +188,6 @@ void GlfwDisplay::awaitClose() {
     });
     */
 
-    Scribe scribe;
-
-
     // Build and compile our shader program
     Shader shader(std::string((const char *) vertex_glsl, vertex_glsl_len),
                   std::string((const char *) fragment_glsl, fragment_glsl_len));
@@ -182,7 +202,7 @@ void GlfwDisplay::awaitClose() {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) colorOffset);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(VertexSpan), (GLvoid *) textureCoordinateOffset);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) textureCoordinateOffset);
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) textureUnitOffset);
     glEnableVertexAttribArray(3);
@@ -190,10 +210,19 @@ void GlfwDisplay::awaitClose() {
     GLuint texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, scribe.getWidth(), scribe.getHeight(), 0, GL_RED, GL_UNSIGNED_BYTE,
-                 scribe.getImage());
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, scribe.getAtlasWidth(), scribe.getAtlasHeight(), 0, GL_RED, GL_UNSIGNED_BYTE,
+                 0);
+    int x = 0;
+    for (unsigned long i = 32; i < 128; i++) {
+        scribe.setIndex(i);
+        int width = scribe.getWidth();
+        glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, width, scribe.getHeight(), GL_RED, GL_UNSIGNED_BYTE,
+                        scribe.getImage());
+        x += width;
+    }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
