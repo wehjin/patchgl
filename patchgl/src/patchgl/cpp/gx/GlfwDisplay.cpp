@@ -21,6 +21,11 @@ using namespace rxcpp::operators;
 using namespace rxcpp::util;
 using namespace std;
 
+size_t positionOffset = 0;
+size_t colorOffset = positionOffset + sizeof(PositionSpan);
+size_t textureCoordinateOffset = colorOffset + sizeof(ColorSpan);
+size_t textureUnitOffset = textureCoordinateOffset + sizeof(TextureCoordinateSpan);
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
@@ -40,7 +45,11 @@ TextureCoordinateSpan bottomLeftTextureCoordinate = {0.f, 0.f};
 TextureCoordinateSpan bottomRightTextureCoordinate = {1.f, 0.f};
 TextureCoordinateSpan topLeftTextureCoordinate = {0.f, 1.f};
 TextureCoordinateSpan topRightTextureCoordinate = {1.f, 1.f};
-VertexSpan emptyVertex = {emptyPosition, emptyColor, bottomLeftTextureCoordinate};
+int emptyTextureUnit = -1;
+VertexSpan emptyVertex = {emptyPosition,
+                          emptyColor,
+                          bottomLeftTextureCoordinate,
+                          emptyTextureUnit};
 PatchSpan emptyPatch = {{emptyVertex, emptyVertex, emptyVertex},
                         {emptyVertex, emptyVertex, emptyVertex}};
 
@@ -110,10 +119,11 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     PositionSpan topRightPosition = {myPatch.right, myPatch.top, (myPatch.near)};
     PositionSpan bottomRightPosition = {myPatch.right, myPatch.bottom, (myPatch.near)};
     PositionSpan topLeftPosition = {myPatch.left, myPatch.top, (myPatch.near)};
-    VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan, bottomLeftTextureCoordinate};
-    VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan, bottomRightTextureCoordinate};
-    VertexSpan topLeftVertex = {topLeftPosition, colorSpan, topLeftTextureCoordinate};
-    VertexSpan topRightVertex = {topRightPosition, colorSpan, topRightTextureCoordinate};
+    GLint textureUnit = myPatch.shape == patch::FULL_BLOCK ? emptyTextureUnit : 0;
+    VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan, bottomLeftTextureCoordinate, textureUnit};
+    VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan, bottomRightTextureCoordinate, textureUnit};
+    VertexSpan topLeftVertex = {topLeftPosition, colorSpan, topLeftTextureCoordinate, textureUnit};
+    VertexSpan topRightVertex = {topRightPosition, colorSpan, topRightTextureCoordinate, textureUnit};
     screenSpan[spanIndex].bottomRight.bl = bottomLeftVertex;
     screenSpan[spanIndex].bottomRight.br = bottomRightVertex;
     screenSpan[spanIndex].bottomRight.tr = topRightVertex;
@@ -168,13 +178,14 @@ void GlfwDisplay::awaitClose() {
     glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) positionOffset);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) sizeof(PositionSpan));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) colorOffset);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(VertexSpan),
-                          (GLvoid *) (sizeof(PositionSpan) + sizeof(ColorSpan)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_TRUE, sizeof(VertexSpan), (GLvoid *) textureCoordinateOffset);
     glEnableVertexAttribArray(2);
+    glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, sizeof(VertexSpan), (GLvoid *) textureUnitOffset);
+    glEnableVertexAttribArray(3);
 
     GLuint texture;
     glGenTextures(1, &texture);
@@ -185,8 +196,7 @@ void GlfwDisplay::awaitClose() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 0.2f, 0.3f, 0.3f, 0.5f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glClearColor(0.2f, 0.3f, 0.3, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {

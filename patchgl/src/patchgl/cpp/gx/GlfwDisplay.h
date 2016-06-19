@@ -28,7 +28,8 @@ typedef struct {
 typedef struct {
     PositionSpan position;
     ColorSpan color;
-    TextureCoordinateSpan texture;
+    TextureCoordinateSpan textureCoordinate;
+    GLint textureUnit;
 } VertexSpan;
 
 #pragma pack(1)

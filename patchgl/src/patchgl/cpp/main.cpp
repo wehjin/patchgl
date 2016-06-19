@@ -29,7 +29,7 @@ int main() {
 
     GlfwDisplay display = GlfwDisplay();
 
-    float letterSize = .05f;
+    float letterSize = 1.f;
     float z = -.5f;
     const Frame frame(-letterSize / 2, letterSize / 2, -letterSize / 2, letterSize / 2, z, z);
     const Argb argb(1.f, 1.f, .5f, .2f);
