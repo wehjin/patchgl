@@ -13,7 +13,7 @@ void main()
     color = vec4(ourColor, 1.f);
   } else {
     vec4 textureValue = texture(ourTexture, TexCoord);
-    if (textureValue.r < .01f) {
+    if (textureValue.r < .5f) {
       discard;
     }
     color = vec4(ourColor, textureValue.r);
