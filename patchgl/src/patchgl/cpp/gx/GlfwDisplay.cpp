@@ -124,9 +124,8 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     if (textureUnit != emptyTextureUnit) {
         unsigned char c = (unsigned char) myPatch.shape;
         Scribe::character_info &info = scribe.characterInfoArray[c];
-        float slop = 1.f / 128.f * .05f;
-        float leftTexel = info.atlasX + slop;
-        float rightTexel = c == 127 ? 1.f : (scribe.characterInfoArray[c + 1].atlasX - slop);
+        float leftTexel = info.atlasX;
+        float rightTexel = info.atlasEndX;
         float topTexel = 1.f;
         float bottomTexel = 1.f - info.bitmapHeight / (float) scribe.getAtlasHeight();
         bottomLeftTextureCoordinate = {leftTexel, (bottomTexel)};
@@ -137,14 +136,14 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
         positionTop = positionBottom + (positionTop - positionBottom) * info.bitmapTop / scribe.atlasTop;
 
         float widthBeforeScale = positionRight - positionLeft;
-        positionRight = positionLeft + widthBeforeScale * info.bitmapWidth / scribe.maxBitmapWidth;
+        positionRight = positionLeft + widthBeforeScale * (info.bitmapWidth / scribe.maxBitmapWidth);
 
         float positionShiftY = -(1.f - info.bitmapTop / info.bitmapHeight) * (positionTop - positionBottom);
         positionBottom += positionShiftY;
         positionTop += positionShiftY;
 
         float extraWidth = widthBeforeScale - (positionRight - positionLeft);
-        float positionShiftX = extraWidth / 2;
+        float positionShiftX = extraWidth / 2.f;
         positionLeft += positionShiftX;
         positionRight += positionShiftX;
     }
@@ -229,7 +228,7 @@ void GlfwDisplay::awaitClose() {
         int width = scribe.getWidth();
         glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, width, scribe.getHeight(), GL_RED, GL_UNSIGNED_BYTE,
                         scribe.getImage());
-        x += width;
+        x += (width + scribe.gap);
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

@@ -21,9 +21,11 @@ public:
         float bitmapTop;
         unsigned int atlasXInt;
         float atlasX;
+        float atlasEndX;
     } characterInfoArray[128];
     int atlasTop = 0;
     unsigned int maxBitmapWidth = 0;
+    int gap = 1;
 
     Scribe();
 

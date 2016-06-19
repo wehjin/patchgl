@@ -58,7 +58,7 @@ Scribe::Scribe() {
             characterInfoArray[i].bitmapLeft = glyphSlot->bitmap_left;
             characterInfoArray[i].bitmapTop = glyphSlot->bitmap_top;
             characterInfoArray[i].atlasXInt = atlasWidth;
-            atlasWidth += glyphSlot->bitmap.width;
+            atlasWidth += (glyphSlot->bitmap.width + gap);
             atlasHeight = std::max(atlasHeight, glyphSlot->bitmap.rows);
             atlasTop = std::max(atlasTop, glyphSlot->bitmap_top);
             maxBitmapWidth = std::max(maxBitmapWidth, glyphSlot->bitmap.width);
@@ -66,6 +66,8 @@ Scribe::Scribe() {
         }
         for (unsigned long i = 32; i < 128; i++) {
             characterInfoArray[i].atlasX = ((float) characterInfoArray[i].atlasXInt) / atlasWidth;
+            characterInfoArray[i].atlasEndX =
+                    (characterInfoArray[i].atlasXInt + characterInfoArray[i].bitmapWidth) / atlasWidth;
         }
         std::cout << "Atlas top: " << atlasTop << std::endl;
         std::cout << "Atlas width: " << atlasWidth << std::endl;
