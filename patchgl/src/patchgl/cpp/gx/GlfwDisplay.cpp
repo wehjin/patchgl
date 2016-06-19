@@ -193,10 +193,9 @@ void GlfwDisplay::awaitClose() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, scribe.getWidth(), scribe.getHeight(), 0, GL_RED, GL_UNSIGNED_BYTE,
                  scribe.getImage());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glClearColor(0.2f, 0.3f, 0.3, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {

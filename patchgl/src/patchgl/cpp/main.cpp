@@ -36,7 +36,7 @@ int main() {
     const Shape shape(L'I');
     ShiftDisplay shiftDisplay = display.withShift(-.5f, .5f);
     shiftDisplay.addPatch(237, frame, shape, argb);
-    shiftDisplay.setShift(0.f, -0.5f);
+    shiftDisplay.setShift(0.f, -0.4f);
 
     Command command1;
     int patchId1 = rand();

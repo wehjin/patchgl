@@ -35,7 +35,7 @@ Scribe::Scribe() {
                 face,    /* handle to face object           */
                 0,       /* char_width in 1/64th of points  */
                 16 * 64,   /* char_height in 1/64th of points */
-                1200,     /* horizontal device resolution    */
+                150,     /* horizontal device resolution    */
                 0);   /* vertical device resolution      */
         if (error) {
             throw std::runtime_error(getErrorMessage("FT_Set_Char_Size", error));

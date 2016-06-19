@@ -16,6 +16,6 @@ void main()
     if (textureValue.r < .5f) {
       discard;
     }
-    color = vec4(ourColor, textureValue.r);
+    color = vec4(ourColor, 1.f);
   }
 }
