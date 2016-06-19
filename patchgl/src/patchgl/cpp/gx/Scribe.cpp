@@ -50,7 +50,7 @@ Scribe::Scribe() {
                 throw std::runtime_error(getErrorMessage("FT_Load_Char", error));
             }
             FT_GlyphSlot glyphSlot = face->glyph;
-            printBitmap(glyphSlot->bitmap);
+            //printBitmap(glyphSlot->bitmap);
             characterInfoArray[i].advanceX = glyphSlot->advance.x >> 6;
             characterInfoArray[i].advanceY = glyphSlot->advance.y >> 6;
             characterInfoArray[i].bitmapWidth = glyphSlot->bitmap.width;
@@ -61,12 +61,16 @@ Scribe::Scribe() {
             atlasWidth += glyphSlot->bitmap.width;
             atlasHeight = std::max(atlasHeight, glyphSlot->bitmap.rows);
             atlasTop = std::max(atlasTop, glyphSlot->bitmap_top);
+            maxBitmapWidth = std::max(maxBitmapWidth, glyphSlot->bitmap.width);
+            std::cout << "BitmapWidth: " << (char) i << ":" << glyphSlot->bitmap.width << std::endl;
         }
         for (unsigned long i = 32; i < 128; i++) {
             characterInfoArray[i].atlasX = ((float) characterInfoArray[i].atlasXInt) / atlasWidth;
         }
         std::cout << "Atlas top: " << atlasTop << std::endl;
+        std::cout << "Atlas width: " << atlasWidth << std::endl;
         std::cout << "Atlas height: " << atlasHeight << std::endl;
+        std::cout << "Atlas maxBitmapWidth: " << maxBitmapWidth << std::endl;
         initialized = true;
     }
 }

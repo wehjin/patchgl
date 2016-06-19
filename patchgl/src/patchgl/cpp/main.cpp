@@ -33,7 +33,7 @@ int main() {
     float z = -.5f;
     const Frame frame(-letterSize / 2, letterSize / 2, -letterSize / 2, letterSize / 2, z, z);
     const Argb argb(1.f, 1.f, .5f, .2f);
-    const Shape shape(L'g');
+    const Shape shape(L'A');
     ShiftDisplay shiftDisplay = display.withShift(-.5f, .5f);
     shiftDisplay.addPatch(237, frame, shape, argb);
     shiftDisplay.setShift(0.f, -0.0f);

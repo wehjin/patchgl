@@ -113,6 +113,8 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     ColorSpan colorSpan = {myPatch.red, myPatch.green, myPatch.blue};
     GLfloat positionBottom = myPatch.bottom;
     GLfloat positionTop = myPatch.top;
+    GLfloat positionRight = myPatch.right;
+    GLfloat positionLeft = myPatch.left;
     GLint textureUnit = (myPatch.shape == patch::FULL_BLOCK || myPatch.shape < 32 || myPatch.shape >= 128)
                         ? emptyTextureUnit : 0;
     TextureCoordinateSpan bottomLeftTextureCoordinate = emptyTextureCoordinate;
@@ -122,8 +124,8 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
     if (textureUnit != emptyTextureUnit) {
         unsigned char c = (unsigned char) myPatch.shape;
         Scribe::character_info &info = scribe.characterInfoArray[c];
-        float leftTexel = info.atlasX;
         float slop = 1.f / 128.f * .05f;
+        float leftTexel = info.atlasX + slop;
         float rightTexel = c == 127 ? 1.f : (scribe.characterInfoArray[c + 1].atlasX - slop);
         float topTexel = 1.f;
         float bottomTexel = 1.f - info.bitmapHeight / (float) scribe.getAtlasHeight();
@@ -134,14 +136,22 @@ void GlfwDisplay::addPatch(unsigned int patchId, const patch &myPatch) {
 
         positionTop = positionBottom + (positionTop - positionBottom) * info.bitmapTop / scribe.atlasTop;
 
-        float positionShift = -(1.f - info.bitmapTop / info.bitmapHeight) * (positionTop - positionBottom);
-        positionBottom += positionShift;
-        positionTop += positionShift;
+        float widthBeforeScale = positionRight - positionLeft;
+        positionRight = positionLeft + widthBeforeScale * info.bitmapWidth / scribe.maxBitmapWidth;
+
+        float positionShiftY = -(1.f - info.bitmapTop / info.bitmapHeight) * (positionTop - positionBottom);
+        positionBottom += positionShiftY;
+        positionTop += positionShiftY;
+
+        float extraWidth = widthBeforeScale - (positionRight - positionLeft);
+        float positionShiftX = extraWidth / 2;
+        positionLeft += positionShiftX;
+        positionRight += positionShiftX;
     }
-    PositionSpan bottomLeftPosition = {myPatch.left, positionBottom, (myPatch.near)};
-    PositionSpan topRightPosition = {myPatch.right, positionTop, (myPatch.near)};
-    PositionSpan bottomRightPosition = {myPatch.right, positionBottom, (myPatch.near)};
-    PositionSpan topLeftPosition = {myPatch.left, positionTop, (myPatch.near)};
+    PositionSpan bottomLeftPosition = {positionLeft, positionBottom, (myPatch.near)};
+    PositionSpan topRightPosition = {positionRight, positionTop, (myPatch.near)};
+    PositionSpan bottomRightPosition = {positionRight, positionBottom, (myPatch.near)};
+    PositionSpan topLeftPosition = {positionLeft, positionTop, (myPatch.near)};
 
     VertexSpan bottomLeftVertex = {bottomLeftPosition, colorSpan, bottomLeftTextureCoordinate, textureUnit};
     VertexSpan bottomRightVertex = {bottomRightPosition, colorSpan, bottomRightTextureCoordinate, textureUnit};

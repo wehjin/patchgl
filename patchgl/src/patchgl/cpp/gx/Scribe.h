@@ -22,7 +22,8 @@ public:
         unsigned int atlasXInt;
         float atlasX;
     } characterInfoArray[128];
-     int atlasTop = 0;
+    int atlasTop = 0;
+    unsigned int maxBitmapWidth = 0;
 
     Scribe();
 
