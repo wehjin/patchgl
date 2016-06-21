@@ -9,6 +9,9 @@
 #include <GL/glew.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "GlfwDisplay.h"
 #include "Shader.h"
 #include "../data/vertex_glsl.h"
@@ -63,7 +66,7 @@ GLFWwindow *createWindow() {
 
     GLFWwindow *window = glfwCreateWindow(640, 480, "My Title", nullptr, nullptr);
     if (window == nullptr) {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         exit(1);
     }
@@ -71,7 +74,7 @@ GLFWwindow *createWindow() {
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
-        std::cout << "Failed to initialize GLEW" << std::endl;
+        std::cerr << "Failed to initialize GLEW" << std::endl;
         glfwTerminate();
         exit(1);
     }
@@ -235,6 +238,15 @@ void GlfwDisplay::awaitClose() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+    glm::mat4 trans;
+    trans = glm::scale(trans, glm::vec3(height / (float) width, 1., 1.));
+    trans = glm::rotate(trans, glm::radians(90.f), glm::vec3(0.0, 0.0, 1.0));
+    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+    GLint transformLoc = glGetUniformLocation(shader.program, "transform");
+
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {
             runloop.dispatch();
@@ -243,13 +255,10 @@ void GlfwDisplay::awaitClose() {
             break;
         }
 
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        float ratio = width / (float) height;
-        glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.use();
         glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_DYNAMIC_DRAW);
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
         glDrawArrays(GL_TRIANGLES, 0, vertexSpanCount);
         glfwSwapBuffers(window);
         glfwWaitEvents();

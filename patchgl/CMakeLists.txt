@@ -41,12 +41,14 @@ find_package(OpenGL REQUIRED)
 find_package(Freetype REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(glm REQUIRED)
 
 include_directories(
         ${OPENGL_INCLUDE_DIR}
         ${GLEW_INCLUDE_DIRS}
         ${FREETYPE_INCLUDE_DIRS}
         ${PROTOBUF_INCLUDE_DIRS}
+        ${GLM_INCLUDE_DIRS}
 )
 
 target_link_libraries(

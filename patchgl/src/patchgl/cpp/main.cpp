@@ -7,6 +7,8 @@
 #include <set>
 #include <fstream>
 #include <iostream>
+#include <glm/glm.hpp>
+
 #include "patch.h"
 
 #include "rxcpp/rx.hpp"

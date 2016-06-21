@@ -62,17 +62,17 @@ Scribe::Scribe() {
             atlasHeight = std::max(atlasHeight, glyphSlot->bitmap.rows);
             atlasTop = std::max(atlasTop, glyphSlot->bitmap_top);
             maxBitmapWidth = std::max(maxBitmapWidth, glyphSlot->bitmap.width);
-            std::cout << "BitmapWidth: " << (char) i << ":" << glyphSlot->bitmap.width << std::endl;
+            std::cerr << "BitmapWidth: " << (char) i << ":" << glyphSlot->bitmap.width << std::endl;
         }
         for (unsigned long i = 32; i < 128; i++) {
             characterInfoArray[i].atlasX = ((float) characterInfoArray[i].atlasXInt) / atlasWidth;
             characterInfoArray[i].atlasEndX =
                     (characterInfoArray[i].atlasXInt + characterInfoArray[i].bitmapWidth) / atlasWidth;
         }
-        std::cout << "Atlas top: " << atlasTop << std::endl;
-        std::cout << "Atlas width: " << atlasWidth << std::endl;
-        std::cout << "Atlas height: " << atlasHeight << std::endl;
-        std::cout << "Atlas maxBitmapWidth: " << maxBitmapWidth << std::endl;
+        std::cerr << "Atlas top: " << atlasTop << std::endl;
+        std::cerr << "Atlas width: " << atlasWidth << std::endl;
+        std::cerr << "Atlas height: " << atlasHeight << std::endl;
+        std::cerr << "Atlas maxBitmapWidth: " << maxBitmapWidth << std::endl;
         initialized = true;
     }
 }
@@ -99,14 +99,14 @@ void *Scribe::getImage() const {
 }
 
 void Scribe::printBitmap(const FT_Bitmap &bitmap) const {
-    std::__1::cout << "Bitmap width: " << bitmap.width << std::__1::endl;
-    std::__1::cout << "Bitmap rows: " << bitmap.rows << std::__1::endl;
+    std::cerr << "Bitmap width: " << bitmap.width << std::__1::endl;
+    std::cerr << "Bitmap rows: " << bitmap.rows << std::__1::endl;
     for (int i = 0; i < bitmap.rows; i++) {
         unsigned int rowStart = i * bitmap.width;
         for (int j = 0; j < bitmap.width; j++) {
-            std::__1::cout << ((int) bitmap.buffer[rowStart + j]) << " ";
+            std::cerr << ((int) bitmap.buffer[rowStart + j]) << " ";
         }
-        std::__1::cout << std::__1::endl;
+        std::cerr << std::__1::endl;
     }
 }
 
