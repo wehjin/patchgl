@@ -241,11 +241,16 @@ void GlfwDisplay::awaitClose() {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
-    glm::mat4 trans;
-    trans = glm::scale(trans, glm::vec3(height / (float) width, 1., 1.));
-    trans = glm::rotate(trans, glm::radians(90.f), glm::vec3(0.0, 0.0, 1.0));
-    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
-    GLint transformLoc = glGetUniformLocation(shader.program, "transform");
+
+    glm::mat4 model;
+    model = glm::translate(model, glm::vec3(0.f, 5.5f, -1.f));
+    glm::mat4 view;
+    view = glm::translate(view, glm::vec3(0.f, -5.5f, 0.f));
+    glm::mat4 projection;
+    projection = glm::perspective(glm::radians(110.0f), (float) width / (float) height, 0.1f, 100.0f);
+    GLint modelLoc = glGetUniformLocation(shader.program, "model");
+    GLint viewLoc = glGetUniformLocation(shader.program, "view");
+    GLint projectionLoc = glGetUniformLocation(shader.program, "projection");
 
     while (!glfwWindowShouldClose(window)) {
         while (!runloop.empty() && runloop.peek().when < runloop.now()) {
@@ -258,7 +263,9 @@ void GlfwDisplay::awaitClose() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.use();
         glBufferData(GL_ARRAY_BUFFER, sizeof(screenSpan), &screenSpan, GL_DYNAMIC_DRAW);
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
         glDrawArrays(GL_TRIANGLES, 0, vertexSpanCount);
         glfwSwapBuffers(window);
         glfwWaitEvents();

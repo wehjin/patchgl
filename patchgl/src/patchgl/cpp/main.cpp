@@ -31,8 +31,8 @@ int main() {
 
     GlfwDisplay display = GlfwDisplay();
 
-    float letterSize = 1.f;
-    float z = -.5f;
+    float letterSize = .8f;
+    float z = .02f;
     const Frame frame(-letterSize / 2, letterSize / 2, -letterSize / 2, letterSize / 2, z, z);
     const Argb argb(1.f, 1.f, .5f, .2f);
     const Shape shape(L'W');
@@ -49,9 +49,9 @@ int main() {
     command1.mutable_begin_patch()->mutable_position()->set_top(.5f);
     command1.mutable_begin_patch()->mutable_position()->set_right(.5f);
     command1.mutable_begin_patch()->mutable_position()->set_bottom(-.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_near(-0.4f);
+    command1.mutable_begin_patch()->mutable_position()->set_near(.01f);
     command1.mutable_begin_patch()->set_patch_id((unsigned int) patchId1);
-    command1.mutable_begin_patch()->set_shape("%");
+    command1.mutable_begin_patch()->set_shape("");
 
     Command command2;
     int patchId2 = rand();
@@ -62,7 +62,7 @@ int main() {
     command2.mutable_begin_patch()->mutable_position()->set_top(1.f);
     command2.mutable_begin_patch()->mutable_position()->set_right(0.f);
     command2.mutable_begin_patch()->mutable_position()->set_bottom(.1f);
-    command2.mutable_begin_patch()->mutable_position()->set_near(-.3f);
+    command2.mutable_begin_patch()->mutable_position()->set_near(0.f);
     command2.mutable_begin_patch()->set_patch_id((unsigned int) patchId2);
 
     charon charon;
