@@ -56,13 +56,13 @@ int main() {
     Command command2;
     int patchId2 = rand();
     command2.mutable_begin_patch()->mutable_color()->set_red(0.f);
-    command2.mutable_begin_patch()->mutable_color()->set_green(0.f);
+    command2.mutable_begin_patch()->mutable_color()->set_green(random_float_one());
     command2.mutable_begin_patch()->mutable_color()->set_blue(1.f);
-    command2.mutable_begin_patch()->mutable_position()->set_left(-1.f);
+    command2.mutable_begin_patch()->mutable_position()->set_left(-1.5f);
+    command2.mutable_begin_patch()->mutable_position()->set_bottom(-1.f);
     command2.mutable_begin_patch()->mutable_position()->set_top(1.f);
-    command2.mutable_begin_patch()->mutable_position()->set_right(0.f);
-    command2.mutable_begin_patch()->mutable_position()->set_bottom(.1f);
-    command2.mutable_begin_patch()->mutable_position()->set_near(0.f);
+    command2.mutable_begin_patch()->mutable_position()->set_right(1.5f);
+    command2.mutable_begin_patch()->mutable_position()->set_near(.01f);
     command2.mutable_begin_patch()->set_patch_id((unsigned int) patchId2);
 
     charon charon;
