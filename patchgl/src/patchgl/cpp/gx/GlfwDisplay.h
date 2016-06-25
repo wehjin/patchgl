@@ -13,41 +13,7 @@
 #include "../screen.h"
 #include "ShiftDisplay.h"
 #include "Scribe.h"
-
-typedef struct {
-    GLfloat x, y, z;
-} PositionSpan;
-
-typedef struct {
-    GLfloat r, g, b;
-} ColorSpan;
-
-typedef struct {
-    GLfloat s, t;
-} TextureCoordinateSpan;
-
-typedef struct {
-    PositionSpan position;
-    ColorSpan color;
-    TextureCoordinateSpan textureCoordinate;
-    GLint textureUnit;
-} VertexSpan;
-
-#pragma pack(1)
-typedef struct {
-    VertexSpan bl, br, tr;
-} BottomRightTriangle;
-
-#pragma pack(1)
-typedef struct {
-    VertexSpan tr, tl, bl;
-} TopLeftTriangle;
-
-#pragma pack(1)
-typedef struct {
-    BottomRightTriangle bottomRight;
-    TopLeftTriangle topLeft;
-} PatchSpan;
+#include "Span.h"
 
 class GlfwDisplay final : Display {
 

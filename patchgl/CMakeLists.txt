@@ -22,6 +22,7 @@ set(SOURCE_FILES
         src/patchgl/cpp/gx/ShiftDisplay.cpp src/patchgl/cpp/gx/ShiftDisplay.h
         src/patchgl/cpp/gx/Shader.h
         src/patchgl/cpp/gx/Scribe.cpp src/patchgl/cpp/gx/Scribe.h
+        src/patchgl/cpp/gx/Span.cpp src/patchgl/cpp/gx/Span.h
         )
 
 include_directories(

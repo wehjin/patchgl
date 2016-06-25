@@ -17,17 +17,13 @@
 #include "../data/vertex_glsl.h"
 #include "../data/fragment_glsl.h"
 #include "Scribe.h"
+#include "Span.h"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
 using namespace rxcpp::operators;
 using namespace rxcpp::util;
 using namespace std;
-
-size_t positionOffset = 0;
-size_t colorOffset = positionOffset + sizeof(PositionSpan);
-size_t textureCoordinateOffset = colorOffset + sizeof(ColorSpan);
-size_t textureUnitOffset = textureCoordinateOffset + sizeof(TextureCoordinateSpan);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -42,16 +38,6 @@ void error_callback(int error, const char *description) {
 schedulers::run_loop runloop;
 observe_on_one_worker myWorker = observe_on_run_loop(runloop);
 
-ColorSpan emptyColor = {0.f, 0.f, 0.f};
-PositionSpan emptyPosition = {0.f, 0.f, 0.f};
-TextureCoordinateSpan emptyTextureCoordinate = {0.f, 0.f};
-int emptyTextureUnit = -1;
-VertexSpan emptyVertex = {emptyPosition,
-                          emptyColor,
-                          emptyTextureCoordinate,
-                          emptyTextureUnit};
-PatchSpan emptyPatch = {{emptyVertex, emptyVertex, emptyVertex},
-                        {emptyVertex, emptyVertex, emptyVertex}};
 
 GLFWwindow *createWindow() {
     glfwSetErrorCallback(error_callback);
