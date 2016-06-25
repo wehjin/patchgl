@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/ext.hpp>
 #include "GlfwDisplay.h"
 #include "Shader.h"
 #include "../data/vertex_glsl.h"
@@ -25,9 +26,28 @@ using namespace rxcpp::operators;
 using namespace rxcpp::util;
 using namespace std;
 
+const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+const glm::vec3 cameraFront = glm::vec3(0.f, 0.f, -1.f);
+const glm::vec3 cameraUp = up;
+const auto cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
+glm::vec3 cameraPos = glm::vec3(0.f, 5.5f, 0.f);
+GLfloat cameraSpeed = 0.05f;
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+    } else if (key == GLFW_KEY_W) {
+        cameraPos += cameraSpeed * cameraFront;
+        glfwPostEmptyEvent();
+    } else if (key == GLFW_KEY_S) {
+        cameraPos -= cameraSpeed * cameraFront;
+        glfwPostEmptyEvent();
+    } else if (key == GLFW_KEY_A) {
+        cameraPos -= cameraSpeed * cameraRight;
+        glfwPostEmptyEvent();
+    } else if (key == GLFW_KEY_D) {
+        cameraPos += cameraSpeed * cameraRight;
+        glfwPostEmptyEvent();
     }
 }
 
@@ -37,7 +57,6 @@ void error_callback(int error, const char *description) {
 
 schedulers::run_loop runloop;
 observe_on_one_worker myWorker = observe_on_run_loop(runloop);
-
 
 GLFWwindow *createWindow() {
     glfwSetErrorCallback(error_callback);
@@ -228,12 +247,9 @@ void GlfwDisplay::awaitClose() {
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height);
 
-    glm::mat4 model;
-    model = glm::translate(model, glm::vec3(0.f, 5.5f, -1.f));
-    glm::mat4 view;
-    view = glm::translate(view, glm::vec3(0.f, -5.5f, 0.f));
-    glm::mat4 projection;
-    projection = glm::perspective(glm::radians(110.0f), (float) width / (float) height, 0.1f, 100.0f);
+    glm::vec3 screenPosition = glm::vec3(0.f, 5.52f, -1.f);
+    glm::mat4 model = glm::translate(screenPosition);
+    glm::mat4 projection = glm::perspective(glm::radians(110.0f), (float) width / (float) height, 0.1f, 100.0f);
     GLint modelLoc = glGetUniformLocation(shader.program, "model");
     GLint viewLoc = glGetUniformLocation(shader.program, "view");
     GLint projectionLoc = glGetUniformLocation(shader.program, "projection");
@@ -245,6 +261,8 @@ void GlfwDisplay::awaitClose() {
         if (glfwWindowShouldClose(window)) {
             break;
         }
+
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader.use();

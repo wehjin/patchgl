@@ -49,7 +49,7 @@ int main() {
     command1.mutable_begin_patch()->mutable_position()->set_top(.5f);
     command1.mutable_begin_patch()->mutable_position()->set_right(.5f);
     command1.mutable_begin_patch()->mutable_position()->set_bottom(-.5f);
-    command1.mutable_begin_patch()->mutable_position()->set_near(.01f);
+    command1.mutable_begin_patch()->mutable_position()->set_near(.015f);
     command1.mutable_begin_patch()->set_patch_id((unsigned int) patchId1);
     command1.mutable_begin_patch()->set_shape("");
 
