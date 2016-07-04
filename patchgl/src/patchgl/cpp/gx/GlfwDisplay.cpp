@@ -91,8 +91,7 @@ GLFWwindow *createWindow() {
 
 GlfwDisplay::GlfwDisplay()
         : window(createWindow()),
-          scheduler(myWorker),
-          myScreen(screen(window, myWorker)) {
+          scheduler(myWorker) {
 
     for (unsigned int i = 0; i < patchSpanCount; i++) {
         freeStack[i] = i + 1;
@@ -194,16 +193,13 @@ void GlfwDisplay::close() {
 }
 
 void GlfwDisplay::refreshWhenIdle() {
-    myScreen.setShouldRefresh(true);
+    if (shouldPostRedrawEvent) {
+        shouldPostRedrawEvent = false;
+        glfwPostEmptyEvent();
+    }
 }
 
 void GlfwDisplay::awaitClose() {
-
-    /*
-    myScreen.animation_frame().subscribe([&](double time) {
-        myScreen.setShouldRefresh(true);
-    });
-    */
 
     // Build and compile our shader program
     Shader shader(std::string((const char *) vertex_glsl, vertex_glsl_len),
@@ -272,6 +268,8 @@ void GlfwDisplay::awaitClose() {
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
         glDrawArrays(GL_TRIANGLES, 0, vertexSpanCount);
         glfwSwapBuffers(window);
+
+        shouldPostRedrawEvent = true;
         glfwWaitEvents();
     }
 

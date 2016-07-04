@@ -45,7 +45,6 @@ public:
 
     void *getImage() const;
 
-    void printBitmap(const FT_Bitmap &bitmap) const;
 };
 
 

@@ -50,7 +50,6 @@ Scribe::Scribe() {
                 throw std::runtime_error(getErrorMessage("FT_Load_Char", error));
             }
             FT_GlyphSlot glyphSlot = face->glyph;
-            //printBitmap(glyphSlot->bitmap);
             characterInfoArray[i].advanceX = glyphSlot->advance.x >> 6;
             characterInfoArray[i].advanceY = glyphSlot->advance.y >> 6;
             characterInfoArray[i].bitmapWidth = glyphSlot->bitmap.width;
@@ -96,18 +95,6 @@ int Scribe::getHeight() const {
 
 void *Scribe::getImage() const {
     return face->glyph->bitmap.buffer;
-}
-
-void Scribe::printBitmap(const FT_Bitmap &bitmap) const {
-    std::cerr << "Bitmap width: " << bitmap.width << std::__1::endl;
-    std::cerr << "Bitmap rows: " << bitmap.rows << std::__1::endl;
-    for (int i = 0; i < bitmap.rows; i++) {
-        unsigned int rowStart = i * bitmap.width;
-        for (int j = 0; j < bitmap.width; j++) {
-            std::cerr << ((int) bitmap.buffer[rowStart + j]) << " ";
-        }
-        std::cerr << std::__1::endl;
-    }
 }
 
 

@@ -8,7 +8,6 @@ set(SOURCE_FILES
         src/patchgl/cpp/main.cpp
         src/patchgl/cpp/font.cpp src/patchgl/cpp/font.h
         src/patchgl/cpp/patch.cpp src/patchgl/cpp/patch.h
-        src/patchgl/cpp/screen.cpp src/patchgl/cpp/screen.h
         src/patchgl/cpp/data/patchgl.pb.cc src/patchgl/cpp/data/patchgl.pb.h
         src/patchgl/cpp/charon.cpp src/patchgl/cpp/charon.h
         src/patchgl/cpp/removable/Removable.h
@@ -58,7 +57,7 @@ target_link_libraries(
         ${GLEW_LIBRARIES}
         ${FREETYPE_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
-        glfw3 fern ftgl
+        glfw3 fern
 )
 
 install(TARGETS patchgl DESTINATION bin)

@@ -9,19 +9,26 @@
 #include <cstdlib>
 #include <cstdio>
 #include "Display.h"
+#include "rxcpp/rx.hpp"
+#include "../patch.h"
 #include "../removable/EmptyRemovable.h"
-#include "../screen.h"
 #include "ShiftDisplay.h"
 #include "Scribe.h"
 #include "Span.h"
+
+using namespace rxcpp;
+using namespace rxcpp::sources;
+using namespace rxcpp::operators;
+using namespace rxcpp::util;
+
 
 class GlfwDisplay final : Display {
 
 public:
 
     GLFWwindow *window;
-    screen myScreen;
     const observe_on_one_worker &scheduler;
+    bool shouldPostRedrawEvent = false;
 
     GlfwDisplay();
 
