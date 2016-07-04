@@ -25,37 +25,36 @@ set(SOURCE_FILES
         )
 
 include_directories(
-        /usr/local/include
         fern
-        lib/RxCpp-2.3.0/Rx/v2/src
 )
 
 add_subdirectory(fern)
 add_subdirectory(lib/RxCpp-2.3.0)
-add_subdirectory(lib/glfw-3.1.2)
 add_subdirectory(lib/freetype-2.6.3)
-
-link_directories(/usr/local/lib)
+add_subdirectory(lib/glm)
 add_executable(patchgl ${SOURCE_FILES})
 find_package(OpenGL REQUIRED)
+find_package(GLFW REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(GLEW REQUIRED)
-find_package(glm REQUIRED)
 
 include_directories(
         ${OPENGL_INCLUDE_DIR}
-        ${GLEW_INCLUDE_DIRS}
+        ${GLFW_INCLUDE_DIR}
+        ${PROTOBUF_INCLUDE_DIR}
+        ${GLEW_INCLUDE_DIR}
         lib/freetype-2.6.3/include
-        ${PROTOBUF_INCLUDE_DIRS}
-        ${GLM_INCLUDE_DIRS}
+        lib/glm
+        lib/RxCpp-2.3.0/Rx/v2/src
 )
 
 target_link_libraries(
         patchgl
         ${OPENGL_LIBRARIES}
-        ${GLEW_LIBRARIES}
+        ${GLFW_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
-        glfw3 freetype fern
+        ${GLEW_LIBRARIES}
+        freetype fern
 )
 
 install(TARGETS patchgl DESTINATION bin)

@@ -45,7 +45,7 @@ private:
         if (!success) {
             GLchar infoLog[512];
             glGetProgramInfoLog(program, 512, NULL, infoLog);
-            std::__1::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::__1::endl;
+            std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
         }
     }
 

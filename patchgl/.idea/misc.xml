@@ -8,10 +8,7 @@
       <file path="$PROJECT_DIR$/../protobuf" />
       <file path="$PROJECT_DIR$/../shui" />
     </sourceRoots>
-    <libraryRoots>
-      <file path="$PROJECT_DIR$/lib/RxCpp-2.3.0" />
-      <file path="$PROJECT_DIR$/lib/glfw-3.1.2" />
-    </libraryRoots>
+    <libraryRoots />
     <excludeRoots />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">

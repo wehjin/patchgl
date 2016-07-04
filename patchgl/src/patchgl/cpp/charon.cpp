@@ -7,6 +7,7 @@
 using namespace rxcpp::sources;
 using namespace rxcpp::operators;
 using namespace rxcpp::util;
+using namespace std;
 using namespace patchgl;
 
 observable<Command> charon::commands() {

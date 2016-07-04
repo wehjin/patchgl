@@ -5,11 +5,11 @@
 #ifndef PATCHGL_CHARON_H
 #define PATCHGL_CHARON_H
 
+#include <mutex>
 #include "data/patchgl.pb.h"
 #include "rxcpp/rx.hpp"
 
 using namespace rxcpp;
-using namespace std;
 using namespace patchgl;
 
 class charon {
