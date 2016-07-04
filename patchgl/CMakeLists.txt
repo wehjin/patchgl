@@ -31,20 +31,20 @@ include_directories(
 add_subdirectory(fern)
 add_subdirectory(lib/RxCpp-2.3.0)
 add_subdirectory(lib/freetype-2.6.3)
-add_subdirectory(lib/glm)
 add_executable(patchgl ${SOURCE_FILES})
 find_package(OpenGL REQUIRED)
 find_package(GLFW REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(GLEW REQUIRED)
+find_package(GLM REQUIRED)
 
 include_directories(
         ${OPENGL_INCLUDE_DIR}
         ${GLFW_INCLUDE_DIR}
         ${PROTOBUF_INCLUDE_DIR}
         ${GLEW_INCLUDE_DIR}
+        ${GLM_INCLUDE_DIR}
         lib/freetype-2.6.3/include
-        lib/glm
         lib/RxCpp-2.3.0/Rx/v2/src
 )
 
@@ -54,6 +54,7 @@ target_link_libraries(
         ${GLFW_LIBRARIES}
         ${PROTOBUF_LIBRARIES}
         ${GLEW_LIBRARIES}
+        ${GLM_LIBRARIES}
         freetype fern
 )
 
