@@ -14,6 +14,7 @@
 #include "rxcpp/rx.hpp"
 #include "charon.h"
 #include "gx/GlfwDisplay.h"
+#include "docopt.h"
 
 using namespace rxcpp;
 using namespace rxcpp::sources;
@@ -25,7 +26,26 @@ float random_float_one() {
     return static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 }
 
-int main() {
+static const char USAGE[] = R"(PatchGL
+
+    Usage:
+      patchgl
+      patchgl (-h | --help)
+      patchgl --version
+
+    Options:
+      -h --help     Show this screen.
+      --version     Show version.
+)";
+
+static const char *const VERSION = "PatchGL 0.0";
+
+int main(int argc, const char **argv) {
+    std::vector<std::string> arguments(argv + 1, argv + argc);
+    auto const args = docopt::docopt(USAGE, arguments, true, VERSION);
+    for (auto const &arg : args) {
+        std::cout << arg.first << ": " << arg.second << std::endl;
+    }
 
     srand((unsigned int) std::time(0));
 
