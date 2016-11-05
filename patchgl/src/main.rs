@@ -37,18 +37,33 @@ impl PatchRenderer {
     }
 }
 
+struct Patch {
+    left: f32,
+    right: f32,
+    top: f32,
+    bottom: f32,
+}
+
+impl Patch {
+    fn new() -> Self {
+        Patch { left: -0.5, top: 0.25, right: 0.5, bottom: -0.25 }
+    }
+    fn as_vertices(&self) -> Vec<Vertex> {
+        let lt_vertex = Vertex { position: [self.left, self.top] };
+        let rt_vertex = Vertex { position: [self.right, self.top] };
+        let rb_vertex = Vertex { position: [self.right, self.bottom] };
+        let lb_vertex = Vertex { position: [self.left, self.bottom] };
+        vec![lt_vertex, rt_vertex, lb_vertex, rb_vertex]
+    }
+}
 
 fn main() {
     use glium::{Surface};
 
-    let lt_vertex = Vertex { position: [-0.5, 0.25] };
-    let rt_vertex = Vertex { position: [0.5, 0.25] };
-    let rb_vertex = Vertex { position: [0.5, -0.25] };
-    let lb_vertex = Vertex { position: [-0.5, -0.25] };
-    let shape = vec![lt_vertex, rt_vertex, lb_vertex, rb_vertex];
     let patch_renderer = PatchRenderer::new();
+    let patch = Patch::new();
 
-    let vertex_buffer = glium::VertexBuffer::new(&patch_renderer.display, &shape).unwrap();
+    let vertex_buffer = glium::VertexBuffer::new(&patch_renderer.display, &patch.as_vertices()).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
     loop {
         let mut target = patch_renderer.display.draw();
