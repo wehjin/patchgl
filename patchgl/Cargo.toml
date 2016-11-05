@@ -1,0 +1,7 @@
+[package]
+name = "patchgl"
+version = "0.1.0"
+authors = ["Jeffrey Yu <wehjin@gmail.com>"]
+
+[dependencies]
+glium = "*"
