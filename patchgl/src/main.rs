@@ -1,4 +1,5 @@
 #[macro_use] extern crate glium;
+extern crate xml;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -46,7 +47,39 @@ struct Patch {
 
 impl Patch {
     fn new() -> Self {
-        Patch { left: -0.5, top: 0.25, right: 0.5, bottom: -0.25 }
+        let mut patch = Patch { left: 0.0, top: 0.0, right: 0.0, bottom: 0.0 };
+        let patch_xml = r#"
+        <screen id="1" size="320x480">
+            <patch id="2" bounds="0.25, 1, -0.25, -0.5"/>
+        </screen>
+        "#;
+        use xml::reader::{EventReader, XmlEvent};
+        let parser = EventReader::from_str(patch_xml);
+        for event in parser {
+            match event {
+                Ok(XmlEvent::StartElement { name, attributes, .. }) => {
+                    println!("{}", name);
+                    if name.local_name == "patch" {
+                        for attribute in attributes {
+                            println!("{}={}", attribute.name, attribute.value);
+                            if attribute.name.local_name == "bounds" {
+                                let values: Vec<&str> = attribute.value.split(',').collect();
+                                patch.top = values[0].trim().parse::<f32>().unwrap();
+                                patch.right = values[1].trim().parse::<f32>().unwrap();
+                                patch.bottom = values[2].trim().parse::<f32>().unwrap();
+                                patch.left = values[3].trim().parse::<f32>().unwrap();
+                            }
+                        }
+                    }
+                }
+                Err(event) => {
+                    println!("Error: {}", event);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        patch
     }
     fn as_vertices(&self) -> Vec<Vertex> {
         let lt_vertex = Vertex { position: [self.left, self.top] };

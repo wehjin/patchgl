@@ -5,3 +5,5 @@ authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 
 [dependencies]
 glium = "*"
+xml-rs = "0.3"
+
