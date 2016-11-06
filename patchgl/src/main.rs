@@ -41,28 +41,22 @@ impl PatchRenderer {
     }
 }
 
+
 #[derive(Default)]
-struct Patch {
-    cage: Cage
+struct Patchwork {
+    patch: Patch
 }
 
-
-impl Patch {
-    fn new() -> Self {
-        let patch_xml = r#"
-        <screen id="1" size="320x480">
-            <patch id="2" bounds="0.25, 1, 0.0, -0.25, -0.5"/>
-        </screen>
-        "#;
-
-        let mut patch = Default::default();
+impl Patchwork {
+    fn from_xml(xml_string: &str) -> Self {
+        let mut patchwork = Patchwork { patch: Default::default() };
         use xml::reader::{EventReader, XmlEvent};
-        let parser = EventReader::from_str(patch_xml);
+        let parser = EventReader::from_str(xml_string);
         for event in parser {
             match event {
                 Ok(XmlEvent::StartElement { name, attributes, .. }) => {
                     if name.local_name == "patch" {
-                        patch = patch_from_attributes(&attributes);
+                        patchwork.patch = Patch::from_attributes(&attributes);
                     }
                 }
                 Err(event) => {
@@ -72,28 +66,51 @@ impl Patch {
                 _ => {}
             }
         }
+        patchwork
+    }
+}
+
+#[derive(Default)]
+struct Patch {
+    cage: Cage
+}
+
+impl Patch {
+    fn from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Self {
+        let mut patch = Patch { ..Default::default() };
+        for attribute in attributes {
+            if attribute.name.local_name == "bounds" {
+                let cage = cage_from_string(&attribute.value);
+                patch.cage = cage;
+            }
+        }
         patch
     }
-    fn as_vertices(&self) -> Vec<Vertex> {
+    fn as_trianglelist(&self) -> Vec<Vertex> {
         let (left, right, bottom, top, _, _) = self.cage.limits();
         let lt_vertex = Vertex { position: [left, top] };
         let rt_vertex = Vertex { position: [right, top] };
         let rb_vertex = Vertex { position: [right, bottom] };
         let lb_vertex = Vertex { position: [left, bottom] };
-        vec![lt_vertex, rt_vertex, lb_vertex, rb_vertex]
+        vec![lt_vertex, rt_vertex, lb_vertex, lb_vertex, rt_vertex, rb_vertex]
     }
 }
 
 fn main() {
-    use glium::{Surface};
+    let xml = r#"
+        <screen id="1" size="320x480">
+            <patch id="2" bounds="0.25, 1, 0.0, -0.25, -0.5"/>
+        </screen>
+        "#;
+    let patchwork = Patchwork::from_xml(xml);
+    let patch = patchwork.patch;
 
     let patch_renderer = PatchRenderer::new();
-    let patch = Patch::new();
-
-    let vertex_buffer = glium::VertexBuffer::new(&patch_renderer.display, &patch.as_vertices()).unwrap();
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
+    let vertex_buffer = glium::VertexBuffer::new(&patch_renderer.display, &patch.as_trianglelist()).unwrap();
+    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
     loop {
         let mut target = patch_renderer.display.draw();
+        use glium::{Surface};
         target.clear_color(0.70, 0.80, 0.90, 1.0);
         target.draw(&vertex_buffer, &indices, &patch_renderer.program, &glium::uniforms::EmptyUniforms,
                     &Default::default()).unwrap();
@@ -106,17 +123,6 @@ fn main() {
             }
         }
     }
-}
-
-fn patch_from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Patch {
-    let mut patch = Patch { ..Default::default() };
-    for attribute in attributes {
-        if attribute.name.local_name == "bounds" {
-            let cage = cage_from_string(&attribute.value);
-            patch.cage = cage;
-        }
-    }
-    patch
 }
 
 fn cage_from_string(cage_string: &String) -> Cage {
