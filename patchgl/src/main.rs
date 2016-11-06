@@ -1,5 +1,8 @@
 #[macro_use] extern crate glium;
 extern crate xml;
+extern crate cage;
+
+use cage::{Cage};
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -38,38 +41,28 @@ impl PatchRenderer {
     }
 }
 
+#[derive(Default)]
 struct Patch {
-    left: f32,
-    right: f32,
-    top: f32,
-    bottom: f32,
+    cage: Cage
 }
+
 
 impl Patch {
     fn new() -> Self {
-        let mut patch = Patch { left: 0.0, top: 0.0, right: 0.0, bottom: 0.0 };
         let patch_xml = r#"
         <screen id="1" size="320x480">
-            <patch id="2" bounds="0.25, 1, -0.25, -0.5"/>
+            <patch id="2" bounds="0.25, 1, 0.0, -0.25, -0.5"/>
         </screen>
         "#;
+
+        let mut patch = Default::default();
         use xml::reader::{EventReader, XmlEvent};
         let parser = EventReader::from_str(patch_xml);
         for event in parser {
             match event {
                 Ok(XmlEvent::StartElement { name, attributes, .. }) => {
-                    println!("{}", name);
                     if name.local_name == "patch" {
-                        for attribute in attributes {
-                            println!("{}={}", attribute.name, attribute.value);
-                            if attribute.name.local_name == "bounds" {
-                                let values: Vec<&str> = attribute.value.split(',').collect();
-                                patch.top = values[0].trim().parse::<f32>().unwrap();
-                                patch.right = values[1].trim().parse::<f32>().unwrap();
-                                patch.bottom = values[2].trim().parse::<f32>().unwrap();
-                                patch.left = values[3].trim().parse::<f32>().unwrap();
-                            }
-                        }
+                        patch = patch_from_attributes(&attributes);
                     }
                 }
                 Err(event) => {
@@ -82,10 +75,11 @@ impl Patch {
         patch
     }
     fn as_vertices(&self) -> Vec<Vertex> {
-        let lt_vertex = Vertex { position: [self.left, self.top] };
-        let rt_vertex = Vertex { position: [self.right, self.top] };
-        let rb_vertex = Vertex { position: [self.right, self.bottom] };
-        let lb_vertex = Vertex { position: [self.left, self.bottom] };
+        let (left, right, bottom, top, _, _) = self.cage.limits();
+        let lt_vertex = Vertex { position: [left, top] };
+        let rt_vertex = Vertex { position: [right, top] };
+        let rb_vertex = Vertex { position: [right, bottom] };
+        let lb_vertex = Vertex { position: [left, bottom] };
         vec![lt_vertex, rt_vertex, lb_vertex, rb_vertex]
     }
 }
@@ -114,10 +108,33 @@ fn main() {
     }
 }
 
+fn patch_from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Patch {
+    let mut patch = Patch { ..Default::default() };
+    for attribute in attributes {
+        if attribute.name.local_name == "bounds" {
+            let cage = cage_from_string(&attribute.value);
+            patch.cage = cage;
+        }
+    }
+    patch
+}
+
+fn cage_from_string(cage_string: &String) -> Cage {
+    let values: Vec<&str> = cage_string.split(',').collect();
+    let (top_index, right_index, near_index, bottom_index, left_index) = (0, 1, 2, 3, 4);
+    let z = values[near_index].trim().parse::<f32>().unwrap();
+    let limits = (
+        values[left_index].trim().parse::<f32>().unwrap(),
+        values[right_index].trim().parse::<f32>().unwrap(),
+        values[bottom_index].trim().parse::<f32>().unwrap(),
+        values[top_index].trim().parse::<f32>().unwrap(),
+        z, z
+    );
+    Cage::from(limits)
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn it_works() {
         assert_eq!(4, 2 + 2);

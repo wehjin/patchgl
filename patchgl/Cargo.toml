@@ -6,4 +6,4 @@ authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 [dependencies]
 glium = "*"
 xml-rs = "0.3"
-
+cage = { git = "https://github.com/wehjin/rust-cage" }
