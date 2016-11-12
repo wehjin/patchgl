@@ -3,7 +3,7 @@ extern crate xml;
 extern crate cage;
 extern crate patchgllib;
 
-use patchgllib::patch::Patch;
+use patchgllib::model::Patchwork;
 
 struct PatchRenderer {
     display: glium::backend::glutin_backend::GlutinFacade,
@@ -36,34 +36,6 @@ impl PatchRenderer {
     }
 }
 
-
-#[derive(Default)]
-struct Patchwork {
-    patch: Patch
-}
-
-impl Patchwork {
-    fn from_xml(xml_string: &str) -> Self {
-        let mut patchwork = Patchwork { patch: Default::default() };
-        use xml::reader::{EventReader, XmlEvent};
-        let parser = EventReader::from_str(xml_string);
-        for event in parser {
-            match event {
-                Ok(XmlEvent::StartElement { name, attributes, .. }) => {
-                    if name.local_name == "patch" {
-                        patchwork.patch = Patch::from_attributes(&attributes);
-                    }
-                }
-                Err(event) => {
-                    println!("Error: {}", event);
-                    break;
-                }
-                _ => {}
-            }
-        }
-        patchwork
-    }
-}
 
 fn main() {
     let xml = r#"

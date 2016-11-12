@@ -2,11 +2,33 @@ use cage::Cage;
 use parser;
 use xml;
 
-#[derive(Copy, Clone)]
-pub struct Vertex {
-    position: [f32; 2],
+#[derive(Default)]
+pub struct Patchwork {
+    pub patch: Patch
 }
-implement_vertex!(Vertex, position);
+
+impl Patchwork {
+    pub fn from_xml(xml_string: &str) -> Self {
+        let mut patchwork = Patchwork { patch: Default::default() };
+        use xml::reader::{EventReader, XmlEvent};
+        let parser = EventReader::from_str(xml_string);
+        for event in parser {
+            match event {
+                Ok(XmlEvent::StartElement { name, attributes, .. }) => {
+                    if name.local_name == "patch" {
+                        patchwork.patch = Patch::from_attributes(&attributes);
+                    }
+                }
+                Err(event) => {
+                    println!("Error: {}", event);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        patchwork
+    }
+}
 
 #[derive(Default)]
 pub struct Patch {
@@ -33,3 +55,9 @@ impl Patch {
         vec![lt_vertex, rt_vertex, lb_vertex, lb_vertex, rt_vertex, rb_vertex]
     }
 }
+
+#[derive(Copy, Clone)]
+pub struct Vertex {
+    position: [f32; 2],
+}
+implement_vertex!(Vertex, position);
