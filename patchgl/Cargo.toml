@@ -7,3 +7,11 @@ authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 glium = "*"
 xml-rs = "0.3"
 cage = { git = "https://github.com/wehjin/rust-cage" }
+
+[lib]
+name = "libpatchgl"
+path = "src/lib.rs"
+
+[[bin]]
+name = "patchgl"
+path = "src/main.rs"
