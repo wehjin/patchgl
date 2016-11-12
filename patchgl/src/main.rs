@@ -7,7 +7,7 @@ use patchgllib::model::Patchwork;
 use patchgllib::renderer::PatchRenderer;
 
 fn main() {
-    let xml = include_str!("screen_with_patch.xml");
+    let xml = include_str!("screen_with_square_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
     let patch_renderer = PatchRenderer::new(patchwork);
 
