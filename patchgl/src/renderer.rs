@@ -18,11 +18,12 @@ impl PatchRenderer {
 
         let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
         let vertex_buffer = glium::VertexBuffer::new(&display, &patch.as_trianglelist()).unwrap();
+
         PatchRenderer {
             display: display,
             program: program,
             vertex_buffer: vertex_buffer,
-            indices: glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList)
+            indices: glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
         }
     }
 }

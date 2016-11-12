@@ -15,7 +15,20 @@ fn main() {
         let mut target = patch_renderer.display.draw();
         use glium::{Surface};
         target.clear_color(0.70, 0.80, 0.90, 1.0);
-        target.draw(&patch_renderer.vertex_buffer, &patch_renderer.indices, &patch_renderer.program, &glium::uniforms::EmptyUniforms,
+
+        let uniforms = uniform! {
+            modelview: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0f32],
+            ]
+        };
+
+        target.draw(&patch_renderer.vertex_buffer,
+                    &patch_renderer.indices,
+                    &patch_renderer.program,
+                    &uniforms,
                     &Default::default()).unwrap();
         target.finish().unwrap();
 
