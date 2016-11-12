@@ -4,12 +4,14 @@ use xml;
 
 #[derive(Default)]
 pub struct Patchwork {
-    pub patch: Patch
+    pub patch: Patch,
+    pub width: f32,
+    pub height: f32,
 }
 
 impl Patchwork {
     pub fn from_xml(xml_string: &str) -> Self {
-        let mut patchwork = Patchwork { patch: Default::default() };
+        let mut patchwork = Patchwork { ..Default::default() };
         use xml::reader::{EventReader, XmlEvent};
         let parser = EventReader::from_str(xml_string);
         for event in parser {
@@ -17,6 +19,9 @@ impl Patchwork {
                 Ok(XmlEvent::StartElement { name, attributes, .. }) => {
                     if name.local_name == "patch" {
                         patchwork.patch = Patch::from_attributes(&attributes);
+                    } else if name.local_name == "screen" {
+                        patchwork.width = 320.0f32;
+                        patchwork.height = 480.0f32;
                     }
                 }
                 Err(event) => {
@@ -27,6 +32,9 @@ impl Patchwork {
             }
         }
         patchwork
+    }
+    pub fn aspect_ratio(&self) -> f32 {
+        self.width / self.height
     }
 }
 

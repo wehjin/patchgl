@@ -9,21 +9,14 @@ use patchgllib::renderer::PatchRenderer;
 fn main() {
     let xml = include_str!("screen_with_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
-    let patch = patchwork.patch;
-    let patch_renderer = PatchRenderer::new(patch);
+    let patch_renderer = PatchRenderer::new(patchwork);
+
     loop {
         let mut target = patch_renderer.display.draw();
         use glium::{Surface};
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
-        let uniforms = uniform! {
-            modelview: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0f32],
-            ]
-        };
+        let uniforms = uniform! { modelview: patch_renderer.get_modelview() };
 
         target.draw(&patch_renderer.vertex_buffer,
                     &patch_renderer.indices,

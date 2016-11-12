@@ -1,8 +1,16 @@
 <screen id="1" size="320x480">
-    <patch id="2" bounds="0.25, 1, 0.0, -0.25, -0.5"
-           bottom="180"
-           top="300"
-           left="80"
+    <patch id="2" bounds="180, 320, 0, 300, 80"
+           top="180"
            right="320"
-           near="0"/>
+           near="0"
+           bottom="300"
+           left="80"
+    />
+    <!--patch id="2" bounds="80, 320, 0, 400, 0"
+           top="180"
+           right="320"
+           near="0"
+           bottom="300"
+           left="80"
+    /-->
 </screen>
