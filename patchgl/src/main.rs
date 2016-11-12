@@ -7,11 +7,7 @@ use patchgllib::model::Patchwork;
 use patchgllib::renderer::PatchRenderer;
 
 fn main() {
-    let xml = r#"
-        <screen id="1" size="320x480">
-            <patch id="2" bounds="0.25, 1, 0.0, -0.25, -0.5"/>
-        </screen>
-        "#;
+    let xml = include_str!("screen_with_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
     let patch = patchwork.patch;
     let patch_renderer = PatchRenderer::new(patch);
