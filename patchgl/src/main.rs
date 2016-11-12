@@ -14,15 +14,12 @@ fn main() {
         "#;
     let patchwork = Patchwork::from_xml(xml);
     let patch = patchwork.patch;
-
-    let patch_renderer = PatchRenderer::new();
-    let vertex_buffer = glium::VertexBuffer::new(&patch_renderer.display, &patch.as_trianglelist()).unwrap();
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
+    let patch_renderer = PatchRenderer::new(patch);
     loop {
         let mut target = patch_renderer.display.draw();
         use glium::{Surface};
         target.clear_color(0.70, 0.80, 0.90, 1.0);
-        target.draw(&vertex_buffer, &indices, &patch_renderer.program, &glium::uniforms::EmptyUniforms,
+        target.draw(&patch_renderer.vertex_buffer, &patch_renderer.indices, &patch_renderer.program, &glium::uniforms::EmptyUniforms,
                     &Default::default()).unwrap();
         target.finish().unwrap();
 
