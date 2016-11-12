@@ -1,8 +1,10 @@
 #[macro_use] extern crate glium;
 extern crate xml;
 extern crate cage;
+extern crate patchgllib;
 
 use cage::{Cage};
+use patchgllib::parser;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -80,7 +82,7 @@ impl Patch {
         let mut patch = Patch { ..Default::default() };
         for attribute in attributes {
             if attribute.name.local_name == "bounds" {
-                let cage = cage_from_string(&attribute.value);
+                let cage = parser::cage_from_string(&attribute.value);
                 patch.cage = cage;
             }
         }
@@ -123,20 +125,6 @@ fn main() {
             }
         }
     }
-}
-
-fn cage_from_string(cage_string: &String) -> Cage {
-    let values: Vec<&str> = cage_string.split(',').collect();
-    let (top_index, right_index, near_index, bottom_index, left_index) = (0, 1, 2, 3, 4);
-    let z = values[near_index].trim().parse::<f32>().unwrap();
-    let limits = (
-        values[left_index].trim().parse::<f32>().unwrap(),
-        values[right_index].trim().parse::<f32>().unwrap(),
-        values[bottom_index].trim().parse::<f32>().unwrap(),
-        values[top_index].trim().parse::<f32>().unwrap(),
-        z, z
-    );
-    Cage::from(limits)
 }
 
 #[cfg(test)]

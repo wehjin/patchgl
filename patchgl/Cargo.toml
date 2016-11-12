@@ -9,7 +9,7 @@ xml-rs = "0.3"
 cage = { git = "https://github.com/wehjin/rust-cage" }
 
 [lib]
-name = "libpatchgl"
+name = "patchgllib"
 path = "src/lib.rs"
 
 [[bin]]
