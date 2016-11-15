@@ -29,7 +29,7 @@ fn main() {
 
     let text: String = "I for one welcome our new robot overloads".into();
     let quip_renderer = QuipRenderer::new();
-    let glyphs = glyffin::layout_paragraph(&quip_renderer.font, Scale::uniform(24.0), 320, &text);
+    let glyphs = glyffin::layout_paragraph(&quip_renderer.font, Scale::uniform(24.0 * dpi_factor), 320, &text);
     for glyph in &glyphs {
         cache.queue_glyph(0, glyph.clone());
     }
