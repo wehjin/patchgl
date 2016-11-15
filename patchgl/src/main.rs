@@ -20,7 +20,11 @@ fn main() {
     let xml = include_str!("screen_with_square_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
 
-    let display = glium::glutin::WindowBuilder::new().with_vsync().build_glium().unwrap();
+    let display = glium::glutin::WindowBuilder::new()
+        .with_dimensions(patchwork.width as u32, patchwork.height as u32)
+        .with_title("PatchGl")
+        .with_vsync()
+        .build_glium().unwrap();
     let dpi_factor = display.get_window().unwrap().hidpi_factor();
     let (cache_width, cache_height) = (512 * dpi_factor as u32, 512 * dpi_factor as u32);
     let mut cache = Cache::new(cache_width, cache_height, 0.1, 0.1);
