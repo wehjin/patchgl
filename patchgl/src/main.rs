@@ -7,16 +7,20 @@ use patchgllib::model::Patchwork;
 use patchgllib::renderer::PatchRenderer;
 
 fn main() {
+    use glium::{DisplayBuild};
+
     let xml = include_str!("screen_with_square_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
-    let patch_renderer = PatchRenderer::new(patchwork);
+
+    let display = glium::glutin::WindowBuilder::new().build_glium().unwrap();
+    let patch_renderer = PatchRenderer::new(patchwork, &display);
 
     loop {
-        let mut target = patch_renderer.display.draw();
+        let mut target = display.draw();
         use glium::{Surface};
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
-        let uniforms = uniform! { modelview: patch_renderer.get_modelview() };
+        let uniforms = uniform! { modelview: patch_renderer.get_modelview(&display) };
 
         target.draw(&patch_renderer.vertex_buffer,
                     &patch_renderer.indices,
@@ -25,7 +29,7 @@ fn main() {
                     &Default::default()).unwrap();
         target.finish().unwrap();
 
-        for ev in patch_renderer.display.poll_events() {
+        for ev in display.poll_events() {
             match ev {
                 glium::glutin::Event::Closed => return,
                 _ => ()
