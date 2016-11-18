@@ -28,38 +28,11 @@ fn main() {
     let patch_renderer = PatchRenderer::new(patchwork, &display);
 
     let text: String = "I for one welcome our new robot overloads".into();
-    let quip_renderer = QuipRenderer::new();
+    let quip_renderer = QuipRenderer::new(&display);
     let glyphs = glyffin::layout_paragraph(&quip_renderer.font, Scale::uniform(24.0 * dpi_factor), 320, &text);
     for glyph in &glyphs {
         cache.queue_glyph(0, glyph.clone());
     }
-    let quip_program = program!( display, 140 => {
-                vertex: "
-                    #version 140
-                    uniform mat4 modelview;
-                    in vec2 position;
-                    in vec2 tex_coords;
-                    in vec4 colour;
-                    out vec2 v_tex_coords;
-                    out vec4 v_colour;
-                    void main() {
-                        gl_Position = modelview * vec4(position, 0.0, 1.0);
-                        v_tex_coords = tex_coords;
-                        v_colour = colour;
-                    }
-                ",
-
-                fragment: "
-                    #version 140
-                    uniform sampler2D tex;
-                    in vec2 v_tex_coords;
-                    in vec4 v_colour;
-                    out vec4 f_colour;
-                    void main() {
-                        f_colour = v_colour * vec4(1.0, 1.0, 1.0, texture(tex, v_tex_coords).r);
-                    }
-                "
-            }).unwrap();
     let cache_tex = glium::texture::Texture2d::with_format(
         display,
         glium::texture::RawImage2d {
@@ -164,7 +137,7 @@ fn main() {
 
         target.draw(&quip_vertex_buffer,
                     glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
-                    &quip_program, &quip_uniforms,
+                    &quip_renderer.program, &quip_uniforms,
                     &glium::DrawParameters {
                         blend: glium::Blend::alpha_blending(),
                         ..Default::default()

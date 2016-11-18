@@ -1,4 +1,48 @@
 use rusttype::{FontCollection, Font, Scale, point, PositionedGlyph};
+use glium;
+
+pub struct QuipRenderer<'a> {
+    pub font: Font<'a>,
+    pub program: glium::Program
+}
+
+impl<'a> QuipRenderer<'a> {
+    pub fn new(display: &glium::backend::glutin_backend::GlutinFacade) -> Self {
+        let font_data = include_bytes!("Arial Unicode.ttf");
+        let font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
+        let program = program!( display, 140 => {
+                vertex: "
+                    #version 140
+                    uniform mat4 modelview;
+                    in vec2 position;
+                    in vec2 tex_coords;
+                    in vec4 colour;
+                    out vec2 v_tex_coords;
+                    out vec4 v_colour;
+                    void main() {
+                        gl_Position = modelview * vec4(position, 0.0, 1.0);
+                        v_tex_coords = tex_coords;
+                        v_colour = colour;
+                    }
+                ",
+
+                fragment: "
+                    #version 140
+                    uniform sampler2D tex;
+                    in vec2 v_tex_coords;
+                    in vec4 v_colour;
+                    out vec4 f_colour;
+                    void main() {
+                        f_colour = v_colour * vec4(1.0, 1.0, 1.0, texture(tex, v_tex_coords).r);
+                    }
+                "
+            }).unwrap();
+        QuipRenderer {
+            font: font,
+            program: program
+        }
+    }
+}
 
 pub fn layout_paragraph<'a>(font: &'a Font, scale: Scale, width: u32, text: &str) -> Vec<PositionedGlyph<'a>> {
     use unicode_normalization::UnicodeNormalization;
@@ -39,16 +83,4 @@ pub fn layout_paragraph<'a>(font: &'a Font, scale: Scale, width: u32, text: &str
         result.push(glyph);
     }
     result
-}
-
-pub struct QuipRenderer<'a> {
-    pub font: Font<'a>
-}
-
-impl<'a> QuipRenderer<'a> {
-    pub fn new() -> Self {
-        let font_data = include_bytes!("Arial Unicode.ttf");
-        let font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
-        QuipRenderer { font: font }
-    }
 }
