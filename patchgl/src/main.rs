@@ -15,17 +15,13 @@ use std::borrow::Cow;
 use glium::glutin;
 
 fn main() {
-    use glium::{DisplayBuild};
-
     let xml = include_str!("screen_with_square_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
 
-    let display = glium::glutin::WindowBuilder::new()
-        .with_dimensions(patchwork.width as u32, patchwork.height as u32)
-        .with_title("PatchGl")
-        .with_vsync()
-        .build_glium().unwrap();
-    let dpi_factor = display.get_window().unwrap().hidpi_factor();
+    use patchgllib::screen::Screen;
+    let screen = Screen::new(&patchwork);
+    let display = &screen.display;
+    let dpi_factor = screen.dpi_factor();
     let (cache_width, cache_height) = (512 * dpi_factor as u32, 512 * dpi_factor as u32);
     let mut cache = Cache::new(cache_width, cache_height, 0.1, 0.1);
 
@@ -37,7 +33,7 @@ fn main() {
     for glyph in &glyphs {
         cache.queue_glyph(0, glyph.clone());
     }
-    let quip_program = program!( &display, 140 => {
+    let quip_program = program!( display, 140 => {
                 vertex: "
                     #version 140
                     uniform mat4 modelview;
@@ -65,7 +61,7 @@ fn main() {
                 "
             }).unwrap();
     let cache_tex = glium::texture::Texture2d::with_format(
-        &display,
+        display,
         glium::texture::RawImage2d {
             data: Cow::Owned(vec![128u8; cache_width as usize * cache_height as usize]),
             width: cache_width,
@@ -143,7 +139,7 @@ fn main() {
         }).collect();
 
         glium::VertexBuffer::new(
-            &display,
+            display,
             &vertices).unwrap()
     };
 
