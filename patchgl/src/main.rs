@@ -8,9 +8,7 @@ extern crate arrayvec;
 use patchgllib::model::Patchwork;
 use patchgllib::renderer::PatchRenderer;
 use patchgllib::glyffin::QuipRenderer;
-use patchgllib::glyffin;
-use rusttype::gpu_cache::{Cache};
-use rusttype::{point, vector, Scale, Rect};
+use rusttype::{Scale};
 use std::borrow::Cow;
 use glium::glutin;
 
@@ -21,106 +19,29 @@ fn main() {
     use patchgllib::screen::Screen;
     let screen = Screen::new(&patchwork);
     let display = &screen.display;
-    let dpi_factor = screen.dpi_factor();
-    let (cache_width, cache_height) = (512 * dpi_factor as u32, 512 * dpi_factor as u32);
-    let mut cache = Cache::new(cache_width, cache_height, 0.1, 0.1);
 
     let patch_renderer = PatchRenderer::new(&patchwork, &display);
+    let patchwork_uniforms = uniform! {
+        modelview: patch_renderer.get_modelview(&display)
+    };
 
     let text: String = "I for one welcome our new robot overloads".into();
-    let quip_renderer = QuipRenderer::new(&display);
-    let glyphs = glyffin::layout_paragraph(&quip_renderer.font, Scale::uniform(24.0 * dpi_factor), patchwork.width, &text);
-    for glyph in &glyphs {
-        cache.queue_glyph(0, glyph.clone());
-    }
-    let cache_tex = glium::texture::Texture2d::with_format(
+    let mut quip_renderer = QuipRenderer::new(&display, screen.get_dpi_factor());
+    let (texture_width, texture_height) = quip_renderer.cache_dimensions;
+    let texture = glium::texture::Texture2d::with_format(
         display,
         glium::texture::RawImage2d {
-            data: Cow::Owned(vec![128u8; cache_width as usize * cache_height as usize]),
-            width: cache_width,
-            height: cache_height,
+            data: Cow::Owned(vec![128u8; texture_width as usize * texture_height as usize]),
+            width: texture_width,
+            height: texture_height,
             format: glium::texture::ClientFormat::U8
         },
         glium::texture::UncompressedFloatFormat::U8,
         glium::texture::MipmapsOption::NoMipmap).unwrap();
-
-    cache.cache_queued(|rect, data| {
-        cache_tex.main_level().write(glium::Rect {
-            left: rect.min.x,
-            bottom: rect.min.y,
-            width: rect.width(),
-            height: rect.height()
-        }, glium::texture::RawImage2d {
-            data: Cow::Borrowed(data),
-            width: rect.width(),
-            height: rect.height(),
-            format: glium::texture::ClientFormat::U8
-        });
-    }).unwrap();
-
-    let quip_vertex_buffer = {
-        #[derive(Copy, Clone)]
-        struct Vertex {
-            position: [f32; 2],
-            tex_coords: [f32; 2],
-            colour: [f32; 4]
-        }
-
-        implement_vertex!(Vertex, position, tex_coords, colour);
-        let colour = [0.0, 0.0, 0.0, 1.0];
-        let origin = point(0.0, 0.0);
-        let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
-            if let Ok(Some((uv_rect, screen_rect))) = cache.rect_for(0, g) {
-                let gl_rect = Rect {
-                    min: origin + vector(screen_rect.min.x as f32, screen_rect.min.y as f32),
-                    max: origin + vector(screen_rect.max.x as f32, screen_rect.max.y as f32)
-                };
-                arrayvec::ArrayVec::<[Vertex; 6]>::from([
-                    Vertex {
-                        position: [gl_rect.min.x, gl_rect.max.y],
-                        tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour: colour
-                    },
-                    Vertex {
-                        position: [gl_rect.min.x, gl_rect.min.y],
-                        tex_coords: [uv_rect.min.x, uv_rect.min.y],
-                        colour: colour
-                    },
-                    Vertex {
-                        position: [gl_rect.max.x, gl_rect.min.y],
-                        tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour: colour
-                    },
-                    Vertex {
-                        position: [gl_rect.max.x, gl_rect.min.y],
-                        tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour: colour
-                    },
-                    Vertex {
-                        position: [gl_rect.max.x, gl_rect.max.y],
-                        tex_coords: [uv_rect.max.x, uv_rect.max.y],
-                        colour: colour
-                    },
-                    Vertex {
-                        position: [gl_rect.min.x, gl_rect.max.y],
-                        tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour: colour
-                    }])
-            } else {
-                arrayvec::ArrayVec::new()
-            }
-        }).collect();
-
-        glium::VertexBuffer::new(
-            display,
-            &vertices).unwrap()
-    };
-
-    let patchwork_uniforms = uniform! {
-        modelview: patch_renderer.get_modelview(&display)
-    };
+    let vertices = quip_renderer.layout_paragraph(Scale::uniform(24.0 * screen.get_dpi_factor()), patchwork.width, &text, &texture);
+    let quip_vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
     let quip_uniforms = uniform! {
-        tex: cache_tex.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
+        tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
         modelview: patch_renderer.get_modelview(&display)
     };
 

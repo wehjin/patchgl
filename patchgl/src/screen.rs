@@ -18,7 +18,7 @@ impl Screen {
         }
     }
 
-    pub fn dpi_factor(&self) -> f32 {
+    pub fn get_dpi_factor(&self) -> f32 {
         self.display.get_window().unwrap().hidpi_factor()
     }
 }
