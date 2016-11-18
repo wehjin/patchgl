@@ -25,11 +25,11 @@ fn main() {
     let (cache_width, cache_height) = (512 * dpi_factor as u32, 512 * dpi_factor as u32);
     let mut cache = Cache::new(cache_width, cache_height, 0.1, 0.1);
 
-    let patch_renderer = PatchRenderer::new(patchwork, &display);
+    let patch_renderer = PatchRenderer::new(&patchwork, &display);
 
     let text: String = "I for one welcome our new robot overloads".into();
     let quip_renderer = QuipRenderer::new(&display);
-    let glyphs = glyffin::layout_paragraph(&quip_renderer.font, Scale::uniform(24.0 * dpi_factor), 320, &text);
+    let glyphs = glyffin::layout_paragraph(&quip_renderer.font, Scale::uniform(24.0 * dpi_factor), patchwork.width, &text);
     for glyph in &glyphs {
         cache.queue_glyph(0, glyph.clone());
     }

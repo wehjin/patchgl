@@ -5,8 +5,8 @@ use xml;
 #[derive(Default)]
 pub struct Patchwork {
     pub patch: Patch,
-    pub width: f32,
-    pub height: f32,
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Patchwork {
@@ -20,8 +20,8 @@ impl Patchwork {
                     if name.local_name == "patch" {
                         patchwork.patch = Patch::from_attributes(&attributes);
                     } else if name.local_name == "screen" {
-                        patchwork.width = 320.0f32;
-                        patchwork.height = 480.0f32;
+                        patchwork.width = 320u32;
+                        patchwork.height = 480u32;
                     }
                 }
                 Err(event) => {
@@ -34,7 +34,7 @@ impl Patchwork {
         patchwork
     }
     pub fn aspect_ratio(&self) -> f32 {
-        self.width / self.height
+        self.width as f32 / self.height as f32
     }
 }
 

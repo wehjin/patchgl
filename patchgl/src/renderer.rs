@@ -1,15 +1,15 @@
 use glium;
 use model::{Patchwork, Vertex};
 
-pub struct PatchRenderer {
+pub struct PatchRenderer<'a> {
     pub program: glium::Program,
     pub vertex_buffer: glium::VertexBuffer<Vertex>,
     pub indices: glium::index::NoIndices,
-    pub patchwork: Patchwork,
+    pub patchwork: &'a Patchwork,
 }
 
-impl PatchRenderer {
-    pub fn new(patchwork: Patchwork, display: &glium::backend::glutin_backend::GlutinFacade) -> Self {
+impl<'a> PatchRenderer<'a> {
+    pub fn new(patchwork: &'a Patchwork, display: &glium::backend::glutin_backend::GlutinFacade) -> Self {
         let vertex_shader_src = include_str!("shaders/patch_vertex_shader.glsl");
         let fragment_shader_src = include_str!("shaders/patch_fragment_shader.glsl");
         let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
@@ -32,8 +32,8 @@ impl PatchRenderer {
         let ndc_width = 2.0f32 * screen_aspect / window_aspect;
         let ndc_height = 2.0f32;
         [
-            [1.0 / screen_width * ndc_width, 0.0, 0.0, 0.0],
-            [0.0, -1.0 / screen_height * ndc_height, 0.0, 0.0],
+            [1.0 / screen_width as f32 * ndc_width, 0.0, 0.0, 0.0],
+            [0.0, -1.0 / screen_height as f32 * ndc_height, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
             [-ndc_width / 2.0, ndc_height / 2.0, 0.0, 1.0f32],
         ]
