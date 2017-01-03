@@ -39,8 +39,18 @@ impl SignedDistanceField {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct Rectangle {
+    left: f32,
+    right: f32,
+    top: f32,
+    bottom: f32
+}
+
+#[derive(Debug, Copy, Clone)]
 pub struct Glyff {
-    pub sdf: SignedDistanceField
+    pub sdf: SignedDistanceField,
+    pub anchor: Rectangle
 }
 
 #[cfg(test)]
