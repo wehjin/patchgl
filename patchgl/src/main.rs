@@ -22,11 +22,8 @@ fn main() {
     let display = &screen.display;
 
     let patch_renderer = PatchRenderer::new(&patchwork, &display);
-    let patchwork_uniforms = uniform! {
-        modelview: patch_renderer.get_modelview(&display)
-    };
 
-    let text: String = "I for one welcome our new robot overloads".into();
+    let text: String = "I for one welcome our new robot overlords".into();
     let mut quip_renderer = QuipRenderer::new(&display, screen.dpi_factor());
     let (texture_width, texture_height) = quip_renderer.cache_dimensions;
     let texture = glium::texture::Texture2d::with_format(
@@ -47,23 +44,22 @@ fn main() {
     };
 
     loop {
-        let mut target = display.draw();
         use glium::{Surface};
+
+        let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
-        target.draw(&patch_renderer.vertex_buffer,
-                    &patch_renderer.indices,
-                    &patch_renderer.program,
-                    &patchwork_uniforms,
-                    &Default::default()).unwrap();
+        patch_renderer.draw(&mut target, &display);
 
         target.draw(&quip_vertex_buffer,
                     glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
-                    &quip_renderer.program, &quip_uniforms,
+                    &quip_renderer.program,
+                    &quip_uniforms,
                     &glium::DrawParameters {
                         blend: glium::Blend::alpha_blending(),
                         ..Default::default()
-                    }).unwrap();
+                    })
+              .unwrap();
 
         target.finish().unwrap();
 

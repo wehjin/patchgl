@@ -38,6 +38,17 @@ impl<'a> PatchRenderer<'a> {
             [-ndc_width / 2.0, ndc_height / 2.0, 0.0, 1.0f32],
         ]
     }
+
+    pub fn draw(&self, frame: &mut glium::Frame, display: &glium::backend::glutin_backend::GlutinFacade) {
+        use glium::Surface;
+        let patchwork_uniforms = uniform! { modelview: self.get_modelview(display) };
+        frame.draw(&self.vertex_buffer,
+                   &self.indices,
+                   &self.program,
+                   &patchwork_uniforms,
+                   &Default::default())
+             .unwrap();
+    }
 }
 
 
