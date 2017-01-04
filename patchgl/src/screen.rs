@@ -7,18 +7,17 @@ pub struct Screen {
 }
 
 impl Screen {
-    pub fn new(patchwork: &Patchwork) -> Self {
-        let display = glium::glutin::WindowBuilder::new()
-            .with_dimensions(patchwork.width as u32, patchwork.height as u32)
-            .with_title("PatchGl")
-            .with_vsync()
-            .build_glium().unwrap();
+    pub fn new(width: u32, height: u32) -> Self {
         Screen {
-            display: display
+            display: glium::glutin::WindowBuilder::new()
+                .with_dimensions(width, height)
+                .with_title("PatchGl")
+                .with_vsync()
+                .build_glium().unwrap()
         }
     }
 
-    pub fn get_dpi_factor(&self) -> f32 {
+    pub fn dpi_factor(&self) -> f32 {
         self.display.get_window().unwrap().hidpi_factor()
     }
 }

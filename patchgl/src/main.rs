@@ -1,4 +1,5 @@
-#[macro_use] extern crate glium;
+#[macro_use]
+extern crate glium;
 extern crate xml;
 extern crate cage;
 extern crate patchgllib;
@@ -17,7 +18,7 @@ fn main() {
     let patchwork = Patchwork::from_xml(xml);
 
     use patchgllib::screen::Screen;
-    let screen = Screen::new(&patchwork);
+    let screen = Screen::new(patchwork.width, patchwork.height);
     let display = &screen.display;
 
     let patch_renderer = PatchRenderer::new(&patchwork, &display);
@@ -26,7 +27,7 @@ fn main() {
     };
 
     let text: String = "I for one welcome our new robot overloads".into();
-    let mut quip_renderer = QuipRenderer::new(&display, screen.get_dpi_factor());
+    let mut quip_renderer = QuipRenderer::new(&display, screen.dpi_factor());
     let (texture_width, texture_height) = quip_renderer.cache_dimensions;
     let texture = glium::texture::Texture2d::with_format(
         display,
@@ -38,7 +39,7 @@ fn main() {
         },
         glium::texture::UncompressedFloatFormat::U8,
         glium::texture::MipmapsOption::NoMipmap).unwrap();
-    let vertices = quip_renderer.layout_paragraph(Scale::uniform(24.0 * screen.get_dpi_factor()), patchwork.width, &text, &texture);
+    let vertices = quip_renderer.layout_paragraph(Scale::uniform(24.0 * screen.dpi_factor()), patchwork.width, &text, &texture);
     let quip_vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
     let quip_uniforms = uniform! {
         tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
