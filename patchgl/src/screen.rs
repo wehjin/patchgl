@@ -1,4 +1,3 @@
-use model::Patchwork;
 use glium;
 use glium::DisplayBuild;
 

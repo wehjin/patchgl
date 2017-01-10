@@ -86,38 +86,13 @@ impl<'a> QuipRenderer<'a> {
     }
 
     pub fn new(display: &glium::backend::glutin_backend::GlutinFacade, cache_dpi_factor: f32) -> Self {
-        let font_data = include_bytes!("Arial Unicode.ttf");
-        let font = FontCollection::from_bytes(font_data as &[u8]).into_font().unwrap();
-        let program = program!( display, 140 => {
-                vertex: "
-                    #version 140
-                    uniform mat4 modelview;
-                    in vec2 position;
-                    in vec2 tex_coords;
-                    in vec4 colour;
-                    out vec2 v_tex_coords;
-                    out vec4 v_colour;
-                    void main() {
-                        gl_Position = modelview * vec4(position, 0.0, 1.0);
-                        v_tex_coords = tex_coords;
-                        v_colour = colour;
-                    }
-                ",
-
-                fragment: "
-                    #version 140
-                    uniform sampler2D tex;
-                    in vec2 v_tex_coords;
-                    in vec4 v_colour;
-                    out vec4 f_colour;
-                    void main() {
-                        f_colour = v_colour * vec4(1.0, 1.0, 1.0, texture(tex, v_tex_coords).r);
-                    }
-                "
-            }).unwrap();
+        let program = program!(display, 140 => {
+            vertex: include_str ! ("quip_vertex_shader.glsl"),
+            fragment: include_str ! ("quip_fragment_shader.glsl"),
+        }).unwrap();
         let (cache_width, cache_height) = (512 * cache_dpi_factor as u32, 512 * cache_dpi_factor as u32);
         QuipRenderer {
-            font: font,
+            font: FontCollection::from_bytes(include_bytes!("Arial Unicode.ttf") as &[u8]).into_font().unwrap(),
             program: program,
             cache: Cache::new(cache_width, cache_height, 0.1, 0.1),
             cache_dimensions: (cache_width, cache_height)
