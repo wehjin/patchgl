@@ -16,14 +16,19 @@ pub struct QuipRenderer<'a> {
     pub program: glium::Program,
     pub cache: Cache,
     pub cache_dimensions: (u32, u32),
+    texture: glium::texture::Texture2d,
+    modelview: [[f32; 4]; 4],
+    vertex_buffer: glium::VertexBuffer<Vertex>,
 }
 
 impl<'a> QuipRenderer<'a> {
-    pub fn layout_paragraph(&mut self, scale: Scale, width: u32, text: &str, texture: &glium::texture::Texture2d) -> Vec<Vertex> {
+    pub fn layout_paragraph(&mut self, text: &str, scale: Scale, width: u32,
+                            display: &glium::backend::glutin_backend::GlutinFacade) {
         let glyphs = layout_paragraph(&self.font, scale, width, text);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
         }
+        let texture = &self.texture;
         self.cache.cache_queued(|rect, data| {
             texture.main_level().write(glium::Rect {
                 left: rect.min.x,
@@ -82,20 +87,46 @@ impl<'a> QuipRenderer<'a> {
                 arrayvec::ArrayVec::new()
             }
         }).collect();
-        vertices
+        self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
     }
 
-    pub fn new(display: &glium::backend::glutin_backend::GlutinFacade, cache_dpi_factor: f32) -> Self {
-        let program = program!(display, 140 => {
-            vertex: include_str ! ("quip_vertex_shader.glsl"),
-            fragment: include_str ! ("quip_fragment_shader.glsl"),
-        }).unwrap();
+    pub fn draw(&self, frame: &mut glium::Frame, display: &glium::backend::glutin_backend::GlutinFacade) {
+        use glium::Surface;
+        let sampler = self.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest);
+        let uniforms = uniform! { tex: sampler, modelview: self.modelview };
+        frame.draw(&self.vertex_buffer,
+                   glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
+                   &self.program,
+                   &uniforms,
+                   &glium::DrawParameters { blend: glium::Blend::alpha_blending(), ..Default::default() })
+             .unwrap();
+    }
+
+    pub fn new(cache_dpi_factor: f32,
+               modelview: [[f32; 4]; 4],
+               display: &glium::backend::glutin_backend::GlutinFacade) -> Self {
+        let (vertex_shader, fragment_shader) = (include_str!("quip_vertex_shader.glsl"),
+                                                include_str!("quip_fragment_shader.glsl"));
+        let program = program!(display, 140 => {vertex: vertex_shader, fragment: fragment_shader}).unwrap();
         let (cache_width, cache_height) = (512 * cache_dpi_factor as u32, 512 * cache_dpi_factor as u32);
+        let texture = glium::texture::Texture2d::with_format(
+            display,
+            glium::texture::RawImage2d {
+                data: Cow::Owned(vec![128u8; cache_width as usize * cache_height as usize]),
+                width: cache_width,
+                height: cache_height,
+                format: glium::texture::ClientFormat::U8
+            },
+            glium::texture::UncompressedFloatFormat::U8,
+            glium::texture::MipmapsOption::NoMipmap).unwrap();
         QuipRenderer {
             font: FontCollection::from_bytes(include_bytes!("Arial Unicode.ttf") as &[u8]).into_font().unwrap(),
             program: program,
             cache: Cache::new(cache_width, cache_height, 0.1, 0.1),
-            cache_dimensions: (cache_width, cache_height)
+            cache_dimensions: (cache_width, cache_height),
+            texture: texture,
+            modelview: modelview,
+            vertex_buffer: glium::VertexBuffer::new(display, &[]).unwrap()
         }
     }
 }

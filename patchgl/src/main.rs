@@ -10,7 +10,6 @@ use patchgllib::model::Patchwork;
 use patchgllib::renderer::PatchRenderer;
 use patchgllib::glyffin::QuipRenderer;
 use rusttype::{Scale};
-use std::borrow::Cow;
 use glium::glutin;
 
 fn main() {
@@ -18,30 +17,15 @@ fn main() {
     let patchwork = Patchwork::from_xml(xml);
 
     use patchgllib::screen::Screen;
-    let screen = Screen::new(patchwork.width, patchwork.height);
+    let screen = Screen::new(320, 480);
     let display = &screen.display;
 
     let patch_renderer = PatchRenderer::new(&patchwork, &display);
+    let modelview = patch_renderer.get_modelview(&display);
 
-    let text: String = "I for one welcome our new robot overlords".into();
-    let mut quip_renderer = QuipRenderer::new(&display, screen.dpi_factor());
-    let (texture_width, texture_height) = quip_renderer.cache_dimensions;
-    let texture = glium::texture::Texture2d::with_format(
-        display,
-        glium::texture::RawImage2d {
-            data: Cow::Owned(vec![128u8; texture_width as usize * texture_height as usize]),
-            width: texture_width,
-            height: texture_height,
-            format: glium::texture::ClientFormat::U8
-        },
-        glium::texture::UncompressedFloatFormat::U8,
-        glium::texture::MipmapsOption::NoMipmap).unwrap();
-    let vertices = quip_renderer.layout_paragraph(Scale::uniform(24.0 * screen.dpi_factor()), patchwork.width, &text, &texture);
-    let quip_vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
-    let quip_uniforms = uniform! {
-        tex: texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest),
-        modelview: patch_renderer.get_modelview(&display)
-    };
+    let mut quip_renderer = QuipRenderer::new(screen.dpi_factor(), modelview, display);
+    quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
+                                   Scale::uniform(24.0 * screen.dpi_factor()), screen.width, display);
 
     loop {
         use glium::{Surface};
@@ -50,16 +34,7 @@ fn main() {
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
         patch_renderer.draw(&mut target, &display);
-
-        target.draw(&quip_vertex_buffer,
-                    glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
-                    &quip_renderer.program,
-                    &quip_uniforms,
-                    &glium::DrawParameters {
-                        blend: glium::Blend::alpha_blending(),
-                        ..Default::default()
-                    })
-              .unwrap();
+        quip_renderer.draw(&mut target, &display);
 
         target.finish().unwrap();
 
