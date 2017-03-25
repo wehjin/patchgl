@@ -34,7 +34,7 @@ fn main() {
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
         patch_renderer.draw(&mut target, &display);
-        quip_renderer.draw(&mut target, &display);
+        quip_renderer.draw(&mut target);
 
         target.finish().unwrap();
 

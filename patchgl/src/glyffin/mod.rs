@@ -90,7 +90,7 @@ impl<'a> QuipRenderer<'a> {
         self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
     }
 
-    pub fn draw(&self, frame: &mut glium::Frame, display: &glium::backend::glutin_backend::GlutinFacade) {
+    pub fn draw(&self, frame: &mut glium::Frame) {
         use glium::Surface;
         let sampler = self.texture.sampled().magnify_filter(glium::uniforms::MagnifySamplerFilter::Nearest);
         let uniforms = uniform! { tex: sampler, modelview: self.modelview };

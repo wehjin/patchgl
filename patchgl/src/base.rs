@@ -20,14 +20,14 @@ impl Clone for SignedDistanceField {
 }
 
 impl SignedDistanceField {
-    pub fn new(fill: u8) -> Self {
+    fn new(fill: u8) -> Self {
         SignedDistanceField { distances: [fill; SDF_SIZE * SDF_SIZE] }
     }
     pub fn new_far() -> Self {
-        SignedDistanceField::new(255u8)
+        Self::new(255u8)
     }
     pub fn new_near() -> Self {
-        SignedDistanceField::new(0u8)
+        Self::new(0u8)
     }
     pub fn get_index(column: usize, row: usize) -> usize {
         row * SDF_SIZE + column
@@ -100,19 +100,20 @@ mod tests {
     }
 
     #[test]
+    fn sdf_gets_and_puts_distance() {
+        let mut sdf = SignedDistanceField::new(0u8);
+        sdf.put_distance(0, 1, 34);
+        assert_eq!(34, sdf.get_distance(0, 1))
+    }
+
+    #[test]
     fn sdf_computes_column_index() {
         assert_eq!(1, SignedDistanceField::get_index(1, 0));
     }
 
     #[test]
     fn sdf_computes_row_index() {
-        assert_eq!(SDF_SIZE, SignedDistanceField::get_index(0, 1))
-    }
-
-    #[test]
-    fn sdf_gets_and_puts_distance() {
-        let mut sdf = SignedDistanceField::new(0);
-        sdf.put_distance(0, 1, 34);
-        assert_eq!(34, sdf.get_distance(0, 1))
+        let index = SignedDistanceField::get_index(0, 1);
+        assert_eq!(SDF_SIZE, index)
     }
 }

@@ -1,4 +1,5 @@
-#[macro_use] extern crate glium;
+#[macro_use]
+extern crate glium;
 extern crate xml;
 extern crate cage;
 extern crate rusttype;
@@ -10,4 +11,10 @@ pub mod model;
 pub mod renderer;
 pub mod glyffin;
 pub mod screen;
-mod base;
+pub mod base;
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {}
+}
