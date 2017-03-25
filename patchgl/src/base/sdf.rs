@@ -41,3 +41,26 @@ impl SignedDistanceField {
         self.distances[index] = distance
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sdf_gets_and_puts_distance() {
+        let mut sdf = SignedDistanceField::new(0u8);
+        sdf.put_distance(0, 1, 34);
+        assert_eq!(34, sdf.get_distance(0, 1))
+    }
+
+    #[test]
+    fn sdf_computes_column_index() {
+        assert_eq!(1, SignedDistanceField::get_index(1, 0));
+    }
+
+    #[test]
+    fn sdf_computes_row_index() {
+        let index = SignedDistanceField::get_index(0, 1);
+        assert_eq!(SDF_SIZE, index)
+    }
+}
