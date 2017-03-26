@@ -12,7 +12,7 @@ pub mod renderer;
 pub mod glyffin;
 pub mod screen;
 pub mod base;
-mod rx;
+pub mod ix;
 
 use model::Patchwork;
 use renderer::PatchRenderer;
@@ -23,16 +23,15 @@ use screen::Screen;
 use glium::{Surface};
 use glium::glutin::Event;
 
+#[derive(Clone, Copy)]
 enum Command {
     Close
 }
 
 pub fn go() {
-    let (tx, rx) = std::sync::mpsc::channel();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(1000));
-        tx.send(Command::Close).unwrap();
-    });
+    use ix::Readable;
+
+    let director_readable = ix::from_value(Command::Close).delay(3000);
     let xml = include_str!("screen_with_square_patch.xml");
     let patchwork = Patchwork::from_xml(xml);
 
@@ -45,6 +44,8 @@ pub fn go() {
     let mut quip_renderer = QuipRenderer::new(screen.dpi_factor(), modelview, display);
     quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
                                    Scale::uniform(24.0 * screen.dpi_factor()), screen.width, display);
+
+    let mut command_sequence = director_readable.sequence();
 
     loop {
         let mut target = display.draw();
@@ -62,7 +63,8 @@ pub fn go() {
             }
         }
 
-        while let Ok(command) = rx.try_recv() {
+        use ix::Reading;
+        while let Reading::Next(command) = command_sequence.next() {
             match command {
                 Command::Close => return
             }
