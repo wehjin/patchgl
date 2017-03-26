@@ -5,7 +5,7 @@ use std::rc::Rc;
 pub enum Reading<T> {
     Next(T),
     Complete,
-    Error(Box<Error>),
+    Error(String),
 }
 
 pub trait Sequence<T>
@@ -21,8 +21,8 @@ pub trait Readable<T>
 }
 
 pub struct BasicSequence<T> {
-    on_next: Box<FnMut() -> Reading<T>>,
-    on_stop: Box<FnMut()>,
+    pub on_next: Box<FnMut() -> Reading<T>>,
+    pub on_stop: Box<FnMut()>,
 }
 
 impl<T> Sequence<T> for BasicSequence<T> {
