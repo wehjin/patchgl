@@ -131,7 +131,7 @@ mod tests {
     fn lambda_readable_delivers_values_from_lambda() {
         let readable = from_on_sequence(Box::new(move || {
             let mut counter: u32 = 0;
-            BasicSequence {
+            Box::new(BasicSequence {
                 on_next: Box::new(move || {
                     if counter == 0 {
                         counter = 1;
@@ -141,7 +141,7 @@ mod tests {
                     }
                 }),
                 on_stop: Box::new(|| {})
-            }
+            })
         }));
         let mut sequence = readable.sequence();
         match sequence.next() {
