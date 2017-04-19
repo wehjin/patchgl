@@ -6,18 +6,8 @@ extern crate patchgllib;
 extern crate rusttype;
 extern crate arrayvec;
 
+use patchgllib::go;
+
 fn main() {
-    use patchgllib::go;
     go();
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(4, 2 + 2);
-    }
-
-    #[test]
-    fn patch_renders() {}
 }
