@@ -1,4 +1,4 @@
-use cage::Cage;
+use cage::{Cage};
 use parser;
 use xml;
 
@@ -44,6 +44,9 @@ pub struct Patch {
 }
 
 impl Patch {
+    pub fn from_dimensions(width: f32, height: f32, depth: f32) -> Self {
+        Patch { cage: Cage::from((0f32, width, 0f32, height, depth, depth)) }
+    }
     pub fn from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Self {
         let mut patch = Patch { ..Default::default() };
         for attribute in attributes {
