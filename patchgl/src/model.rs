@@ -65,6 +65,9 @@ impl Patch {
         let lb_vertex = Vertex { position: [left, bottom] };
         vec![lt_vertex, rt_vertex, lb_vertex, lb_vertex, rt_vertex, rb_vertex]
     }
+    pub fn vertex_count() -> usize {
+        6
+    }
 }
 
 #[derive(Copy, Clone)]

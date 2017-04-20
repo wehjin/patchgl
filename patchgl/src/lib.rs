@@ -95,9 +95,11 @@ pub fn start<F>(width: u32, height: u32, on_start: F)
     let dpi_factor = window.hidpi_factor();
 
     let director = RemoteDirector::new(window.create_window_proxy(), on_start);
-    let patch = Patch::from_dimensions(width as f32, width as f32, 0f32);
     let modelview = get_modelview(width, height, &display);
-    let patch_renderer = PatchRenderer::new(&patch, &display, modelview);
+
+    let patch = Patch::from_dimensions(width as f32, width as f32, 0f32);
+    let mut patch_renderer = PatchRenderer::new(&display, modelview);
+
     let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, &display);
     quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
                                    Scale::uniform(24.0 * dpi_factor), width, &display);
@@ -105,7 +107,10 @@ pub fn start<F>(width: u32, height: u32, on_start: F)
     'draw: loop {
         let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
+
+        patch_renderer.set_patch(&patch);
         patch_renderer.draw(&mut target);
+
         quip_renderer.draw(&mut target);
         target.finish().unwrap();
 
