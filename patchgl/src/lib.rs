@@ -10,23 +10,24 @@ pub mod parser;
 pub mod model;
 pub mod renderer;
 pub mod glyffin;
-pub mod screen;
 pub mod base;
 pub mod ix;
 
-use model::{Patchwork, Patch};
-use renderer::PatchRenderer;
-use glyffin::QuipRenderer;
-use rusttype::{Scale};
-use glium::glutin;
-use screen::Screen;
-use glium::{Surface};
-use glium::glutin::Event;
-use glium::backend::glutin_backend::GlutinFacade;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::thread;
 use std::marker::Send;
+use glium::glutin;
+use glium::{Surface};
+use glium::glutin::Event;
+use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::WindowProxy;
+use glium::glutin::WindowBuilder;
+use glium::backend::glutin_backend::WinRef;
+use glium::DisplayBuild;
+use model::Patch;
+use renderer::PatchRenderer;
+use glyffin::QuipRenderer;
+use rusttype::{Scale};
 
 pub enum ScreenMessage {
     Close
@@ -86,42 +87,39 @@ impl RemoteDirector {
 pub fn start<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
-    let screen = Screen::new(width, height);
-    let display_rc = screen.display.clone();
-    let display: &GlutinFacade = &*display_rc;
-    let window_proxy = display_rc.get_window().unwrap().create_window_proxy();
-    let director = RemoteDirector::new(window_proxy, on_start);
+    let display = WindowBuilder::new().with_dimensions(width, height)
+                                      .with_title("PatchGl")
+                                      .with_vsync()
+                                      .build_glium().unwrap();
+    let window: WinRef = display.get_window().unwrap();
+    let dpi_factor = window.hidpi_factor();
 
-    let patchwork = Patchwork {
-        patch: Patch::from_dimensions(width as f32, width as f32, 0f32),
-        width: width,
-        height: height,
-    };
-    let patch_renderer = PatchRenderer::new(&patchwork, display);
-    let modelview = patch_renderer.get_modelview(display);
-
-    let mut quip_renderer = QuipRenderer::new(screen.dpi_factor(), modelview, display);
+    let director = RemoteDirector::new(window.create_window_proxy(), on_start);
+    let patch = Patch::from_dimensions(width as f32, width as f32, 0f32);
+    let modelview = get_modelview(width, height, &display);
+    let patch_renderer = PatchRenderer::new(&patch, &display, modelview);
+    let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, &display);
     quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
-                                   Scale::uniform(24.0 * screen.dpi_factor()), screen.width, display);
+                                   Scale::uniform(24.0 * dpi_factor), width, &display);
 
-    'start: loop {
+    'draw: loop {
         let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
-        patch_renderer.draw(&mut target, &display);
+        patch_renderer.draw(&mut target);
         quip_renderer.draw(&mut target);
         target.finish().unwrap();
 
         for ev in display.wait_events() {
             match ev {
                 Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) | glutin::Event::Closed => {
-                    break 'start
+                    break 'draw
                 }
                 Event::Awakened => {
                     while let Some(ScreenMessage::Close) = director.receive_screen_message() {
-                        break 'start
+                        break 'draw
                     }
                 }
-                _ => ()
+                _ => continue 'draw
             }
         }
     }
@@ -130,9 +128,23 @@ pub fn start<F>(width: u32, height: u32, on_start: F)
 pub fn go() {
     start(320, 480, |screen: &RemoteScreen| {
         use std::time::Duration;
-        thread::sleep(Duration::from_secs(3));
+        thread::sleep(Duration::from_secs(30));
         screen.close()
     });
+}
+
+fn get_modelview(screen_width: u32, screen_height: u32, display: &GlutinFacade) -> [[f32; 4]; 4] {
+    let (window_width, window_height) = display.get_framebuffer_dimensions();
+    let screen_aspect = screen_width as f32 / screen_height as f32;
+    let window_aspect = window_width as f32 / window_height as f32;
+    let ndc_width = 2.0f32 * screen_aspect / window_aspect;
+    let ndc_height = 2.0f32;
+    [
+        [1.0 / screen_width as f32 * ndc_width, 0.0, 0.0, 0.0],
+        [0.0, -1.0 / screen_height as f32 * ndc_height, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [-ndc_width / 2.0, ndc_height / 2.0, 0.0, 1.0f32],
+    ]
 }
 
 #[cfg(test)]
