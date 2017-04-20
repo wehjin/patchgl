@@ -26,6 +26,7 @@ use glium::backend::glutin_backend::GlutinFacade;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::thread;
 use std::marker::Send;
+use glium::glutin::WindowProxy;
 
 pub enum ScreenMessage {
     Close
@@ -52,6 +53,25 @@ pub struct RemoteDirector {
 }
 
 impl RemoteDirector {
+    pub fn new<F>(window_proxy: WindowProxy, on_start: F) -> Self
+        where F: Fn(&RemoteScreen) -> () + Send + 'static
+    {
+        let (send_to_screen, receive_from_director) = channel::<ScreenMessage>();
+        let (send_to_director, receive_from_screen) = channel::<DirectorMessage>();
+        let director = RemoteDirector {
+            sender: send_to_director,
+            receiver: receive_from_director,
+        };
+        thread::spawn(move || {
+            let remote_screen = RemoteScreen {
+                sender: send_to_screen,
+                receiver: receive_from_screen,
+                window_proxy: window_proxy,
+            };
+            on_start(&remote_screen)
+        });
+        director
+    }
     pub fn receive_screen_message(&self) -> Option<ScreenMessage> {
         let result = self.receiver.try_recv();
         if result.is_ok() {
@@ -69,23 +89,8 @@ pub fn start<F>(width: u32, height: u32, on_start: F)
     let screen = Screen::new(width, height);
     let display_rc = screen.display.clone();
     let display: &GlutinFacade = &*display_rc;
-
-    let (send_to_screen, receive_from_director) = channel::<ScreenMessage>();
-    let (send_to_director, receive_from_screen) = channel::<DirectorMessage>();
-    let director = RemoteDirector {
-        sender: send_to_director,
-        receiver: receive_from_director,
-    };
-
-    let window_proxy = (*display.get_window().unwrap()).create_window_proxy();
-    thread::spawn(move || {
-        let remote_screen = RemoteScreen {
-            sender: send_to_screen,
-            receiver: receive_from_screen,
-            window_proxy: window_proxy,
-        };
-        on_start(&remote_screen)
-    });
+    let window_proxy = display_rc.get_window().unwrap().create_window_proxy();
+    let director = RemoteDirector::new(window_proxy, on_start);
 
     let patchwork = Patchwork {
         patch: Patch::from_dimensions(width as f32, width as f32, 0f32),
