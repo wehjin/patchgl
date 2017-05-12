@@ -84,7 +84,7 @@ impl RemoteDirector {
 }
 
 
-pub fn start<F>(width: u32, height: u32, on_start: F)
+pub fn run<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let display = WindowBuilder::new().with_dimensions(width, height)
@@ -128,14 +128,6 @@ pub fn start<F>(width: u32, height: u32, on_start: F)
             }
         }
     }
-}
-
-pub fn go() {
-    start(320, 480, |screen: &RemoteScreen| {
-        use std::time::Duration;
-        thread::sleep(Duration::from_secs(30));
-        screen.close()
-    });
 }
 
 fn get_modelview(screen_width: u32, screen_height: u32, display: &GlutinFacade) -> [[f32; 4]; 4] {

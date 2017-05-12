@@ -6,8 +6,13 @@ extern crate patchgllib;
 extern crate rusttype;
 extern crate arrayvec;
 
-use patchgllib::go;
+use patchgllib::{run, RemoteScreen};
+use std::thread;
 
 fn main() {
-    go();
+    run(320, 480, |screen: &RemoteScreen| {
+        use std::time::Duration;
+        thread::sleep(Duration::from_secs(10));
+        screen.close()
+    });
 }
