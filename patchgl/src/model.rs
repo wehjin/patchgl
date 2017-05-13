@@ -1,6 +1,7 @@
 use cage::{Cage};
 use parser;
 use xml;
+use Color;
 
 #[derive(Default)]
 pub struct Patchwork {
@@ -40,12 +41,13 @@ impl Patchwork {
 
 #[derive(Default)]
 pub struct Patch {
-    cage: Cage
+    cage: Cage,
+    pub color: Color,
 }
 
 impl Patch {
-    pub fn from_dimensions(width: f32, height: f32, depth: f32) -> Self {
-        Patch { cage: Cage::from((0f32, width, 0f32, height, depth, depth)) }
+    pub fn new(width: f32, height: f32, depth: f32, color: Color) -> Self {
+        Patch { cage: Cage::from((0f32, width, 0f32, height, depth, depth)), color: color }
     }
     pub fn from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Self {
         let mut patch = Patch { ..Default::default() };
@@ -58,11 +60,11 @@ impl Patch {
         patch
     }
     pub fn as_trianglelist(&self) -> Vec<Vertex> {
-        let (left, right, bottom, top, _, _) = self.cage.limits();
-        let lt_vertex = Vertex { position: [left, top] };
-        let rt_vertex = Vertex { position: [right, top] };
-        let rb_vertex = Vertex { position: [right, bottom] };
-        let lb_vertex = Vertex { position: [left, bottom] };
+        let (left, right, bottom, top, far, _) = self.cage.limits();
+        let lt_vertex = Vertex { position: [left, top, -far] };
+        let rt_vertex = Vertex { position: [right, top, -far] };
+        let rb_vertex = Vertex { position: [right, bottom, -far] };
+        let lb_vertex = Vertex { position: [left, bottom, -far] };
         vec![lt_vertex, rt_vertex, lb_vertex, lb_vertex, rt_vertex, rb_vertex]
     }
     pub fn vertex_count() -> usize {
@@ -72,6 +74,6 @@ impl Patch {
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
-    position: [f32; 2],
+    position: [f32; 3],
 }
 implement_vertex!(Vertex, position);

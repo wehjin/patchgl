@@ -16,6 +16,8 @@ pub mod ix;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::thread;
 use std::marker::Send;
+use std::collections::HashMap;
+use rusttype::{Scale};
 use glium::glutin;
 use glium::{Surface};
 use glium::glutin::Event;
@@ -24,10 +26,21 @@ use glium::glutin::WindowProxy;
 use glium::glutin::WindowBuilder;
 use glium::backend::glutin_backend::WinRef;
 use glium::DisplayBuild;
-pub use model::Patch;
+pub use base::Color;
+use model::Patch;
 use renderer::PatchRenderer;
 use glyffin::QuipRenderer;
-use rusttype::{Scale};
+
+pub enum Sigil {
+    FilledRectangle(Color)
+}
+
+pub struct Block {
+    pub sigil: Sigil,
+    pub width: f32,
+    pub height: f32,
+    pub push: f32,
+}
 
 pub struct Quip {
     pub text: String,
@@ -36,7 +49,7 @@ pub struct Quip {
 }
 
 pub enum ScreenMessage {
-    DrawPatch(Patch),
+    AddBlock(u64, Block),
     WriteQuip(Quip),
     Close
 }
@@ -50,8 +63,8 @@ pub struct RemoteScreen {
 }
 
 impl RemoteScreen {
-    pub fn set_patch(&self, patch: Patch) {
-        self.sender.send(ScreenMessage::DrawPatch(patch)).unwrap();
+    pub fn add_block(&self, id: u64, block: Block) {
+        self.sender.send(ScreenMessage::AddBlock(id, block)).unwrap();
         self.window_proxy.wakeup_event_loop();
     }
     pub fn set_quip(&self, quip: Quip) {
@@ -119,15 +132,17 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
                                    Scale::uniform(24.0 * dpi_factor), width, &display);
 
-    let mut active_patch = Option::None;
+    let mut blocks = HashMap::<u64, Block>::new();
     let mut active_quip = Option::None::<Quip>;
 
     'draw: loop {
         let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
-        if let Some(ref patch) = active_patch {
-            patch_renderer.set_patch(patch);
+        for (_, block) in &blocks {
+            let Sigil::FilledRectangle(color) = block.sigil;
+            let patch = Patch::new(block.width, block.height, block.push, color);
+            patch_renderer.set_patch(&patch);
             patch_renderer.draw(&mut target);
         }
 
@@ -152,13 +167,11 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                             ScreenMessage::Close => {
                                 break 'draw
                             }
-                            ScreenMessage::DrawPatch(patch) => {
-                                println!("DrawPatch");
-                                active_patch = Option::Some(patch);
+                            ScreenMessage::AddBlock(id, block) => {
+                                blocks.insert(id, block);
                                 continue 'draw
                             }
                             ScreenMessage::WriteQuip(quip) => {
-                                println!("WriteQuip");
                                 active_quip = Option::Some(quip);
                                 continue 'draw
                             }
