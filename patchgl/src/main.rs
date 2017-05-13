@@ -16,13 +16,13 @@ fn main() {
             sigil: Sigil::FilledRectangle(Color::blue()),
             width: 320.0,
             height: 320.0,
-            push: 0.0
+            approach: 0.0
         });
         screen.add_block(2, Block {
             sigil: Sigil::FilledRectangle(Color::grey()),
             width: 80.0,
             height: 480.0,
-            push: -1.0
+            approach: 1.0
         });
         screen.set_quip(Quip {
             text: "I for one welcome our new robot overlords".to_string(),

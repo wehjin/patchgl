@@ -39,7 +39,7 @@ pub struct Block {
     pub sigil: Sigil,
     pub width: f32,
     pub height: f32,
-    pub push: f32,
+    pub approach: f32,
 }
 
 pub struct Quip {
@@ -141,7 +141,7 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
 
         for (_, block) in &blocks {
             let Sigil::FilledRectangle(color) = block.sigil;
-            let patch = Patch::new(block.width, block.height, block.push, color);
+            let patch = Patch::new(block.width, block.height, block.approach, color);
             patch_renderer.set_patch(&patch);
             patch_renderer.draw(&mut target);
         }

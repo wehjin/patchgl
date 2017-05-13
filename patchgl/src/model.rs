@@ -61,10 +61,10 @@ impl Patch {
     }
     pub fn as_trianglelist(&self) -> Vec<Vertex> {
         let (left, right, bottom, top, far, _) = self.cage.limits();
-        let lt_vertex = Vertex { position: [left, top, -far] };
-        let rt_vertex = Vertex { position: [right, top, -far] };
-        let rb_vertex = Vertex { position: [right, bottom, -far] };
-        let lb_vertex = Vertex { position: [left, bottom, -far] };
+        let lt_vertex = Vertex { position: [left, top, far] };
+        let rt_vertex = Vertex { position: [right, top, far] };
+        let rb_vertex = Vertex { position: [right, bottom, far] };
+        let lb_vertex = Vertex { position: [left, bottom, far] };
         vec![lt_vertex, rt_vertex, lb_vertex, lb_vertex, rt_vertex, rb_vertex]
     }
     pub fn vertex_count() -> usize {
