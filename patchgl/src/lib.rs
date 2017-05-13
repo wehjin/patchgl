@@ -24,12 +24,13 @@ use glium::glutin::WindowProxy;
 use glium::glutin::WindowBuilder;
 use glium::backend::glutin_backend::WinRef;
 use glium::DisplayBuild;
-use model::Patch;
+pub use model::Patch;
 use renderer::PatchRenderer;
 use glyffin::QuipRenderer;
 use rusttype::{Scale};
 
 pub enum ScreenMessage {
+    DrawPatch(Patch),
     Close
 }
 
@@ -42,9 +43,13 @@ pub struct RemoteScreen {
 }
 
 impl RemoteScreen {
+    pub fn draw(&self, patch: Patch) {
+        self.sender.send(ScreenMessage::DrawPatch(patch)).unwrap();
+        self.window_proxy.wakeup_event_loop();
+    }
     pub fn close(&self) {
         self.sender.send(ScreenMessage::Close).unwrap();
-        self.window_proxy.wakeup_event_loop()
+        self.window_proxy.wakeup_event_loop();
     }
 }
 
@@ -83,7 +88,6 @@ impl RemoteDirector {
     }
 }
 
-
 pub fn run<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
@@ -97,19 +101,22 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     let director = RemoteDirector::new(window.create_window_proxy(), on_start);
     let modelview = get_modelview(width, height, &display);
 
-    let patch = Patch::from_dimensions(width as f32, width as f32, 0f32);
     let mut patch_renderer = PatchRenderer::new(&display, modelview);
 
     let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, &display);
     quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
                                    Scale::uniform(24.0 * dpi_factor), width, &display);
 
+    let mut active_patch = Option::None;
     'draw: loop {
+        println!("Draw");
         let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
-        patch_renderer.set_patch(&patch);
-        patch_renderer.draw(&mut target);
+        if let Some(ref patch) = active_patch {
+            patch_renderer.set_patch(patch);
+            patch_renderer.draw(&mut target);
+        }
 
         quip_renderer.draw(&mut target);
         target.finish().unwrap();
@@ -120,8 +127,17 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                     break 'draw
                 }
                 Event::Awakened => {
-                    while let Some(ScreenMessage::Close) = director.receive_screen_message() {
-                        break 'draw
+                    while let Some(screen_message) = director.receive_screen_message() {
+                        match screen_message {
+                            ScreenMessage::Close => {
+                                break 'draw
+                            }
+                            ScreenMessage::DrawPatch(patch) => {
+                                println!("DrawPatch");
+                                active_patch = Option::Some(patch);
+                                continue 'draw
+                            }
+                        }
                     }
                 }
                 _ => continue 'draw
