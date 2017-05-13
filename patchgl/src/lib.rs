@@ -29,8 +29,15 @@ use renderer::PatchRenderer;
 use glyffin::QuipRenderer;
 use rusttype::{Scale};
 
+pub struct Quip {
+    pub text: String,
+    pub line_height: f32,
+    pub line_width_max: f32,
+}
+
 pub enum ScreenMessage {
     DrawPatch(Patch),
+    WriteQuip(Quip),
     Close
 }
 
@@ -43,10 +50,15 @@ pub struct RemoteScreen {
 }
 
 impl RemoteScreen {
-    pub fn draw(&self, patch: Patch) {
+    pub fn set_patch(&self, patch: Patch) {
         self.sender.send(ScreenMessage::DrawPatch(patch)).unwrap();
         self.window_proxy.wakeup_event_loop();
     }
+    pub fn set_quip(&self, quip: Quip) {
+        self.sender.send(ScreenMessage::WriteQuip(quip)).unwrap();
+        self.window_proxy.wakeup_event_loop();
+    }
+
     pub fn close(&self) {
         self.sender.send(ScreenMessage::Close).unwrap();
         self.window_proxy.wakeup_event_loop();
@@ -108,8 +120,9 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                                    Scale::uniform(24.0 * dpi_factor), width, &display);
 
     let mut active_patch = Option::None;
+    let mut active_quip = Option::None::<Quip>;
+
     'draw: loop {
-        println!("Draw");
         let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
@@ -118,7 +131,14 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
             patch_renderer.draw(&mut target);
         }
 
-        quip_renderer.draw(&mut target);
+        if let Some(ref quip) = active_quip {
+            quip_renderer.layout_paragraph(&quip.text,
+                                           Scale::uniform(quip.line_height * dpi_factor),
+                                           quip.line_width_max as u32,
+                                           &display);
+            quip_renderer.draw(&mut target);
+        }
+
         target.finish().unwrap();
 
         for ev in display.wait_events() {
@@ -137,10 +157,15 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                                 active_patch = Option::Some(patch);
                                 continue 'draw
                             }
+                            ScreenMessage::WriteQuip(quip) => {
+                                println!("WriteQuip");
+                                active_quip = Option::Some(quip);
+                                continue 'draw
+                            }
                         }
                     }
                 }
-                _ => continue 'draw
+                _ => ()
             }
         }
     }
