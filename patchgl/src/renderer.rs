@@ -9,7 +9,8 @@ pub struct PatchRenderer {
     pub vertex_buffer: glium::VertexBuffer<Vertex>,
     pub indices: glium::index::NoIndices,
     modelview: [[f32; 4]; 4],
-    color: [f32; 4]
+    color: [f32; 4],
+    draw_parameters: glium::DrawParameters<'static>
 }
 
 impl PatchRenderer {
@@ -23,6 +24,14 @@ impl PatchRenderer {
             indices: glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
             modelview: modelview,
             color: Color::white().to_gl(),
+            draw_parameters: glium::DrawParameters {
+                depth: glium::Depth {
+                    test: glium::DepthTest::IfLess,
+                    write: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            }
         }
     }
 

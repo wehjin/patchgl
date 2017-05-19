@@ -26,13 +26,30 @@ use glium::glutin::WindowProxy;
 use glium::glutin::WindowBuilder;
 use glium::backend::glutin_backend::WinRef;
 use glium::DisplayBuild;
-pub use base::Color;
+pub use base::{Color, WebColor};
 use model::Patch;
 use renderer::PatchRenderer;
 use glyffin::QuipRenderer;
 
 pub enum Sigil {
-    FilledRectangle(Color)
+    FilledRectangle(Color),
+    Paragraph { line_height: f32, text: String }
+}
+
+impl Default for Sigil {
+    fn default() -> Self {
+        Sigil::FilledRectangle(Color::from_web(WebColor::DeepPink))
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct Anchor {
+    pub x: f32,
+    pub y: f32
+}
+
+impl Anchor {
+    pub fn top_left() -> Self { Anchor { x: 0.0, y: 0.0 } }
 }
 
 pub struct Block {
@@ -40,17 +57,11 @@ pub struct Block {
     pub width: f32,
     pub height: f32,
     pub approach: f32,
-}
-
-pub struct Quip {
-    pub text: String,
-    pub line_height: f32,
-    pub line_width_max: f32,
+    pub anchor: Anchor,
 }
 
 pub enum ScreenMessage {
     AddBlock(u64, Block),
-    WriteQuip(Quip),
     Close
 }
 
@@ -67,11 +78,6 @@ impl RemoteScreen {
         self.sender.send(ScreenMessage::AddBlock(id, block)).unwrap();
         self.window_proxy.wakeup_event_loop();
     }
-    pub fn set_quip(&self, quip: Quip) {
-        self.sender.send(ScreenMessage::WriteQuip(quip)).unwrap();
-        self.window_proxy.wakeup_event_loop();
-    }
-
     pub fn close(&self) {
         self.sender.send(ScreenMessage::Close).unwrap();
         self.window_proxy.wakeup_event_loop();
@@ -117,6 +123,7 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let display = WindowBuilder::new().with_dimensions(width, height)
+                                      .with_depth_buffer(16)
                                       .with_title("PatchGl")
                                       .with_vsync()
                                       .build_glium().unwrap();
@@ -133,25 +140,26 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                                    Scale::uniform(24.0 * dpi_factor), width, &display);
 
     let mut blocks = HashMap::<u64, Block>::new();
-    let mut active_quip = Option::None::<Quip>;
 
     'draw: loop {
         let mut target = display.draw();
         target.clear_color(0.70, 0.80, 0.90, 1.0);
 
         for (_, block) in &blocks {
-            let Sigil::FilledRectangle(color) = block.sigil;
-            let patch = Patch::new(block.width, block.height, block.approach, color);
-            patch_renderer.set_patch(&patch);
-            patch_renderer.draw(&mut target);
-        }
-
-        if let Some(ref quip) = active_quip {
-            quip_renderer.layout_paragraph(&quip.text,
-                                           Scale::uniform(quip.line_height * dpi_factor),
-                                           quip.line_width_max as u32,
-                                           &display);
-            quip_renderer.draw(&mut target);
+            match block.sigil {
+                Sigil::FilledRectangle(color) => {
+                    let patch = Patch::new(block.width, block.height, block.approach, color);
+                    patch_renderer.set_patch(&patch);
+                    patch_renderer.draw(&mut target);
+                }
+                Sigil::Paragraph { line_height, ref text } => {
+                    quip_renderer.layout_paragraph(text,
+                                                   Scale::uniform(line_height * dpi_factor),
+                                                   block.width as u32,
+                                                   &display);
+                    quip_renderer.draw(&mut target);
+                }
+            }
         }
 
         target.finish().unwrap();
@@ -169,10 +177,6 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                             }
                             ScreenMessage::AddBlock(id, block) => {
                                 blocks.insert(id, block);
-                                continue 'draw
-                            }
-                            ScreenMessage::WriteQuip(quip) => {
-                                active_quip = Option::Some(quip);
                                 continue 'draw
                             }
                         }

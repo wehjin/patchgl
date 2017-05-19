@@ -1,3 +1,7 @@
+pub enum WebColor {
+    DeepPink
+}
+
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Color {
     a: f32,
@@ -19,6 +23,15 @@ impl Color {
     pub fn blue() -> Self { Color { a: 1.0, r: 0.0, g: 0.0, b: 1.0 } }
     pub fn new(a: f32, r: f32, g: f32, b: f32) -> Self {
         Color { a: a, r: r, g: g, b: b }
+    }
+    pub fn from_hexrgb(hex_r: u8, hex_g: u8, hex_b: u8) -> Self {
+        Color { a: 1.0, r: hex_r as f32 / 255.0, g: hex_g as f32 / 255.0, b: hex_b as f32 / 255.0 }
+    }
+
+    pub fn from_web(web_color: WebColor) -> Self {
+        match web_color {
+            WebColor::DeepPink => Color::from_hexrgb(0xff, 0x14, 0x93)
+        }
     }
 }
 

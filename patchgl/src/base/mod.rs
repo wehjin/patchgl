@@ -6,7 +6,7 @@ mod alignment;
 
 pub use self::sdf::*;
 pub use self::rectangle::*;
-pub use self::color::Color;
+pub use self::color::{Color, WebColor};
 pub use self::typeface::Typeface;
 pub use self::alignment::Alignment;
 

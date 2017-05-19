@@ -6,7 +6,7 @@ extern crate patchgllib;
 extern crate rusttype;
 extern crate arrayvec;
 
-use patchgllib::{run, RemoteScreen, Block, Quip, Sigil, Color};
+use patchgllib::{run, RemoteScreen, Block, Sigil, Anchor, Color};
 use std::thread;
 use std::time::Duration;
 
@@ -16,20 +16,24 @@ fn main() {
             sigil: Sigil::FilledRectangle(Color::blue()),
             width: 320.0,
             height: 320.0,
-            approach: 0.0
+            approach: 0.0,
+            anchor: Anchor::top_left()
         });
         screen.add_block(2, Block {
             sigil: Sigil::FilledRectangle(Color::grey()),
             width: 80.0,
             height: 480.0,
-            approach: 1.0
+            approach: -0.1,
+            anchor: Anchor::top_left()
         });
-        screen.set_quip(Quip {
-            text: "I for one welcome our new robot overlords".to_string(),
-            line_height: 24.0,
-            line_width_max: 320.0
+        screen.add_block(3, Block {
+            sigil: Sigil::Paragraph { line_height: 24.0, text: "I for one welcome our new robot overlords".to_string() },
+            width: 320.0,
+            height: 480.0,
+            approach: -0.2,
+            anchor: Anchor::top_left()
         });
-        thread::sleep(Duration::from_secs(10));
+        thread::sleep(Duration::from_secs(40));
         screen.close()
     });
 }
