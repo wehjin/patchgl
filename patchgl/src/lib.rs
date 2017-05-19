@@ -123,7 +123,7 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let display = WindowBuilder::new().with_dimensions(width, height)
-                                      .with_depth_buffer(16)
+                                      .with_depth_buffer(24)
                                       .with_title("PatchGl")
                                       .with_vsync()
                                       .build_glium().unwrap();
@@ -134,17 +134,12 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     let modelview = get_modelview(width, height, &display);
 
     let mut patch_renderer = PatchRenderer::new(&display, modelview);
-
     let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, &display);
-    quip_renderer.layout_paragraph("I for one welcome our new robot overlords",
-                                   Scale::uniform(24.0 * dpi_factor), width, &display);
-
     let mut blocks = HashMap::<u64, Block>::new();
 
     'draw: loop {
         let mut target = display.draw();
-        target.clear_color(0.70, 0.80, 0.90, 1.0);
-
+        target.clear_color_and_depth((0.70, 0.80, 0.90, 1.0), 1.0);
         for (_, block) in &blocks {
             match block.sigil {
                 Sigil::FilledRectangle(color) => {
@@ -152,13 +147,20 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                     patch_renderer.set_patch(&patch);
                     patch_renderer.draw(&mut target);
                 }
+                _ => ()
+            }
+        }
+        for (_, block) in &blocks {
+            match block.sigil {
                 Sigil::Paragraph { line_height, ref text } => {
                     quip_renderer.layout_paragraph(text,
                                                    Scale::uniform(line_height * dpi_factor),
                                                    block.width as u32,
+                                                   block.approach,
                                                    &display);
                     quip_renderer.draw(&mut target);
                 }
+                _ => ()
             }
         }
 

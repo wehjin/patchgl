@@ -6,7 +6,7 @@ use arrayvec;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
-    position: [f32; 2],
+    position: [f32; 3],
     tex_coords: [f32; 2],
     colour: [f32; 4]
 }
@@ -19,10 +19,11 @@ pub struct QuipRenderer<'a> {
     texture: glium::texture::Texture2d,
     modelview: [[f32; 4]; 4],
     vertex_buffer: glium::VertexBuffer<Vertex>,
+    draw_parameters: glium::DrawParameters<'static>
 }
 
 impl<'a> QuipRenderer<'a> {
-    pub fn layout_paragraph(&mut self, text: &str, scale: Scale, width: u32,
+    pub fn layout_paragraph(&mut self, text: &str, scale: Scale, width: u32, approach: f32,
                             display: &glium::backend::glutin_backend::GlutinFacade) {
         let glyphs = layout_paragraph(&self.font, scale, width, text);
         for glyph in &glyphs {
@@ -46,6 +47,7 @@ impl<'a> QuipRenderer<'a> {
         implement_vertex!(Vertex, position, tex_coords, colour);
         let colour = [0.0, 0.0, 0.0, 1.0];
         let origin = point(0.0, 0.0);
+        let z = -approach;
         let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
             if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
                 let gl_rect = Rect {
@@ -54,32 +56,32 @@ impl<'a> QuipRenderer<'a> {
                 };
                 arrayvec::ArrayVec::<[Vertex; 6]>::from([
                     Vertex {
-                        position: [gl_rect.min.x, gl_rect.max.y],
+                        position: [gl_rect.min.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.max.y],
                         colour: colour
                     },
                     Vertex {
-                        position: [gl_rect.min.x, gl_rect.min.y],
+                        position: [gl_rect.min.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.min.y],
                         colour: colour
                     },
                     Vertex {
-                        position: [gl_rect.max.x, gl_rect.min.y],
+                        position: [gl_rect.max.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.min.y],
                         colour: colour
                     },
                     Vertex {
-                        position: [gl_rect.max.x, gl_rect.min.y],
+                        position: [gl_rect.max.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.min.y],
                         colour: colour
                     },
                     Vertex {
-                        position: [gl_rect.max.x, gl_rect.max.y],
+                        position: [gl_rect.max.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.max.y],
                         colour: colour
                     },
                     Vertex {
-                        position: [gl_rect.min.x, gl_rect.max.y],
+                        position: [gl_rect.min.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.max.y],
                         colour: colour
                     }])
@@ -98,7 +100,7 @@ impl<'a> QuipRenderer<'a> {
                    glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
                    &self.program,
                    &uniforms,
-                   &glium::DrawParameters { blend: glium::Blend::alpha_blending(), ..Default::default() })
+                   &self.draw_parameters)
              .unwrap();
     }
 
@@ -126,7 +128,16 @@ impl<'a> QuipRenderer<'a> {
             cache_dimensions: (cache_width, cache_height),
             texture: texture,
             modelview: modelview,
-            vertex_buffer: glium::VertexBuffer::new(display, &[]).unwrap()
+            vertex_buffer: glium::VertexBuffer::new(display, &[]).unwrap(),
+            draw_parameters: glium::DrawParameters {
+                depth: glium::Depth {
+                    test: glium::DepthTest::IfLess,
+                    write: true,
+                    ..Default::default()
+                },
+                blend: glium::Blend::alpha_blending(),
+                ..Default::default()
+            }
         }
     }
 }
@@ -144,7 +155,7 @@ pub fn layout_paragraph<'a>(font: &'a Font, scale: Scale, width: u32, text: &str
                 '\r' => {
                     caret = point(0.0, caret.y + advance_height);
                 }
-                '\n' => {},
+                '\n' => {}
                 _ => {}
             }
             continue;

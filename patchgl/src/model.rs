@@ -47,7 +47,7 @@ pub struct Patch {
 
 impl Patch {
     pub fn new(width: f32, height: f32, approach: f32, color: Color) -> Self {
-        Patch { cage: Cage::from((0f32, width, 0f32, height, approach, approach)), color: color }
+        Patch { cage: Cage::from((0f32, width, 0f32, height, -approach, -approach)), color: color }
     }
     pub fn from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Self {
         let mut patch = Patch { ..Default::default() };
