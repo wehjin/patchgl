@@ -1,5 +1,22 @@
 pub enum WebColor {
-    DeepPink
+    Blue,
+    DeepPink,
+    Grey,
+    Green,
+    Red,
+}
+
+impl WebColor {
+    pub fn from_name(name: &str) -> Self {
+        match name {
+            "blue" => WebColor::Blue,
+            "green" => WebColor::Green,
+            "grey" => WebColor::Grey,
+            "deeppink" => WebColor::DeepPink,
+            "red" => WebColor::Red,
+            _ => WebColor::DeepPink,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -30,7 +47,11 @@ impl Color {
 
     pub fn from_web(web_color: WebColor) -> Self {
         match web_color {
-            WebColor::DeepPink => Color::from_hexrgb(0xff, 0x14, 0x93)
+            WebColor::Blue => Color::blue(),
+            WebColor::DeepPink => Color::from_hexrgb(0xff, 0x14, 0x93),
+            WebColor::Green => Color::green(),
+            WebColor::Grey => Color::grey(),
+            WebColor::Red => Color::red(),
         }
     }
 }

@@ -10,6 +10,7 @@ cage = { git = "https://github.com/wehjin/rust-cage" }
 rusttype = "0.2.1"
 unicode-normalization = "^0.1.2"
 arrayvec = "^0.3.13"
+yaml-rust = "*"
 
 [lib]
 name = "patchgllib"

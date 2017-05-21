@@ -1,0 +1,46 @@
+---
+message: add-block
+block-id: 1
+sigil:
+  type: "filled-rectangle"
+  color: blue
+width: 300.0
+height: 320.0
+approach: 0.00
+anchor: "top-left"
+...
+---
+message: add-block
+block-id: 2
+sigil:
+  type: "filled-rectangle"
+  color: grey
+width: 80.0
+height: 480.0
+approach: 0.02
+anchor: top-left
+...
+---
+message: add-block
+block-id: 3
+sigil:
+  type: paragraph
+  line-height: 24.0
+  text: "I for one welcome our new robot overlords"
+width: 320.0
+height: 480.0
+approach: 0.01
+anchor: top-left
+...
+---
+message: add-block
+block-id: 4
+sigil:
+  type: paragraph
+  line-height: 16.0
+  text: "all your base is belong to us"
+width: 80.0
+height: 480.0
+approach: 0.03
+anchor: top-left
+...
