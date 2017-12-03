@@ -12,14 +12,15 @@ pub mod renderer;
 pub mod glyffin;
 pub mod base;
 pub mod ix;
+mod sigil;
 
 use std::sync::mpsc::{Sender, Receiver, channel};
 use std::thread;
 use std::marker::Send;
 use std::collections::HashMap;
-use rusttype::{Scale};
+use rusttype::Scale;
 use glium::glutin;
-use glium::{Surface};
+use glium::Surface;
 use glium::glutin::Event;
 use glium::backend::glutin_backend::GlutinFacade;
 use glium::glutin::WindowProxy;
@@ -30,17 +31,7 @@ pub use base::{Color, WebColor};
 use model::Patch;
 use renderer::PatchRenderer;
 use glyffin::QuipRenderer;
-
-pub enum Sigil {
-    FilledRectangle(Color),
-    Paragraph { line_height: f32, text: String }
-}
-
-impl Default for Sigil {
-    fn default() -> Self {
-        Sigil::FilledRectangle(Color::from_web(WebColor::DeepPink))
-    }
-}
+pub use sigil::Sigil;
 
 #[derive(Clone, Copy)]
 pub struct Anchor {
@@ -123,10 +114,10 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let display = WindowBuilder::new().with_dimensions(width, height)
-                                      .with_depth_buffer(24)
-                                      .with_title("PatchGl")
-                                      .with_vsync()
-                                      .build_glium().unwrap();
+        .with_depth_buffer(24)
+        .with_title("PatchGl")
+        .with_vsync()
+        .build_glium().unwrap();
     let window: WinRef = display.get_window().unwrap();
     let dpi_factor = window.hidpi_factor();
 
