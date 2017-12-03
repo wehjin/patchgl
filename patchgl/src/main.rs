@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate glium;
 extern crate xml;
 extern crate cage;
@@ -21,24 +20,28 @@ enum Message {
 
 fn main() {
     run(320, 480, |screen: &RemoteScreen| {
-        let docs = YamlLoader::load_from_str(INPUT_STRING).unwrap();
-        for doc in &docs {
-            if let Some(message) = message_from_yaml(doc) {
-                match message {
-                    Message::AddBlock { id, block } => screen.add_block(id, block),
-                    Message::Close => {
-                        thread::sleep(Duration::from_secs(3));
-                        screen.close();
-                        return
-                    }
-                }
-            } else {
-                println!("Invalid message {:?}", doc)
-            }
-        }
+        parse_input(screen);
         thread::sleep(Duration::from_secs(40));
         screen.close()
     });
+}
+
+fn parse_input(screen: &RemoteScreen) {
+    let docs = YamlLoader::load_from_str(INPUT_STRING).unwrap();
+    for doc in &docs {
+        if let Some(message) = message_from_yaml(doc) {
+            match message {
+                Message::AddBlock { id, block } => screen.add_block(id, block),
+                Message::Close => {
+                    thread::sleep(Duration::from_secs(3));
+                    screen.close();
+                    return;
+                }
+            }
+        } else {
+            println!("Invalid message {:?}", doc)
+        }
+    }
 }
 
 
