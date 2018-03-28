@@ -1,8 +1,8 @@
-use model::{Vertex, Patch};
-use glium;
-use glium::backend::glutin_backend::GlutinFacade;
-use glium::Surface;
 use Color;
+use glium;
+use glium::backend::Facade;
+use glium::Surface;
+use model::{Patch, Vertex};
 
 pub struct PatchRenderer {
     pub program: glium::Program,
@@ -10,11 +10,11 @@ pub struct PatchRenderer {
     pub indices: glium::index::NoIndices,
     modelview: [[f32; 4]; 4],
     color: [f32; 4],
-    draw_parameters: glium::DrawParameters<'static>
+    draw_parameters: glium::DrawParameters<'static>,
 }
 
 impl PatchRenderer {
-    pub fn new(display: &GlutinFacade, modelview: [[f32; 4]; 4]) -> Self {
+    pub fn new<F: Facade>(display: &F, modelview: [[f32; 4]; 4]) -> Self {
         let vertex_shader_src = include_str!("shaders/patch_vertex_shader.glsl");
         let fragment_shader_src = include_str!("shaders/patch_fragment_shader.glsl");
         let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
@@ -31,7 +31,7 @@ impl PatchRenderer {
                     ..Default::default()
                 },
                 ..Default::default()
-            }
+            },
         }
     }
 

@@ -1,10 +1,24 @@
+extern crate arrayvec;
+extern crate cage;
 #[macro_use]
 extern crate glium;
-extern crate xml;
-extern crate cage;
 extern crate rusttype;
 extern crate unicode_normalization;
-extern crate arrayvec;
+extern crate xml;
+
+pub use base::{Color, WebColor};
+use glium::backend::Facade;
+use glium::glutin::{DeviceEvent, Event, EventsLoopProxy, KeyboardInput, VirtualKeyCode, WindowEvent};
+use glium::Surface;
+use glyffin::QuipRenderer;
+use model::Patch;
+use renderer::PatchRenderer;
+use rusttype::Scale;
+pub use sigil::Sigil;
+use std::collections::HashMap;
+use std::marker::Send;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::thread;
 
 pub mod parser;
 pub mod model;
@@ -14,29 +28,10 @@ pub mod base;
 pub mod ix;
 mod sigil;
 
-use std::sync::mpsc::{Sender, Receiver, channel};
-use std::thread;
-use std::marker::Send;
-use std::collections::HashMap;
-use rusttype::Scale;
-use glium::glutin;
-use glium::Surface;
-use glium::glutin::Event;
-use glium::backend::glutin_backend::GlutinFacade;
-use glium::glutin::WindowProxy;
-use glium::glutin::WindowBuilder;
-use glium::backend::glutin_backend::WinRef;
-use glium::DisplayBuild;
-pub use base::{Color, WebColor};
-use model::Patch;
-use renderer::PatchRenderer;
-use glyffin::QuipRenderer;
-pub use sigil::Sigil;
-
 #[derive(Clone, Copy)]
 pub struct Anchor {
     pub x: f32,
-    pub y: f32
+    pub y: f32,
 }
 
 impl Anchor {
@@ -53,48 +48,48 @@ pub struct Block {
 
 pub enum ScreenMessage {
     AddBlock(u64, Block),
-    Close
+    Close,
 }
 
 pub enum DirectorMessage {}
 
 pub struct RemoteScreen {
     sender: Sender<ScreenMessage>,
-    receiver: Receiver<DirectorMessage>,
-    window_proxy: glium::glutin::WindowProxy,
+    _receiver: Receiver<DirectorMessage>,
+    events_loop_proxy: glium::glutin::EventsLoopProxy,
 }
 
 impl RemoteScreen {
     pub fn add_block(&self, id: u64, block: Block) {
-        self.sender.send(ScreenMessage::AddBlock(id, block)).unwrap();
-        self.window_proxy.wakeup_event_loop();
+        self.sender.send(ScreenMessage::AddBlock(id, block)).expect("send add-block");
+        self.events_loop_proxy.wakeup().expect("wakeup after add-block");
     }
     pub fn close(&self) {
-        self.sender.send(ScreenMessage::Close).unwrap();
-        self.window_proxy.wakeup_event_loop();
+        self.sender.send(ScreenMessage::Close).expect("send close");
+        self.events_loop_proxy.wakeup().expect("wakeup after close");
     }
 }
 
 pub struct RemoteDirector {
-    sender: Sender<DirectorMessage>,
+    _sender: Sender<DirectorMessage>,
     receiver: Receiver<ScreenMessage>,
 }
 
 impl RemoteDirector {
-    pub fn new<F>(window_proxy: WindowProxy, on_start: F) -> Self
+    pub fn new<F>(events_loop_proxy: EventsLoopProxy, on_start: F) -> Self
         where F: Fn(&RemoteScreen) -> () + Send + 'static
     {
         let (send_to_screen, receive_from_director) = channel::<ScreenMessage>();
         let (send_to_director, receive_from_screen) = channel::<DirectorMessage>();
         let director = RemoteDirector {
-            sender: send_to_director,
+            _sender: send_to_director,
             receiver: receive_from_director,
         };
         thread::spawn(move || {
             let remote_screen = RemoteScreen {
                 sender: send_to_screen,
-                receiver: receive_from_screen,
-                window_proxy: window_proxy,
+                _receiver: receive_from_screen,
+                events_loop_proxy,
             };
             on_start(&remote_screen)
         });
@@ -113,22 +108,24 @@ impl RemoteDirector {
 pub fn run<F>(width: u32, height: u32, on_start: F)
     where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
-    let display = WindowBuilder::new().with_dimensions(width, height)
+    let mut events_loop = glium::glutin::EventsLoop::new();
+    let context_builder = glium::glutin::ContextBuilder::new()
         .with_depth_buffer(24)
-        .with_title("PatchGl")
-        .with_vsync()
-        .build_glium().unwrap();
-    let window: WinRef = display.get_window().unwrap();
-    let dpi_factor = window.hidpi_factor();
-
-    let director = RemoteDirector::new(window.create_window_proxy(), on_start);
+        .with_vsync(true);
+    let window_builder = glium::glutin::WindowBuilder::new()
+        .with_dimensions(width, height)
+        .with_title("PatchGl");
+    let display = glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
+    let dpi_factor = display.gl_window().hidpi_factor();
+    let director = RemoteDirector::new(events_loop.create_proxy(), on_start);
     let modelview = get_modelview(width, height, &display);
 
     let mut patch_renderer = PatchRenderer::new(&display, modelview);
     let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, &display);
     let mut blocks = HashMap::<u64, Block>::new();
 
-    'draw: loop {
+    let mut done = false;
+    while !done {
         let mut target = display.draw();
         target.clear_color_and_depth((0.70, 0.80, 0.90, 1.0), 1.0);
         for (_, block) in &blocks {
@@ -157,32 +154,38 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
 
         target.finish().unwrap();
 
-        for ev in display.wait_events() {
+        events_loop.poll_events(|ev| {
             match ev {
-                Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) | glutin::Event::Closed => {
-                    break 'draw
+                Event::DeviceEvent {
+                    event: DeviceEvent::Key(KeyboardInput {
+                                                virtual_keycode: Some(VirtualKeyCode::Escape),
+                                                ..
+                                            }),
+                    ..
+                }
+                | Event::WindowEvent { event: WindowEvent::Closed, .. } => {
+                    done = true;
                 }
                 Event::Awakened => {
                     while let Some(screen_message) = director.receive_screen_message() {
                         match screen_message {
                             ScreenMessage::Close => {
-                                break 'draw
+                                done = true;
                             }
                             ScreenMessage::AddBlock(id, block) => {
                                 blocks.insert(id, block);
-                                continue 'draw
                             }
                         }
                     }
                 }
                 _ => ()
             }
-        }
+        });
     }
 }
 
-fn get_modelview(screen_width: u32, screen_height: u32, display: &GlutinFacade) -> [[f32; 4]; 4] {
-    let (window_width, window_height) = display.get_framebuffer_dimensions();
+fn get_modelview<F: Facade>(screen_width: u32, screen_height: u32, display: &F) -> [[f32; 4]; 4] {
+    let (window_width, window_height) = display.get_context().get_framebuffer_dimensions();
     let screen_aspect = screen_width as f32 / screen_height as f32;
     let window_aspect = window_width as f32 / window_height as f32;
     let ndc_width = 2.0f32 * screen_aspect / window_aspect;

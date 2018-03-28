@@ -1,14 +1,15 @@
-use rusttype::{FontCollection, Font, Scale, Rect, point, vector, PositionedGlyph};
-use rusttype::gpu_cache::Cache;
-use glium;
-use std::borrow::Cow;
 use arrayvec;
+use glium;
+use glium::backend::Facade;
+use rusttype::{Font, FontCollection, point, PositionedGlyph, Rect, Scale, vector};
+use rusttype::gpu_cache::Cache;
+use std::borrow::Cow;
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
     position: [f32; 3],
     tex_coords: [f32; 2],
-    colour: [f32; 4]
+    colour: [f32; 4],
 }
 
 pub struct QuipRenderer<'a> {
@@ -19,12 +20,11 @@ pub struct QuipRenderer<'a> {
     texture: glium::texture::Texture2d,
     modelview: [[f32; 4]; 4],
     vertex_buffer: glium::VertexBuffer<Vertex>,
-    draw_parameters: glium::DrawParameters<'static>
+    draw_parameters: glium::DrawParameters<'static>,
 }
 
 impl<'a> QuipRenderer<'a> {
-    pub fn layout_paragraph(&mut self, text: &str, scale: Scale, width: u32, approach: f32,
-                            display: &glium::backend::glutin_backend::GlutinFacade) {
+    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, scale: Scale, width: u32, approach: f32, display: &F) {
         let glyphs = layout_paragraph(&self.font, scale, width, text);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
@@ -35,12 +35,12 @@ impl<'a> QuipRenderer<'a> {
                 left: rect.min.x,
                 bottom: rect.min.y,
                 width: rect.width(),
-                height: rect.height()
+                height: rect.height(),
             }, glium::texture::RawImage2d {
                 data: Cow::Borrowed(data),
                 width: rect.width(),
                 height: rect.height(),
-                format: glium::texture::ClientFormat::U8
+                format: glium::texture::ClientFormat::U8,
             });
         }).unwrap();
 
@@ -52,38 +52,38 @@ impl<'a> QuipRenderer<'a> {
             if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
                 let gl_rect = Rect {
                     min: origin + vector(screen_rect.min.x as f32, screen_rect.min.y as f32),
-                    max: origin + vector(screen_rect.max.x as f32, screen_rect.max.y as f32)
+                    max: origin + vector(screen_rect.max.x as f32, screen_rect.max.y as f32),
                 };
                 arrayvec::ArrayVec::<[Vertex; 6]>::from([
                     Vertex {
                         position: [gl_rect.min.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour: colour
+                        colour: colour,
                     },
                     Vertex {
                         position: [gl_rect.min.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.min.y],
-                        colour: colour
+                        colour: colour,
                     },
                     Vertex {
                         position: [gl_rect.max.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour: colour
+                        colour: colour,
                     },
                     Vertex {
                         position: [gl_rect.max.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour: colour
+                        colour: colour,
                     },
                     Vertex {
                         position: [gl_rect.max.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.max.y],
-                        colour: colour
+                        colour: colour,
                     },
                     Vertex {
                         position: [gl_rect.min.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour: colour
+                        colour: colour,
                     }])
             } else {
                 arrayvec::ArrayVec::new()
@@ -104,9 +104,7 @@ impl<'a> QuipRenderer<'a> {
              .unwrap();
     }
 
-    pub fn new(cache_dpi_factor: f32,
-               modelview: [[f32; 4]; 4],
-               display: &glium::backend::glutin_backend::GlutinFacade) -> Self {
+    pub fn new<F: Facade>(cache_dpi_factor: f32, modelview: [[f32; 4]; 4], display: &F) -> Self {
         let (vertex_shader, fragment_shader) = (include_str!("quip_vertex_shader.glsl"),
                                                 include_str!("quip_fragment_shader.glsl"));
         let program = program!(display, 140 => {vertex: vertex_shader, fragment: fragment_shader}).unwrap();
@@ -117,7 +115,7 @@ impl<'a> QuipRenderer<'a> {
                 data: Cow::Owned(vec![128u8; cache_width as usize * cache_height as usize]),
                 width: cache_width,
                 height: cache_height,
-                format: glium::texture::ClientFormat::U8
+                format: glium::texture::ClientFormat::U8,
             },
             glium::texture::UncompressedFloatFormat::U8,
             glium::texture::MipmapsOption::NoMipmap).unwrap();
@@ -137,7 +135,7 @@ impl<'a> QuipRenderer<'a> {
                 },
                 blend: glium::Blend::alpha_blending(),
                 ..Default::default()
-            }
+            },
         }
     }
 }

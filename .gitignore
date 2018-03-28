@@ -2,8 +2,10 @@
 .sconsign.dblite
 build/
 .gradle/
-.idea/workspace.xml
+.idea/
 *.iml
 *~
 mix.lock
-.idea/mix.xml
+*.swp
+target/
+.idea/

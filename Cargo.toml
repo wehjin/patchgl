@@ -4,13 +4,13 @@ version = "0.1.0"
 authors = ["Jeffrey Yu <wehjin@gmail.com>"]
 
 [dependencies]
-glium = "*"
+glium = "0.20.0"
 xml-rs = "0.3"
 cage = { git = "https://github.com/wehjin/rust-cage" }
 rusttype = "0.2.1"
 unicode-normalization = "^0.1.2"
 arrayvec = "^0.3.13"
-yaml-rust = "*"
+yaml-rust = "0.4"
 
 [lib]
 name = "patchgllib"
