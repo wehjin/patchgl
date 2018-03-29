@@ -155,15 +155,22 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     let director = RemoteDirector::new(events_loop.create_proxy(), on_start);
     draw(&blocks);
     events_loop.run_forever(|ev| {
+        println!("{:?}", ev);
         match ev {
-            Event::WindowEvent { event: WindowEvent::Closed, .. }
-            | Event::WindowEvent {
-                event: WindowEvent::KeyboardInput {
-                    input: KeyboardInput {
-                        virtual_keycode: Some(VirtualKeyCode::Escape), ..
-                    }, ..
-                }, ..
-            } => ControlFlow::Break,
+            Event::WindowEvent { event, .. } => {
+                match event {
+                    WindowEvent::Closed | WindowEvent::KeyboardInput {
+                        input: KeyboardInput {
+                            virtual_keycode: Some(VirtualKeyCode::Escape), ..
+                        }, ..
+                    } => ControlFlow::Break,
+                    WindowEvent::Resized(_, _) | WindowEvent::Refresh => {
+                        draw(&blocks);
+                        ControlFlow::Continue
+                    }
+                    _ => ControlFlow::Continue
+                }
+            }
             Event::Awakened => {
                 match update_screen(&director, &mut blocks) {
                     ScreenStatus::Unchanged => ControlFlow::Continue,

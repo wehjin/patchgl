@@ -11,7 +11,7 @@ use std::thread;
 use std::time::Duration;
 use yaml_rust::{Yaml, YamlLoader};
 
-static INPUT_STRING: &'static str = include_str!("example.yaml");
+static STR_YAML: &'static str = include_str!("example.yaml");
 
 enum Message {
     AddBlock { id: u64, block: Block },
@@ -20,14 +20,14 @@ enum Message {
 
 fn main() {
     run(320, 480, |screen: &RemoteScreen| {
-        parse_input(screen);
+        init_screen_with_yaml(screen, STR_YAML);
         thread::sleep(Duration::from_secs(40));
         screen.close()
     });
 }
 
-fn parse_input(screen: &RemoteScreen) {
-    let docs = YamlLoader::load_from_str(INPUT_STRING).unwrap();
+fn init_screen_with_yaml(screen: &RemoteScreen, str_yaml: &str) {
+    let docs = YamlLoader::load_from_str(str_yaml).unwrap();
     for doc in &docs {
         if let Some(message) = message_from_yaml(doc) {
             match message {
@@ -43,7 +43,6 @@ fn parse_input(screen: &RemoteScreen) {
         }
     }
 }
-
 
 fn sigil_from_yaml(doc: &Yaml) -> Sigil {
     match doc["type"].as_str().unwrap() {
