@@ -7,26 +7,28 @@ extern crate unicode_normalization;
 extern crate xml;
 
 pub use base::{Color, WebColor};
+pub use directors::*;
 use glium::backend::Facade;
-use glium::glutin::{ControlFlow, Event, EventsLoopProxy, KeyboardInput, VirtualKeyCode, WindowEvent};
+use glium::glutin::{ControlFlow, Event, KeyboardInput, VirtualKeyCode, WindowEvent};
 use glium::Surface;
 use glyffin::QuipRenderer;
 use model::Patch;
 use renderer::PatchRenderer;
 use rusttype::Scale;
+pub use screens::*;
 pub use sigil::Sigil;
 use std::collections::HashMap;
 use std::marker::Send;
-use std::sync::mpsc::{channel, Receiver, Sender};
-use std::thread;
 
-pub mod parser;
 pub mod model;
 pub mod renderer;
 pub mod glyffin;
 pub mod base;
 pub mod ix;
 mod sigil;
+mod screens;
+mod directors;
+pub mod parser;
 
 #[derive(Clone, Copy)]
 pub struct Anchor {
@@ -53,60 +55,7 @@ pub enum ScreenMessage {
 
 pub enum DirectorMessage {}
 
-pub struct RemoteScreen {
-    sender: Sender<ScreenMessage>,
-    _receiver: Receiver<DirectorMessage>,
-    events_loop_proxy: glium::glutin::EventsLoopProxy,
-}
-
-impl RemoteScreen {
-    pub fn add_block(&self, id: u64, block: Block) {
-        self.sender.send(ScreenMessage::AddBlock(id, block)).expect("send add-block");
-        self.events_loop_proxy.wakeup().expect("wakeup after add-block");
-    }
-    pub fn close(&self) {
-        self.sender.send(ScreenMessage::Close).expect("send close");
-        self.events_loop_proxy.wakeup().expect("wakeup after close");
-    }
-}
-
-pub struct RemoteDirector {
-    _sender: Sender<DirectorMessage>,
-    receiver: Receiver<ScreenMessage>,
-}
-
-impl RemoteDirector {
-    pub fn new<F>(events_loop_proxy: EventsLoopProxy, on_start: F) -> Self
-        where F: Fn(&RemoteScreen) -> () + Send + 'static
-    {
-        let (send_to_screen, receive_from_director) = channel::<ScreenMessage>();
-        let (send_to_director, receive_from_screen) = channel::<DirectorMessage>();
-        let director = RemoteDirector {
-            _sender: send_to_director,
-            receiver: receive_from_director,
-        };
-        thread::spawn(move || {
-            let remote_screen = RemoteScreen {
-                sender: send_to_screen,
-                _receiver: receive_from_screen,
-                events_loop_proxy,
-            };
-            on_start(&remote_screen)
-        });
-        director
-    }
-    pub fn receive_screen_message(&self) -> Option<ScreenMessage> {
-        let result = self.receiver.try_recv();
-        if result.is_ok() {
-            Option::Some(result.unwrap())
-        } else {
-            Option::None
-        }
-    }
-}
-
-pub fn run<F>(width: u32, height: u32, on_start: F)
-    where F: Fn(&RemoteScreen) -> () + Send + 'static
+pub fn open_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let mut events_loop = glium::glutin::EventsLoop::new();
     let context_builder = glium::glutin::ContextBuilder::new()
@@ -152,7 +101,7 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
         target.finish().unwrap();
     };
 
-    let director = RemoteDirector::new(events_loop.create_proxy(), on_start);
+    let director = RemoteDirector::connect(events_loop.create_proxy(), on_screen_ready);
     draw(&blocks);
     events_loop.run_forever(|ev| {
         println!("{:?}", ev);
