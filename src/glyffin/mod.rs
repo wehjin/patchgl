@@ -24,6 +24,10 @@ pub struct QuipRenderer<'a> {
 }
 
 impl<'a> QuipRenderer<'a> {
+    pub fn set_modelview(&mut self, modelview: [[f32; 4]; 4]) {
+        self.modelview = modelview;
+    }
+
     pub fn layout_paragraph<F: Facade>(&mut self, text: &str, scale: Scale, width: u32, approach: f32, display: &F) {
         let glyphs = layout_paragraph(&self.font, scale, width, text);
         for glyph in &glyphs {

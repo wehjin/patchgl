@@ -35,6 +35,10 @@ impl PatchRenderer {
         }
     }
 
+    pub fn set_modelview(&mut self, modelview: [[f32; 4]; 4]) {
+        self.modelview = modelview;
+    }
+
     pub fn set_patch(&mut self, patch: &Patch) {
         self.vertex_buffer.write(&patch.as_trianglelist());
         self.color = patch.color.to_gl();

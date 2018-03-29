@@ -55,56 +55,56 @@ pub enum ScreenMessage {
 
 pub enum DirectorMessage {}
 
-pub fn open_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(&RemoteScreen) -> () + Send + 'static
+pub fn open_screen<F>(start_width: u32, start_height: u32, on_screen_ready: F) where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let mut events_loop = glium::glutin::EventsLoop::new();
     let context_builder = glium::glutin::ContextBuilder::new()
         .with_depth_buffer(24)
         .with_vsync(true);
     let window_builder = glium::glutin::WindowBuilder::new()
-        .with_dimensions(width, height)
-        .with_title("PatchGl");
+        .with_dimensions(start_width, start_height)
+        .with_title("PatchGL");
     let display = &glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
     let dpi_factor = display.gl_window().hidpi_factor();
-    let modelview = get_modelview(width, height, display);
-
-    let mut patch_renderer = PatchRenderer::new(display, modelview);
-    let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, display);
     let mut blocks = HashMap::<u64, Block>::new();
 
-    let mut draw = |blocks: &HashMap<u64, Block>| {
-        let mut target = display.draw();
-        target.clear_color_and_depth((0.70, 0.80, 0.90, 1.0), 1.0);
-        blocks.iter().for_each(|(_, block)| {
-            match block.sigil {
-                Sigil::FilledRectangle(color) => {
-                    let patch = Patch::new(block.width, block.height, block.approach, color);
-                    patch_renderer.set_patch(&patch);
-                    patch_renderer.draw(&mut target);
+    let modelview = get_modelview(start_width, start_height, display);
+    let mut patch_renderer = PatchRenderer::new(display, modelview);
+    let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, display);
+
+    let draw =
+        |blocks: &HashMap<u64, Block>, patch_renderer: &mut PatchRenderer, quip_renderer: &mut QuipRenderer| {
+            let mut target = display.draw();
+            target.clear_color_and_depth((0.70, 0.80, 0.90, 1.0), 1.0);
+            blocks.iter().for_each(|(_, block)| {
+                match block.sigil {
+                    Sigil::FilledRectangle(color) => {
+                        let patch = Patch::new(block.width, block.height, block.approach, color);
+                        patch_renderer.set_patch(&patch);
+                        patch_renderer.draw(&mut target);
+                    }
+                    _ => ()
                 }
-                _ => ()
-            }
-        });
-        blocks.iter().for_each(|(_, block)| {
-            match block.sigil {
-                Sigil::Paragraph { line_height, ref text } => {
-                    quip_renderer.layout_paragraph(text,
-                                                   Scale::uniform(line_height * dpi_factor),
-                                                   block.width as u32,
-                                                   block.approach,
-                                                   display);
-                    quip_renderer.draw(&mut target);
+            });
+            blocks.iter().for_each(|(_, block)| {
+                match block.sigil {
+                    Sigil::Paragraph { line_height, ref text } => {
+                        quip_renderer.layout_paragraph(text,
+                                                       Scale::uniform(line_height * dpi_factor),
+                                                       block.width as u32,
+                                                       block.approach,
+                                                       display);
+                        quip_renderer.draw(&mut target);
+                    }
+                    _ => ()
                 }
-                _ => ()
-            }
-        });
-        target.finish().unwrap();
-    };
+            });
+            target.finish().unwrap();
+        };
 
     let director = RemoteDirector::connect(events_loop.create_proxy(), on_screen_ready);
-    draw(&blocks);
+    draw(&blocks, &mut patch_renderer, &mut quip_renderer);
     events_loop.run_forever(|ev| {
-        println!("{:?}", ev);
         match ev {
             Event::WindowEvent { event, .. } => {
                 match event {
@@ -113,8 +113,15 @@ pub fn open_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(&
                             virtual_keycode: Some(VirtualKeyCode::Escape), ..
                         }, ..
                     } => ControlFlow::Break,
-                    WindowEvent::Resized(_, _) | WindowEvent::Refresh => {
-                        draw(&blocks);
+                    WindowEvent::Resized(width, height) => {
+                        let modelview = get_modelview(width, height, display);
+                        patch_renderer.set_modelview(modelview);
+                        quip_renderer.set_modelview(modelview);
+                        draw(&blocks, &mut patch_renderer, &mut quip_renderer);
+                        ControlFlow::Continue
+                    }
+                    WindowEvent::Refresh => {
+                        draw(&blocks, &mut patch_renderer, &mut quip_renderer);
                         ControlFlow::Continue
                     }
                     _ => ControlFlow::Continue
@@ -124,7 +131,7 @@ pub fn open_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(&
                 match update_screen(&director, &mut blocks) {
                     ScreenStatus::Unchanged => ControlFlow::Continue,
                     ScreenStatus::DidChange => {
-                        draw(&blocks);
+                        draw(&blocks, &mut patch_renderer, &mut quip_renderer);
                         ControlFlow::Continue
                     }
                     ScreenStatus::WillClose => ControlFlow::Break,
