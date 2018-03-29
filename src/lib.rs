@@ -19,6 +19,7 @@ pub mod glyffin;
 pub mod base;
 pub mod ix;
 pub mod parser;
+pub mod director;
 mod sigil;
 mod local_screen;
 mod anchor;
@@ -26,15 +27,8 @@ mod block;
 
 
 #[derive(Debug)]
-pub struct Screen {
-    pub msg_sender: Sender<ScreenMsg>,
-    pub width: u32,
-    pub height: u32,
-}
-
-#[derive(Debug)]
 pub enum DirectorMsg {
-    ScreenReady(Screen),
+    ScreenReady(Sender<ScreenMsg>),
     ScreenResized(u32, u32),
     ScreenClosed,
 }
@@ -48,6 +42,6 @@ pub enum ScreenMsg {
 
 pub fn create_screen(width: u32, height: u32, director_msg_sender: Sender<DirectorMsg>) {
     let (screen_msg_sender, screen_msg_receiver) = channel::<ScreenMsg>();
-    director_msg_sender.send(DirectorMsg::ScreenReady(Screen { msg_sender: screen_msg_sender, width, height })).unwrap();
+    director_msg_sender.send(DirectorMsg::ScreenReady(screen_msg_sender)).unwrap();
     LocalScreen::start(width, height, director_msg_sender, screen_msg_receiver);
 }

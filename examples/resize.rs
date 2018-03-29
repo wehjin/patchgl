@@ -4,55 +4,42 @@ extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 
-use patchgl::{DirectorMsg, Screen, ScreenMsg};
+use patchgl::{DirectorMsg, ScreenMsg};
 use patchgl::{Block, Color, Sigil, WebColor};
-use std::sync::mpsc::channel;
-use std::thread;
+use patchgl::director;
+use std::sync::mpsc::Sender;
 
 fn main() {
-    let (director_msg_sender, director_msg_receiver) = channel::<DirectorMsg>();
-
-    let width = 320;
-    let height = 400;
-
-    thread::spawn(move || {
-        let mut opt_screen: Option<Screen> = None;
-        while let None = opt_screen {
-            if let Ok(DirectorMsg::ScreenReady(new_screen)) = director_msg_receiver.recv() {
-                opt_screen = Some(new_screen);
+    let (width, height) = (320, 400);
+    let director = director::spawn((width, height, None), |msg, carry| {
+        match msg {
+            DirectorMsg::ScreenReady(new_sender) => {
+                let (width, height, _) = carry;
+                send_block_to_screen(width, height, &new_sender);
+                ((width, height, Some(new_sender)), director::ScanFlow::Continue)
             }
-        }
-
-        let mut screen = opt_screen.unwrap();
-        send_scene_to_screen(&screen);
-
-        let mut done = false;
-        while !done {
-            if let Ok(director_msg) = director_msg_receiver.recv() {
-                match director_msg {
-                    DirectorMsg::ScreenReady(_) => panic!("Duplicate ScreenReady"),
-                    DirectorMsg::ScreenResized(new_width, new_height) => {
-                        screen.width = new_width;
-                        screen.height = new_height;
-                        send_scene_to_screen(&screen);
-                    }
-                    DirectorMsg::ScreenClosed => {
-                        done = true;
-                    }
+            DirectorMsg::ScreenResized(new_width, new_height) => {
+                let (_, _, sender) = carry;
+                if let Some(ref sender) = sender {
+                    send_block_to_screen(new_width, new_height, &sender);
                 }
+                ((new_width, new_height, sender), director::ScanFlow::Continue)
+            }
+            DirectorMsg::ScreenClosed => {
+                ((0, 0, None), director::ScanFlow::Break)
             }
         }
     });
-    patchgl::create_screen(width, height, director_msg_sender);
+    patchgl::create_screen(width, height, director);
 }
 
-fn send_scene_to_screen(screen: &Screen) {
+fn send_block_to_screen(width: u32, height: u32, sender: &Sender<ScreenMsg>) {
     let block = Block {
         sigil: Sigil::Color(Color::from_web(WebColor::Blue)),
-        width: screen.width as f32,
-        height: screen.height as f32,
+        width: width as f32,
+        height: height as f32,
         ..Default::default()
     };
-    screen.msg_sender.send(ScreenMsg::AddBlock(1, block)).unwrap();
+    sender.send(ScreenMsg::AddBlock(1, block)).unwrap();
 }
 
