@@ -24,7 +24,7 @@ pub struct Color {
     a: f32,
     r: f32,
     g: f32,
-    b: f32
+    b: f32,
 }
 
 impl Color {

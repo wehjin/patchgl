@@ -50,22 +50,6 @@ fn init_screen_with_yaml(screen: &mut RemoteScreen, str_yaml: &str) {
     }
 }
 
-fn sigil_from_yaml(doc: &Yaml) -> Sigil {
-    match doc["type"].as_str().unwrap() {
-        "filled-rectangle" => {
-            let web_color = WebColor::from_name(doc["color"].as_str().unwrap());
-            Sigil::FilledRectangle(Color::from_web(web_color))
-        }
-        "paragraph" => {
-            Sigil::Paragraph {
-                line_height: doc["line-height"].as_f64().unwrap() as f32,
-                text: doc["text"].as_str().unwrap().to_string(),
-            }
-        }
-        _ => Sigil::FilledRectangle(Color::from_web(WebColor::DeepPink))
-    }
-}
-
 fn message_from_yaml(doc: &Yaml) -> Option<Message> {
     match doc["message"].as_str().unwrap() {
         "close" => Option::Some(Message::Close),
@@ -83,5 +67,21 @@ fn message_from_yaml(doc: &Yaml) -> Option<Message> {
             },
         }),
         _ => Option::None
+    }
+}
+
+fn sigil_from_yaml(doc: &Yaml) -> Sigil {
+    match doc["type"].as_str().unwrap() {
+        "filled-rectangle" => {
+            let web_color = WebColor::from_name(doc["color"].as_str().unwrap());
+            Sigil::FilledRectangle(Color::from_web(web_color))
+        }
+        "paragraph" => {
+            Sigil::Paragraph {
+                line_height: doc["line-height"].as_f64().unwrap() as f32,
+                text: doc["text"].as_str().unwrap().to_string(),
+            }
+        }
+        _ => Sigil::FilledRectangle(Color::from_web(WebColor::DeepPink))
     }
 }

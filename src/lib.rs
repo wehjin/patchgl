@@ -6,7 +6,10 @@ extern crate rusttype;
 extern crate unicode_normalization;
 extern crate xml;
 
+
+pub use anchor::Anchor;
 pub use base::{Color, WebColor};
+pub use block::Block;
 use local_screen::LocalScreen;
 pub use remote_director::RemoteDirector;
 pub use remote_screen::RemoteScreen;
@@ -24,24 +27,8 @@ mod sigil;
 mod remote_screen;
 mod remote_director;
 mod local_screen;
-
-#[derive(Clone, Copy)]
-pub struct Anchor {
-    pub x: f32,
-    pub y: f32,
-}
-
-impl Anchor {
-    pub fn top_left() -> Self { Anchor { x: 0.0, y: 0.0 } }
-}
-
-pub struct Block {
-    pub sigil: Sigil,
-    pub width: f32,
-    pub height: f32,
-    pub approach: f32,
-    pub anchor: Anchor,
-}
+mod anchor;
+mod block;
 
 pub enum ScreenMessage {
     AddBlock(u64, Block),
