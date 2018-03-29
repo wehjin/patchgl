@@ -6,7 +6,7 @@ extern crate rusttype;
 extern crate xml;
 extern crate yaml_rust;
 
-use patchgllib::{Anchor, Block, Color, open_screen, RemoteScreen, Sigil, WebColor};
+use patchgllib::{Anchor, Block, Color, start_screen, RemoteScreen, Sigil, WebColor};
 use std::thread;
 use std::time::Duration;
 use yaml_rust::{Yaml, YamlLoader};
@@ -19,7 +19,7 @@ enum Message {
 }
 
 fn main() {
-    open_screen(320, 480, |screen: &RemoteScreen| {
+    start_screen(320, 480, |screen: &RemoteScreen| {
         init_screen_with_yaml(screen, STR_YAML);
         thread::sleep(Duration::from_secs(40));
         screen.close()
