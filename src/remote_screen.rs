@@ -1,20 +1,24 @@
-use glium::glutin::EventsLoopProxy;
 use std::sync::mpsc::{Receiver, Sender};
-use super::{Block, DirectorMessage, ScreenMessage};
+use super::{DirectorMessage, ScreenMessage};
 
 pub struct RemoteScreen {
-    pub sender: Sender<ScreenMessage>,
-    pub _receiver: Receiver<DirectorMessage>,
-    pub events_loop_proxy: EventsLoopProxy,
+    sender: Sender<ScreenMessage>,
+    _receiver: Receiver<DirectorMessage>,
 }
 
 impl RemoteScreen {
-    pub fn add_block(&self, id: u64, block: Block) {
-        self.sender.send(ScreenMessage::AddBlock(id, block)).expect("send add-block");
-        self.events_loop_proxy.wakeup().expect("wakeup after add-block");
+    pub fn new(sender: Sender<ScreenMessage>, receiver: Receiver<DirectorMessage>) -> Self {
+        RemoteScreen { sender, _receiver: receiver }
     }
-    pub fn close(&self) {
-        self.sender.send(ScreenMessage::Close).expect("send close");
-        self.events_loop_proxy.wakeup().expect("wakeup after close");
+
+    pub fn update(&mut self, screen_message: ScreenMessage) {
+        match screen_message {
+            ScreenMessage::AddBlock(id, block) => {
+                self.sender.send(ScreenMessage::AddBlock(id, block)).expect("send add-block");
+            }
+            ScreenMessage::Close => {
+                self.sender.send(ScreenMessage::Close).expect("send close");
+            }
+        }
     }
 }

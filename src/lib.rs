@@ -7,13 +7,12 @@ extern crate unicode_normalization;
 extern crate xml;
 
 pub use base::{Color, WebColor};
-use glium::glutin::{ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowEvent};
 use local_screen::LocalScreen;
-pub use remote_director::*;
-pub use remote_screen::*;
+pub use remote_director::RemoteDirector;
+pub use remote_screen::RemoteScreen;
 pub use sigil::Sigil;
 use std::marker::Send;
-
+use std::sync::mpsc;
 
 pub mod model;
 pub mod renderer;
@@ -51,76 +50,23 @@ pub enum ScreenMessage {
 
 pub enum DirectorMessage {}
 
-pub fn start_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(&RemoteScreen) -> () + Send + 'static
-{
-    let mut events_loop = EventsLoop::new();
-    let mut screen = LocalScreen::new(width, height, &events_loop);
-    let events_loop_proxy = events_loop.create_proxy();
-    let director = RemoteDirector::connect(events_loop_proxy, on_screen_ready);
-    events_loop.run_forever(|ev| {
-        match ev {
-            Event::WindowEvent { event, .. } => {
-                match event {
-                    WindowEvent::Closed | WindowEvent::KeyboardInput {
-                        input: KeyboardInput { virtual_keycode: Some(VirtualKeyCode::Escape), .. }, ..
-                    } => {
-                        ControlFlow::Break
-                    }
-                    WindowEvent::Resized(width, height) => {
-                        screen.resize(width, height);
-                        ControlFlow::Continue
-                    }
-                    WindowEvent::Refresh => {
-                        screen.draw();
-                        ControlFlow::Continue
-                    }
-                    _ => {
-                        ControlFlow::Continue
-                    }
-                }
-            }
-            Event::Awakened => {
-                while let Some(screen_message) = director.receive_screen_message() {
-                    screen.update(screen_message);
-                }
-                match screen.status() {
-                    ScreenStatus::Unchanged => ControlFlow::Continue,
-                    ScreenStatus::Changed => {
-                        screen.draw();
-                        ControlFlow::Continue
-                    }
-                    ScreenStatus::WillClose => ControlFlow::Break,
-                }
-            }
-            _ => ControlFlow::Continue
-        }
+pub trait ScreenRunner {
+    fn on_screen_ready(&mut self, screen: RemoteScreen);
+}
+
+pub fn create_screen<T: ScreenRunner + Send + 'static>(width: u32, height: u32, screen_runner: T) {
+    let (screen_message_sender, screen_message_receiver) = mpsc::channel::<ScreenMessage>();
+    let (director_message_sender, director_message_receiver) = mpsc::channel::<DirectorMessage>();
+    std::thread::spawn(move || {
+        let mut screen_runner = screen_runner;
+        screen_runner.on_screen_ready(RemoteScreen::new(screen_message_sender, director_message_receiver));
     });
+
+    let remote_director = RemoteDirector {
+        _director_message_sender: director_message_sender,
+        screen_message_receiver,
+    };
+    LocalScreen::start(width, height, remote_director);
 }
 
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum ScreenStatus {
-    Unchanged,
-    Changed,
-    WillClose,
-}
-
-impl ScreenStatus {
-    fn will_close(&self) -> Self {
-        ScreenStatus::WillClose
-    }
-    fn did_change(&self) -> Self {
-        if *self == ScreenStatus::WillClose {
-            ScreenStatus::WillClose
-        } else {
-            ScreenStatus::Changed
-        }
-    }
-    fn did_draw(&self) -> Self {
-        if *self == ScreenStatus::WillClose {
-            ScreenStatus::WillClose
-        } else {
-            ScreenStatus::Unchanged
-        }
-    }
-}

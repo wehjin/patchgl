@@ -6,7 +6,7 @@ extern crate rusttype;
 extern crate xml;
 extern crate yaml_rust;
 
-use patchgllib::{Anchor, Block, Color, start_screen, RemoteScreen, Sigil, WebColor};
+use patchgllib::{Anchor, Block, Color, create_screen, RemoteScreen, ScreenRunner, ScreenMessage, Sigil, WebColor};
 use std::thread;
 use std::time::Duration;
 use yaml_rust::{Yaml, YamlLoader};
@@ -18,23 +18,29 @@ enum Message {
     Close,
 }
 
+
 fn main() {
-    start_screen(320, 480, |screen: &RemoteScreen| {
-        init_screen_with_yaml(screen, STR_YAML);
-        thread::sleep(Duration::from_secs(40));
-        screen.close()
-    });
+    struct MainDirector {};
+    impl ScreenRunner for MainDirector {
+        fn on_screen_ready(&mut self, screen: RemoteScreen) {
+            let mut screen = screen;
+            init_screen_with_yaml(&mut screen, STR_YAML);
+            thread::sleep(Duration::from_secs(40));
+            screen.update(ScreenMessage::Close)
+        }
+    }
+    create_screen(320, 480, MainDirector {});
 }
 
-fn init_screen_with_yaml(screen: &RemoteScreen, str_yaml: &str) {
+fn init_screen_with_yaml(screen: &mut RemoteScreen, str_yaml: &str) {
     let docs = YamlLoader::load_from_str(str_yaml).unwrap();
     for doc in &docs {
         if let Some(message) = message_from_yaml(doc) {
             match message {
-                Message::AddBlock { id, block } => screen.add_block(id, block),
+                Message::AddBlock { id, block } => screen.update(ScreenMessage::AddBlock(id, block)),
                 Message::Close => {
                     thread::sleep(Duration::from_secs(3));
-                    screen.close();
+                    screen.update(ScreenMessage::Close);
                     return;
                 }
             }
