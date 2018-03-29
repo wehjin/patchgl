@@ -1,6 +1,7 @@
 use ::{Block, ScreenMessage, ScreenStatus, Sigil};
 use glium::{Display, Surface};
 use glium::backend::Facade;
+use glium::glutin::{ContextBuilder, EventsLoop, WindowBuilder};
 use glyffin::QuipRenderer;
 use model::Patch;
 use renderer::PatchRenderer;
@@ -16,8 +17,12 @@ pub struct LocalScreen<'a> {
 }
 
 impl<'a> LocalScreen<'a> {
-    pub fn new(display: Display) -> Self {
-        let (width, height) = display.get_framebuffer_dimensions();
+    pub fn new(width: u32, height: u32, events_loop: &EventsLoop) -> Self {
+        let display = {
+            let context_builder = ContextBuilder::new().with_depth_buffer(24).with_vsync(true);
+            let window_builder = WindowBuilder::new().with_dimensions(width, height).with_title("PatchGL");
+            Display::new(window_builder, context_builder, &events_loop).unwrap()
+        };
         let modelview = get_modelview(width, height, &display);
         let dpi_factor = display.gl_window().hidpi_factor();
         LocalScreen {

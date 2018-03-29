@@ -7,13 +7,13 @@ extern crate unicode_normalization;
 extern crate xml;
 
 pub use base::{Color, WebColor};
-use glium::Display;
 use glium::glutin::{ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowEvent};
 use local_screen::LocalScreen;
 pub use remote_director::*;
 pub use remote_screen::*;
 pub use sigil::Sigil;
 use std::marker::Send;
+
 
 pub mod model;
 pub mod renderer;
@@ -54,14 +54,9 @@ pub enum DirectorMessage {}
 pub fn start_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(&RemoteScreen) -> () + Send + 'static
 {
     let mut events_loop = EventsLoop::new();
-    let mut screen = LocalScreen::new({
-        let context_builder = glium::glutin::ContextBuilder::new().with_depth_buffer(24).with_vsync(true);
-        let window_builder = glium::glutin::WindowBuilder::new().with_dimensions(width, height).with_title("PatchGL");
-        Display::new(window_builder, context_builder, &events_loop).unwrap()
-    });
-    screen.draw();
-
-    let director = RemoteDirector::connect(events_loop.create_proxy(), on_screen_ready);
+    let mut screen = LocalScreen::new(width, height, &events_loop);
+    let events_loop_proxy = events_loop.create_proxy();
+    let director = RemoteDirector::connect(events_loop_proxy, on_screen_ready);
     events_loop.run_forever(|ev| {
         match ev {
             Event::WindowEvent { event, .. } => {
@@ -101,6 +96,7 @@ pub fn start_screen<F>(width: u32, height: u32, on_screen_ready: F) where F: Fn(
         }
     });
 }
+
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ScreenStatus {
