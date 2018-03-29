@@ -1,17 +1,17 @@
 extern crate arrayvec;
 extern crate cage;
 extern crate glium;
-extern crate patchgllib;
+extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 extern crate yaml_rust;
 
-use patchgllib::{Anchor, Block, Color, create_screen, RemoteScreen, ScreenRunner, ScreenMessage, Sigil, WebColor};
+use patchgl::{Anchor, Block, Color, create_screen, RemoteScreen, ScreenMessage, ScreenRunner, Sigil, WebColor};
 use std::thread;
 use std::time::Duration;
 use yaml_rust::{Yaml, YamlLoader};
 
-static STR_YAML: &'static str = include_str!("example.yaml");
+static STR_YAML: &'static str = include_str!("yaml_data.yaml");
 
 enum Message {
     AddBlock { id: u64, block: Block },

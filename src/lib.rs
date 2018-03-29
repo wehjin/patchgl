@@ -68,5 +68,3 @@ pub fn create_screen<T: ScreenRunner + Send + 'static>(width: u32, height: u32, 
     };
     LocalScreen::start(width, height, remote_director);
 }
-
-

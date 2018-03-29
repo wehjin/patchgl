@@ -13,9 +13,5 @@ arrayvec = "^0.3.13"
 yaml-rust = "0.4"
 
 [lib]
-name = "patchgllib"
-path = "src/lib.rs"
-
-[[bin]]
 name = "patchgl"
-path = "src/main.rs"
+path = "src/lib.rs"
