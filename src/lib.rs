@@ -8,7 +8,7 @@ extern crate xml;
 
 pub use base::{Color, WebColor};
 use glium::backend::Facade;
-use glium::glutin::{DeviceEvent, Event, EventsLoopProxy, KeyboardInput, VirtualKeyCode, WindowEvent};
+use glium::glutin::{Event, EventsLoopProxy, KeyboardInput, VirtualKeyCode, WindowEvent};
 use glium::Surface;
 use glyffin::QuipRenderer;
 use model::Patch;
@@ -155,15 +155,17 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
         target.finish().unwrap();
 
         events_loop.poll_events(|ev| {
+            println!("{:?}", ev);
             match ev {
-                Event::DeviceEvent {
-                    event: DeviceEvent::Key(KeyboardInput {
-                                                virtual_keycode: Some(VirtualKeyCode::Escape),
-                                                ..
-                                            }),
-                    ..
+                Event::WindowEvent { event: WindowEvent::Closed, .. }
+                | Event::WindowEvent {
+                    event: WindowEvent::KeyboardInput {
+                        input: KeyboardInput {
+                            virtual_keycode: Some(VirtualKeyCode::Escape), ..
+                        }, ..
+                    }, ..
                 }
-                | Event::WindowEvent { event: WindowEvent::Closed, .. } => {
+                => {
                     done = true;
                 }
                 Event::Awakened => {
