@@ -6,16 +6,12 @@ extern crate rusttype;
 extern crate unicode_normalization;
 extern crate xml;
 
-
 pub use anchor::Anchor;
 pub use base::{Color, WebColor};
 pub use block::Block;
 use local_screen::LocalScreen;
-pub use remote_director::RemoteDirector;
-pub use remote_screen::RemoteScreen;
 pub use sigil::Sigil;
-use std::marker::Send;
-use std::sync::mpsc;
+use std::sync::mpsc::{channel, Sender};
 
 pub mod model;
 pub mod renderer;
@@ -24,34 +20,34 @@ pub mod base;
 pub mod ix;
 pub mod parser;
 mod sigil;
-mod remote_screen;
-mod remote_director;
 mod local_screen;
 mod anchor;
 mod block;
 
-pub enum ScreenMessage {
+
+#[derive(Debug)]
+pub struct Screen {
+    pub msg_sender: Sender<ScreenMsg>,
+    pub width: u32,
+    pub height: u32,
+}
+
+#[derive(Debug)]
+pub enum DirectorMsg {
+    ScreenReady(Screen),
+    ScreenResized(u32, u32),
+    ScreenClosed,
+}
+
+
+#[derive(Debug)]
+pub enum ScreenMsg {
     AddBlock(u64, Block),
     Close,
 }
 
-pub enum DirectorMessage {}
-
-pub trait ScreenRunner {
-    fn on_screen_ready(&mut self, screen: RemoteScreen);
-}
-
-pub fn create_screen<T: ScreenRunner + Send + 'static>(width: u32, height: u32, screen_runner: T) {
-    let (screen_message_sender, screen_message_receiver) = mpsc::channel::<ScreenMessage>();
-    let (director_message_sender, director_message_receiver) = mpsc::channel::<DirectorMessage>();
-    std::thread::spawn(move || {
-        let mut screen_runner = screen_runner;
-        screen_runner.on_screen_ready(RemoteScreen::new(screen_message_sender, director_message_receiver));
-    });
-
-    let remote_director = RemoteDirector {
-        _director_message_sender: director_message_sender,
-        screen_message_receiver,
-    };
-    LocalScreen::start(width, height, remote_director);
+pub fn create_screen(width: u32, height: u32, director_msg_sender: Sender<DirectorMsg>) {
+    let (screen_msg_sender, screen_msg_receiver) = channel::<ScreenMsg>();
+    director_msg_sender.send(DirectorMsg::ScreenReady(Screen { msg_sender: screen_msg_sender, width, height })).unwrap();
+    LocalScreen::start(width, height, director_msg_sender, screen_msg_receiver);
 }

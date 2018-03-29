@@ -1,4 +1,6 @@
-use ::{Block, RemoteDirector, ScreenMessage, Sigil};
+use ::{Block, Sigil};
+use ::DirectorMsg;
+use ::ScreenMsg;
 use glium::{Display, Surface};
 use glium::backend::Facade;
 use glium::glutin::{ContextBuilder, ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowBuilder, WindowEvent};
@@ -20,14 +22,14 @@ pub struct LocalScreen<'a> {
 }
 
 pub enum AwakenMessage {
-    ScreenMessage(ScreenMessage)
+    ScreenMessage(ScreenMsg)
 }
 
 impl<'a> LocalScreen<'a> {
-    pub fn start(width: u32, height: u32, remote_directory: RemoteDirector) {
+    pub fn start(width: u32, height: u32, director_msg_sender: Sender<DirectorMsg>, screen_msg_receiver: Receiver<ScreenMsg>) {
         let mut events_loop = EventsLoop::new();
         let (awaken_message_sender, awaken_message_receiver) = channel::<AwakenMessage>();
-        start_events_loop_awakener(&events_loop, awaken_message_sender, remote_directory.screen_message_receiver);
+        start_events_loop_awakener(&events_loop, awaken_message_sender, screen_msg_receiver);
 
         let mut local_screen = LocalScreen::new(width, height, &events_loop);
         events_loop.run_forever(|ev| {
@@ -41,6 +43,7 @@ impl<'a> LocalScreen<'a> {
                         }
                         WindowEvent::Resized(width, height) => {
                             local_screen.on_dimensions(width, height);
+                            director_msg_sender.send(DirectorMsg::ScreenResized(width, height)).unwrap();
                             ControlFlow::Continue
                         }
                         WindowEvent::Refresh => {
@@ -68,6 +71,7 @@ impl<'a> LocalScreen<'a> {
                 _ => ControlFlow::Continue
             }
         });
+        director_msg_sender.send(DirectorMsg::ScreenClosed).unwrap();
     }
 
     fn new(width: u32, height: u32, events_loop: &EventsLoop) -> Self {
@@ -95,14 +99,14 @@ impl<'a> LocalScreen<'a> {
         self.draw();
     }
 
-    pub fn update(&mut self, screen_message: ScreenMessage) {
+    pub fn update(&mut self, screen_message: ScreenMsg) {
         match screen_message {
-            ScreenMessage::AddBlock(id, block) => {
+            ScreenMsg::AddBlock(id, block) => {
                 let blocks = &mut self.blocks;
                 blocks.insert(id, block);
                 self.status = self.status.did_change()
             }
-            ScreenMessage::Close => {
+            ScreenMsg::Close => {
                 self.status = self.status.will_close()
             }
         }
@@ -179,14 +183,15 @@ impl ScreenStatus {
     }
 }
 
-fn start_events_loop_awakener(events_loop: &EventsLoop, awaken_message_sender: Sender<AwakenMessage>, screen_message_receiver: Receiver<ScreenMessage>) {
+fn start_events_loop_awakener(events_loop: &EventsLoop, awaken_message_sender: Sender<AwakenMessage>, screen_msg_receiver: Receiver<ScreenMsg>) {
     let events_loop_proxy = events_loop.create_proxy();
     thread::spawn(move || {
         let mut done = false;
         while !done {
-            match screen_message_receiver.recv() {
-                Ok(screen_message) => {
-                    awaken_message_sender.send(AwakenMessage::ScreenMessage(screen_message)).unwrap();
+            let result = screen_msg_receiver.recv();
+            match result {
+                Ok(msg) => {
+                    awaken_message_sender.send(AwakenMessage::ScreenMessage(msg)).unwrap();
                     events_loop_proxy.wakeup().expect("Wakeup after AwakenMessage");
                 }
                 Err(_) => {

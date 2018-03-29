@@ -1,5 +1,6 @@
 use super::{Anchor, Color, Sigil, WebColor};
 
+#[derive(Debug)]
 pub struct Block {
     pub sigil: Sigil,
     pub width: f32,

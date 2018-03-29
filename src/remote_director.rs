@@ -1,7 +1,12 @@
-use std::sync::mpsc::{Receiver, Sender};
-use super::{DirectorMessage, ScreenMessage};
+use std::sync::mpsc::Sender;
+use super::{Director, DirectorMsg};
 
 pub struct RemoteDirector {
-    pub _director_message_sender: Sender<DirectorMessage>,
-    pub screen_message_receiver: Receiver<ScreenMessage>,
+    pub director_message_sender: Sender<DirectorMsg>,
+}
+
+impl Director for RemoteDirector {
+    fn send_director_msg(&self, msg: DirectorMsg) {
+        self.director_message_sender.send(msg).expect("send director-message");
+    }
 }
