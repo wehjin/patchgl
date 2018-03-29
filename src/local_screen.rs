@@ -116,7 +116,7 @@ impl<'a> LocalScreen<'a> {
             let blocks = &self.blocks;
             blocks.iter().for_each(|(_, block)| {
                 match block.sigil {
-                    Sigil::FilledRectangle(color) => {
+                    Sigil::Color(color) => {
                         let patch = Patch::new(block.width, block.height, block.approach, color);
                         patch_renderer.set_patch(&patch);
                         patch_renderer.draw(&mut target);

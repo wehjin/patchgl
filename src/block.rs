@@ -11,7 +11,7 @@ pub struct Block {
 impl Default for Block {
     fn default() -> Self {
         let block = Block {
-            sigil: Sigil::FilledRectangle(Color::from_web(WebColor::Grey)),
+            sigil: Sigil::Color(Color::from_web(WebColor::Grey)),
             width: 0.0,
             height: 0.0,
             approach: 0.0,

@@ -24,7 +24,7 @@ impl patchgl::ScreenRunner for MainDirector {
         let mut screen = screen;
         use patchgl::{Block, Color, Sigil, WebColor, ScreenMessage};
         let block = Block {
-            sigil: Sigil::FilledRectangle(Color::from_web(WebColor::Blue)),
+            sigil: Sigil::Color(Color::from_web(WebColor::Blue)),
             width: self.width as f32,
             height: self.height as f32,
             ..Default::default()

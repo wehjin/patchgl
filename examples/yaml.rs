@@ -74,7 +74,7 @@ fn sigil_from_yaml(doc: &Yaml) -> Sigil {
     match doc["type"].as_str().unwrap() {
         "filled-rectangle" => {
             let web_color = WebColor::from_name(doc["color"].as_str().unwrap());
-            Sigil::FilledRectangle(Color::from_web(web_color))
+            Sigil::Color(Color::from_web(web_color))
         }
         "paragraph" => {
             Sigil::Paragraph {
@@ -82,6 +82,6 @@ fn sigil_from_yaml(doc: &Yaml) -> Sigil {
                 text: doc["text"].as_str().unwrap().to_string(),
             }
         }
-        _ => Sigil::FilledRectangle(Color::from_web(WebColor::DeepPink))
+        _ => Sigil::Color(Color::from_web(WebColor::DeepPink))
     }
 }
