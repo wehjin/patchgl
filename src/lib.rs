@@ -8,7 +8,7 @@ extern crate xml;
 
 pub use base::{Color, WebColor};
 use glium::backend::Facade;
-use glium::glutin::{Event, EventsLoopProxy, KeyboardInput, VirtualKeyCode, WindowEvent};
+use glium::glutin::{ControlFlow, Event, EventsLoopProxy, KeyboardInput, VirtualKeyCode, WindowEvent};
 use glium::Surface;
 use glyffin::QuipRenderer;
 use model::Patch;
@@ -115,20 +115,18 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
     let window_builder = glium::glutin::WindowBuilder::new()
         .with_dimensions(width, height)
         .with_title("PatchGl");
-    let display = glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
+    let display = &glium::Display::new(window_builder, context_builder, &events_loop).unwrap();
     let dpi_factor = display.gl_window().hidpi_factor();
-    let director = RemoteDirector::new(events_loop.create_proxy(), on_start);
-    let modelview = get_modelview(width, height, &display);
+    let modelview = get_modelview(width, height, display);
 
-    let mut patch_renderer = PatchRenderer::new(&display, modelview);
-    let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, &display);
+    let mut patch_renderer = PatchRenderer::new(display, modelview);
+    let mut quip_renderer = QuipRenderer::new(dpi_factor, modelview, display);
     let mut blocks = HashMap::<u64, Block>::new();
 
-    let mut done = false;
-    while !done {
+    let mut draw = |blocks: &HashMap<u64, Block>| {
         let mut target = display.draw();
         target.clear_color_and_depth((0.70, 0.80, 0.90, 1.0), 1.0);
-        for (_, block) in &blocks {
+        blocks.iter().for_each(|(_, block)| {
             match block.sigil {
                 Sigil::FilledRectangle(color) => {
                     let patch = Patch::new(block.width, block.height, block.approach, color);
@@ -137,53 +135,64 @@ pub fn run<F>(width: u32, height: u32, on_start: F)
                 }
                 _ => ()
             }
-        }
-        for (_, block) in &blocks {
+        });
+        blocks.iter().for_each(|(_, block)| {
             match block.sigil {
                 Sigil::Paragraph { line_height, ref text } => {
                     quip_renderer.layout_paragraph(text,
                                                    Scale::uniform(line_height * dpi_factor),
                                                    block.width as u32,
                                                    block.approach,
-                                                   &display);
+                                                   display);
                     quip_renderer.draw(&mut target);
                 }
                 _ => ()
             }
-        }
-
-        target.finish().unwrap();
-
-        events_loop.poll_events(|ev| {
-            println!("{:?}", ev);
-            match ev {
-                Event::WindowEvent { event: WindowEvent::Closed, .. }
-                | Event::WindowEvent {
-                    event: WindowEvent::KeyboardInput {
-                        input: KeyboardInput {
-                            virtual_keycode: Some(VirtualKeyCode::Escape), ..
-                        }, ..
-                    }, ..
-                }
-                => {
-                    done = true;
-                }
-                Event::Awakened => {
-                    while let Some(screen_message) = director.receive_screen_message() {
-                        match screen_message {
-                            ScreenMessage::Close => {
-                                done = true;
-                            }
-                            ScreenMessage::AddBlock(id, block) => {
-                                blocks.insert(id, block);
-                            }
-                        }
-                    }
-                }
-                _ => ()
-            }
         });
+        target.finish().unwrap();
+    };
+
+    let director = RemoteDirector::new(events_loop.create_proxy(), on_start);
+    draw(&blocks);
+    events_loop.run_forever(|ev| {
+        match ev {
+            Event::WindowEvent { event: WindowEvent::Closed, .. }
+            | Event::WindowEvent {
+                event: WindowEvent::KeyboardInput {
+                    input: KeyboardInput {
+                        virtual_keycode: Some(VirtualKeyCode::Escape), ..
+                    }, ..
+                }, ..
+            } => ControlFlow::Break,
+            Event::Awakened => {
+                match update_screen(&director, &mut blocks) {
+                    ScreenStatus::Unchanged => ControlFlow::Continue,
+                    ScreenStatus::DidChange => {
+                        draw(&blocks);
+                        ControlFlow::Continue
+                    }
+                    ScreenStatus::WillClose => ControlFlow::Break,
+                }
+            }
+            _ => ControlFlow::Continue
+        }
+    });
+}
+
+fn update_screen(director: &RemoteDirector, blocks: &mut HashMap<u64, Block>) -> ScreenStatus {
+    let mut screen_state = ScreenStatus::Unchanged;
+    while let Some(screen_message) = director.receive_screen_message() {
+        match screen_message {
+            ScreenMessage::Close => {
+                screen_state = screen_state.will_close();
+            }
+            ScreenMessage::AddBlock(id, block) => {
+                blocks.insert(id, block);
+                screen_state = screen_state.did_change();
+            }
+        }
     }
+    screen_state
 }
 
 fn get_modelview<F: Facade>(screen_width: u32, screen_height: u32, display: &F) -> [[f32; 4]; 4] {
@@ -200,5 +209,22 @@ fn get_modelview<F: Facade>(screen_width: u32, screen_height: u32, display: &F) 
     ]
 }
 
-#[cfg(test)]
-mod tests {}
+#[derive(Debug, PartialEq, Eq)]
+enum ScreenStatus {
+    Unchanged,
+    DidChange,
+    WillClose,
+}
+
+impl ScreenStatus {
+    fn will_close(&self) -> Self {
+        ScreenStatus::WillClose
+    }
+    fn did_change(&self) -> Self {
+        if *self == ScreenStatus::WillClose {
+            ScreenStatus::WillClose
+        } else {
+            ScreenStatus::DidChange
+        }
+    }
+}

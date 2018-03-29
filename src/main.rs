@@ -1,15 +1,15 @@
-extern crate glium;
-extern crate xml;
+extern crate arrayvec;
 extern crate cage;
+extern crate glium;
 extern crate patchgllib;
 extern crate rusttype;
-extern crate arrayvec;
+extern crate xml;
 extern crate yaml_rust;
 
-use patchgllib::{run, RemoteScreen, Block, Sigil, Anchor, Color, WebColor};
+use patchgllib::{Anchor, Block, Color, RemoteScreen, run, Sigil, WebColor};
 use std::thread;
 use std::time::Duration;
-use yaml_rust::{YamlLoader, Yaml};
+use yaml_rust::{Yaml, YamlLoader};
 
 static INPUT_STRING: &'static str = include_str!("example.yaml");
 
@@ -74,8 +74,8 @@ fn message_from_yaml(doc: &Yaml) -> Option<Message> {
                 anchor: match doc["anchor"].as_str().unwrap() {
                     "top-left" => Anchor::top_left(),
                     _ => Anchor::top_left()
-                }
-            }
+                },
+            },
         }),
         _ => Option::None
     }
