@@ -25,55 +25,58 @@ pub enum AwakenMessage {
     ScreenMessage(ScreenMsg)
 }
 
-impl<'a> LocalScreen<'a> {
-    pub fn start(width: u32, height: u32, director_msg_sender: Sender<DirectorMsg>, screen_msg_receiver: Receiver<ScreenMsg>) {
-        let mut events_loop = EventsLoop::new();
-        let (awaken_message_sender, awaken_message_receiver) = channel::<AwakenMessage>();
-        start_events_loop_awakener(&events_loop, awaken_message_sender, screen_msg_receiver);
+pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
+    let (screen, screen_msg_receiver) = channel::<ScreenMsg>();
+    director.send(DirectorMsg::ScreenReady(screen)).unwrap();
 
-        let mut local_screen = LocalScreen::new(width, height, &events_loop);
-        events_loop.run_forever(|ev| {
-            match ev {
-                Event::WindowEvent { event, .. } => {
-                    match event {
-                        WindowEvent::Closed | WindowEvent::KeyboardInput {
-                            input: KeyboardInput { virtual_keycode: Some(VirtualKeyCode::Escape), .. }, ..
-                        } => {
-                            ControlFlow::Break
-                        }
-                        WindowEvent::Resized(width, height) => {
-                            local_screen.on_dimensions(width, height);
-                            director_msg_sender.send(DirectorMsg::ScreenResized(width, height)).unwrap();
-                            ControlFlow::Continue
-                        }
-                        WindowEvent::Refresh => {
-                            local_screen.draw();
-                            ControlFlow::Continue
-                        }
-                        _ => {
-                            ControlFlow::Continue
-                        }
+    let mut events_loop = EventsLoop::new();
+    let (awaken_message_sender, awaken_message_receiver) = channel::<AwakenMessage>();
+    spawn_awakener(&events_loop, awaken_message_sender, screen_msg_receiver);
+
+    let mut local_screen = LocalScreen::new(width, height, &events_loop);
+    events_loop.run_forever(|ev| {
+        match ev {
+            Event::WindowEvent { event, .. } => {
+                match event {
+                    WindowEvent::Closed | WindowEvent::KeyboardInput {
+                        input: KeyboardInput { virtual_keycode: Some(VirtualKeyCode::Escape), .. }, ..
+                    } => {
+                        ControlFlow::Break
+                    }
+                    WindowEvent::Resized(width, height) => {
+                        local_screen.on_dimensions(width, height);
+                        director.send(DirectorMsg::ScreenResized(width, height)).unwrap();
+                        ControlFlow::Continue
+                    }
+                    WindowEvent::Refresh => {
+                        local_screen.draw();
+                        ControlFlow::Continue
+                    }
+                    _ => {
+                        ControlFlow::Continue
                     }
                 }
-                Event::Awakened => {
-                    while let Ok(AwakenMessage::ScreenMessage(screen_message)) = awaken_message_receiver.try_recv() {
-                        local_screen.update(screen_message);
-                    }
-                    match local_screen.status() {
-                        ScreenStatus::Unchanged => ControlFlow::Continue,
-                        ScreenStatus::Changed => {
-                            local_screen.draw();
-                            ControlFlow::Continue
-                        }
-                        ScreenStatus::WillClose => ControlFlow::Break,
-                    }
-                }
-                _ => ControlFlow::Continue
             }
-        });
-        director_msg_sender.send(DirectorMsg::ScreenClosed).unwrap();
-    }
+            Event::Awakened => {
+                while let Ok(AwakenMessage::ScreenMessage(screen_message)) = awaken_message_receiver.try_recv() {
+                    local_screen.update(screen_message);
+                }
+                match local_screen.status() {
+                    ScreenStatus::Unchanged => ControlFlow::Continue,
+                    ScreenStatus::Changed => {
+                        local_screen.draw();
+                        ControlFlow::Continue
+                    }
+                    ScreenStatus::WillClose => ControlFlow::Break,
+                }
+            }
+            _ => ControlFlow::Continue
+        }
+    });
+    director.send(DirectorMsg::ScreenClosed).unwrap();
+}
 
+impl<'a> LocalScreen<'a> {
     fn new(width: u32, height: u32, events_loop: &EventsLoop) -> Self {
         let display = get_display(width, height, events_loop);
         let modelview = get_modelview(width, height, &display);
@@ -183,7 +186,7 @@ impl ScreenStatus {
     }
 }
 
-fn start_events_loop_awakener(events_loop: &EventsLoop, awaken_message_sender: Sender<AwakenMessage>, screen_msg_receiver: Receiver<ScreenMsg>) {
+fn spawn_awakener(events_loop: &EventsLoop, awaken_message_sender: Sender<AwakenMessage>, screen_msg_receiver: Receiver<ScreenMsg>) {
     let events_loop_proxy = events_loop.create_proxy();
     thread::spawn(move || {
         let mut done = false;

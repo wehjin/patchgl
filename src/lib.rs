@@ -9,9 +9,8 @@ extern crate xml;
 pub use anchor::Anchor;
 pub use base::{Color, WebColor};
 pub use block::Block;
-use local_screen::LocalScreen;
 pub use sigil::Sigil;
-use std::sync::mpsc::{channel, Sender};
+use std::sync::mpsc::Sender;
 
 pub mod model;
 pub mod renderer;
@@ -20,6 +19,7 @@ pub mod base;
 pub mod ix;
 pub mod parser;
 pub mod director;
+pub mod screen;
 mod sigil;
 mod local_screen;
 mod anchor;
@@ -33,15 +33,9 @@ pub enum DirectorMsg {
     ScreenClosed,
 }
 
-
 #[derive(Debug)]
 pub enum ScreenMsg {
     AddBlock(u64, Block),
     Close,
 }
 
-pub fn create_screen(width: u32, height: u32, director_msg_sender: Sender<DirectorMsg>) {
-    let (screen_msg_sender, screen_msg_receiver) = channel::<ScreenMsg>();
-    director_msg_sender.send(DirectorMsg::ScreenReady(screen_msg_sender)).unwrap();
-    LocalScreen::start(width, height, director_msg_sender, screen_msg_receiver);
-}
