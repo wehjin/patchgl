@@ -14,7 +14,7 @@ fn main() {
     let count_flood = Flood::Text(format!("{}", count), Color::from(X11Color::Indigo));
     let button_flood = Flood::Color(Color::from(X11Color::MediumPurple));
     let flood = Flood::Barrier(
-        Position::BottomSubtractLength(Length::FingerTip),
+        Position::BottomMinusLength(Length::FingerTip),
         Box::new(count_flood),
         Box::new(button_flood),
     );

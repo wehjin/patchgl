@@ -35,7 +35,7 @@ pub enum Flood {
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Position {
-    BottomSubtractLength(Length)
+    BottomMinusLength(Length)
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -88,7 +88,7 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, flood: &Flood) -> 
             vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, ..Default::default() }]
         }
         &Flood::Barrier(position, ref a_flood, ref b_flood) => {
-            let Position::BottomSubtractLength(length) = position;
+            let Position::BottomMinusLength(length) = position;
             let bottom_height = length.to_f32();
             let top_height = height - bottom_height;
             let barrier_y = top + top_height;
