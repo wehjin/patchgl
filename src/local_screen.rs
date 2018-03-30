@@ -124,7 +124,7 @@ impl<'a> LocalScreen<'a> {
             blocks.iter().for_each(|(_, block)| {
                 match block.sigil {
                     Sigil::Color(color) => {
-                        let patch = Patch::new(block.width, block.height, block.approach, color);
+                        let patch = Patch::new(block.anchor.x, block.anchor.y, block.width, block.height, block.approach, color);
                         patch_renderer.set_patch(&patch);
                         patch_renderer.draw(&mut target);
                     }

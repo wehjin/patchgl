@@ -1,5 +1,5 @@
 use ::{director, DirectorMsg, screen, ScreenMsg};
-use ::{Block, Color, Sigil};
+use ::{Anchor, Block, Color, Sigil};
 use std::sync::mpsc::Sender;
 
 pub fn render_forever(width: u32, height: u32, flood: Flood) {
@@ -30,6 +30,27 @@ pub fn render_forever(width: u32, height: u32, flood: Flood) {
 pub enum Flood {
     Color(Color),
     Text(String, Color),
+    Barrier(Position, Box<Flood>, Box<Flood>),
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Position {
+    BottomSubtractLength(Length)
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Length {
+    FingerTip,
+    Pixels(f32),
+}
+
+impl Length {
+    pub fn to_f32(&self) -> f32 {
+        match self {
+            &Length::FingerTip => 44.0,
+            &Length::Pixels(pixels) => pixels,
+        }
+    }
 }
 
 struct Plains {
@@ -45,32 +66,35 @@ impl Plains {
 
     pub fn flood(&self, flood: &Flood) {
         if let Some(ref screen) = self.screen {
-            let blocks = self.build_blocks(flood);
+            let blocks = build_blocks(0., 0., self.width as f32, self.height as f32, flood);
             blocks.into_iter().enumerate().for_each(|(i, block)| {
                 let msg = ScreenMsg::AddBlock(i as u64, block);
                 screen.send(msg).unwrap();
             });
         }
     }
+}
 
-    fn build_blocks(&self, flood: &Flood) -> Vec<Block> {
-        match flood {
-            &Flood::Color(ref color) => {
-                vec![Block {
-                    sigil: Sigil::Color(*color),
-                    width: self.width as f32,
-                    height: self.height as f32,
-                    ..Default::default()
-                }]
-            }
-            &Flood::Text(ref string, color) => {
-                vec![Block {
-                    sigil: Sigil::Paragraph { line_height: self.height as f32, text: string.to_owned(), color },
-                    width: self.width as f32,
-                    height: self.height as f32,
-                    ..Default::default()
-                }]
-            }
+fn build_blocks(left: f32, top: f32, width: f32, height: f32, flood: &Flood) -> Vec<Block> {
+    match flood {
+        &Flood::Color(color) => {
+            let sigil = Sigil::Color(color);
+            let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, ..Default::default() };
+            println!("Colorblock: {:?}", block);
+            vec![block]
+        }
+        &Flood::Text(ref string, color) => {
+            let sigil = Sigil::Paragraph { line_height: height, text: string.to_owned(), color };
+            vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, ..Default::default() }]
+        }
+        &Flood::Barrier(position, ref a_flood, ref b_flood) => {
+            let Position::BottomSubtractLength(length) = position;
+            let bottom_height = length.to_f32();
+            let top_height = height - bottom_height;
+            let barrier_y = top + top_height;
+            let mut blocks = build_blocks(left, top, width, top_height, a_flood);
+            blocks.append(&mut build_blocks(left, barrier_y, width, bottom_height, b_flood));
+            blocks
         }
     }
 }

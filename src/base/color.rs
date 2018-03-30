@@ -11,6 +11,7 @@ pub enum WebColor {
 pub enum X11Color {
     Lavender,
     Thistle,
+    MediumPurple,
     Indigo,
 }
 
@@ -52,6 +53,7 @@ impl From<X11Color> for Color {
         match x11_color {
             X11Color::Lavender => Color::from_hexrgb(0xe6, 0xe6, 0xfa),
             X11Color::Thistle => Color::from_hexrgb(0xd8, 0xbf, 0xd8),
+            X11Color::MediumPurple => Color::from_hexrgb(0x93, 0x70, 0xd9),
             X11Color::Indigo => Color::from_hexrgb(0x4b, 0x00, 0x82),
         }
     }
