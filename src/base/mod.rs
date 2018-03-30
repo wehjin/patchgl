@@ -1,14 +1,14 @@
+pub use self::alignment::Alignment;
+pub use self::color::{Color, WebColor, X11Color};
+pub use self::rectangle::*;
+pub use self::sdf::*;
+pub use self::typeface::Typeface;
+
 mod sdf;
 mod rectangle;
 mod color;
 mod typeface;
 mod alignment;
-
-pub use self::sdf::*;
-pub use self::rectangle::*;
-pub use self::color::{Color, WebColor};
-pub use self::typeface::Typeface;
-pub use self::alignment::Alignment;
 
 #[cfg(test)]
 mod tests {}

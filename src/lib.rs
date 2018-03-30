@@ -7,7 +7,7 @@ extern crate unicode_normalization;
 extern crate xml;
 
 pub use anchor::Anchor;
-pub use base::{Color, WebColor};
+pub use base::{Color, WebColor, X11Color};
 pub use block::Block;
 pub use sigil::Sigil;
 use std::sync::mpsc::Sender;

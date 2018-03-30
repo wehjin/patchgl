@@ -5,6 +5,10 @@ pub enum WebColor {
     Grey,
     Green,
     Red,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum X11Color {
     Lavender,
     Thistle,
 }
@@ -38,8 +42,15 @@ impl From<WebColor> for Color {
             WebColor::Green => Color::green(),
             WebColor::Grey => Color::grey(),
             WebColor::Red => Color::red(),
-            WebColor::Lavender => Color::from_hexrgb(0xe6, 0xe6, 0xfa),
-            WebColor::Thistle => Color::from_hexrgb(0xd8, 0xbf, 0xd8),
+        }
+    }
+}
+
+impl From<X11Color> for Color {
+    fn from(x11_color: X11Color) -> Self {
+        match x11_color {
+            X11Color::Lavender => Color::from_hexrgb(0xe6, 0xe6, 0xfa),
+            X11Color::Thistle => Color::from_hexrgb(0xd8, 0xbf, 0xd8),
         }
     }
 }
