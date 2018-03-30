@@ -26,9 +26,10 @@ pub fn render_forever(width: u32, height: u32, flood: Flood) {
     screen::start(width, height, director);
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum Flood {
-    Color(Color)
+    Color(Color),
+    Text(String, Color),
 }
 
 struct Plains {
@@ -54,6 +55,14 @@ impl Plains {
             &Flood::Color(ref color) => {
                 Block {
                     sigil: Sigil::Color(*color),
+                    width: self.width as f32,
+                    height: self.height as f32,
+                    ..Default::default()
+                }
+            }
+            &Flood::Text(ref string, color) => {
+                Block {
+                    sigil: Sigil::Paragraph { line_height: self.height as f32, text: string.to_owned(), color },
                     width: self.width as f32,
                     height: self.height as f32,
                     ..Default::default()

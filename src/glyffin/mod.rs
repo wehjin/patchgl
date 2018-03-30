@@ -28,7 +28,7 @@ impl<'a> QuipRenderer<'a> {
         self.modelview = modelview;
     }
 
-    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, scale: Scale, width: u32, approach: f32, display: &F) {
+    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, scale: Scale, width: u32, approach: f32, colour: [f32; 4], display: &F) {
         let glyphs = layout_paragraph(&self.font, scale, width, text);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
@@ -49,7 +49,6 @@ impl<'a> QuipRenderer<'a> {
         }).unwrap();
 
         implement_vertex!(Vertex, position, tex_coords, colour);
-        let colour = [0.0, 0.0, 0.0, 1.0];
         let origin = point(0.0, 0.0);
         let z = -approach;
         let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
@@ -62,32 +61,32 @@ impl<'a> QuipRenderer<'a> {
                     Vertex {
                         position: [gl_rect.min.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour: colour,
+                        colour,
                     },
                     Vertex {
                         position: [gl_rect.min.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.min.y],
-                        colour: colour,
+                        colour,
                     },
                     Vertex {
                         position: [gl_rect.max.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour: colour,
+                        colour,
                     },
                     Vertex {
                         position: [gl_rect.max.x, gl_rect.min.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour: colour,
+                        colour,
                     },
                     Vertex {
                         position: [gl_rect.max.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.max.x, uv_rect.max.y],
-                        colour: colour,
+                        colour,
                     },
                     Vertex {
                         position: [gl_rect.min.x, gl_rect.max.y, z],
                         tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour: colour,
+                        colour,
                     }])
             } else {
                 arrayvec::ArrayVec::new()

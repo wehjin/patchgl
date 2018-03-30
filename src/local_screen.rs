@@ -139,12 +139,13 @@ impl<'a> LocalScreen<'a> {
             let display = &self.display;
             blocks.iter().for_each(|(_, block)| {
                 match block.sigil {
-                    Sigil::Paragraph { line_height, ref text } => {
+                    Sigil::Paragraph { line_height, ref text, ref color } => {
                         quip_renderer.layout_paragraph(
                             text,
                             Scale::uniform(line_height * dpi_factor),
                             block.width as u32,
                             block.approach,
+                            color.to_gl(),
                             display,
                         );
                         quip_renderer.draw(&mut target);

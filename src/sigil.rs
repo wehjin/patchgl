@@ -3,7 +3,7 @@ use super::{Color, WebColor};
 #[derive(Debug)]
 pub enum Sigil {
     Color(Color),
-    Paragraph { line_height: f32, text: String },
+    Paragraph { line_height: f32, text: String, color: Color },
 }
 
 impl Default for Sigil {
