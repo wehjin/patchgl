@@ -2,6 +2,30 @@ use ::{director, DirectorMsg, screen, ScreenMsg};
 use ::{Block, Color, Sigil};
 use std::sync::mpsc::Sender;
 
+pub fn render_forever(width: u32, height: u32, flood: Flood) {
+    let director = director::spawn(Plains::new(width, height), move |msg, carry| {
+        match msg {
+            DirectorMsg::ScreenReady(next_screen) => {
+                let mut plains = carry;
+                plains.screen = Some(next_screen);
+                plains.flood(&flood);
+                (plains, director::ScanFlow::Continue)
+            }
+            DirectorMsg::ScreenResized(new_width, new_height) => {
+                let mut plains = carry;
+                plains.width = new_width;
+                plains.height = new_height;
+                plains.flood(&flood);
+                (plains, director::ScanFlow::Continue)
+            }
+            DirectorMsg::ScreenClosed => {
+                (Plains::default(), director::ScanFlow::Break)
+            }
+        }
+    });
+    screen::start(width, height, director);
+}
+
 #[derive(Copy, Clone, Debug)]
 pub enum Flood {
     Color(Color)
@@ -43,28 +67,4 @@ impl Default for Plains {
     fn default() -> Self {
         Plains { width: 0, height: 0, screen: None }
     }
-}
-
-pub fn render(width: u32, height: u32, flood: Flood) {
-    let director = director::spawn(Plains::new(width, height), move |msg, carry| {
-        match msg {
-            DirectorMsg::ScreenReady(next_screen) => {
-                let mut plains = carry;
-                plains.screen = Some(next_screen);
-                plains.flood(&flood);
-                (plains, director::ScanFlow::Continue)
-            }
-            DirectorMsg::ScreenResized(new_width, new_height) => {
-                let mut plains = carry;
-                plains.width = new_width;
-                plains.height = new_height;
-                plains.flood(&flood);
-                (plains, director::ScanFlow::Continue)
-            }
-            DirectorMsg::ScreenClosed => {
-                (Plains::default(), director::ScanFlow::Break)
-            }
-        }
-    });
-    screen::start(width, height, director);
 }

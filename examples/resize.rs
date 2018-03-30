@@ -11,6 +11,6 @@ use patchgl::flood::Flood;
 
 fn main() {
     let flood = Flood::Color(Color::from(X11Color::Thistle));
-    flood::render(320, 400, flood);
+    flood::render_forever(320, 400, flood);
 }
 
