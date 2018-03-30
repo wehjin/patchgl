@@ -45,28 +45,31 @@ impl Plains {
 
     pub fn flood(&self, flood: &Flood) {
         if let Some(ref screen) = self.screen {
-            let block = self.build_block(flood);
-            screen.send(ScreenMsg::AddBlock(1, block)).unwrap();
+            let blocks = self.build_blocks(flood);
+            blocks.into_iter().enumerate().for_each(|(i, block)| {
+                let msg = ScreenMsg::AddBlock(i as u64, block);
+                screen.send(msg).unwrap();
+            });
         }
     }
 
-    fn build_block(&self, flood: &Flood) -> Block {
+    fn build_blocks(&self, flood: &Flood) -> Vec<Block> {
         match flood {
             &Flood::Color(ref color) => {
-                Block {
+                vec![Block {
                     sigil: Sigil::Color(*color),
                     width: self.width as f32,
                     height: self.height as f32,
                     ..Default::default()
-                }
+                }]
             }
             &Flood::Text(ref string, color) => {
-                Block {
+                vec![Block {
                     sigil: Sigil::Paragraph { line_height: self.height as f32, text: string.to_owned(), color },
                     width: self.width as f32,
                     height: self.height as f32,
                     ..Default::default()
-                }
+                }]
             }
         }
     }

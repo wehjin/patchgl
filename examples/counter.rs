@@ -10,7 +10,8 @@ use patchgl::flood::Flood;
 
 
 fn main() {
-    let flood = Flood::Text(String::from("0"), Color::from(X11Color::Indigo));
+    let count = 0;
+    let flood = Flood::Text(format!("{}", count), Color::from(X11Color::Indigo));
     flood::render_forever(320, 400, flood);
 }
 
