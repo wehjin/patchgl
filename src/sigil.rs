@@ -8,7 +8,7 @@ pub enum Sigil {
 
 impl Default for Sigil {
     fn default() -> Self {
-        Sigil::Color(Color::from_web(WebColor::DeepPink))
+        Sigil::Color(Color::from(WebColor::DeepPink))
     }
 }
 

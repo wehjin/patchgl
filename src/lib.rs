@@ -20,6 +20,7 @@ pub mod ix;
 pub mod parser;
 pub mod director;
 pub mod screen;
+pub mod flood;
 mod sigil;
 mod local_screen;
 mod anchor;

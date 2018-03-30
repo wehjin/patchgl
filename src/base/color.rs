@@ -1,9 +1,12 @@
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum WebColor {
     Blue,
     DeepPink,
     Grey,
     Green,
     Red,
+    Lavender,
+    Thistle,
 }
 
 impl WebColor {
@@ -27,6 +30,20 @@ pub struct Color {
     b: f32,
 }
 
+impl From<WebColor> for Color {
+    fn from(web_color: WebColor) -> Self {
+        match web_color {
+            WebColor::Blue => Color::blue(),
+            WebColor::DeepPink => Color::from_hexrgb(0xff, 0x14, 0x93),
+            WebColor::Green => Color::green(),
+            WebColor::Grey => Color::grey(),
+            WebColor::Red => Color::red(),
+            WebColor::Lavender => Color::from_hexrgb(0xe6, 0xe6, 0xfa),
+            WebColor::Thistle => Color::from_hexrgb(0xd8, 0xbf, 0xd8),
+        }
+    }
+}
+
 impl Color {
     pub fn to_gl(&self) -> [f32; 4] {
         [self.r, self.g, self.b, self.a]
@@ -39,20 +56,10 @@ impl Color {
     pub fn green() -> Self { Color { a: 1.0, r: 0.0, g: 1.0, b: 0.0 } }
     pub fn blue() -> Self { Color { a: 1.0, r: 0.0, g: 0.0, b: 1.0 } }
     pub fn new(a: f32, r: f32, g: f32, b: f32) -> Self {
-        Color { a: a, r: r, g: g, b: b }
+        Color { a, r, g, b }
     }
     pub fn from_hexrgb(hex_r: u8, hex_g: u8, hex_b: u8) -> Self {
         Color { a: 1.0, r: hex_r as f32 / 255.0, g: hex_g as f32 / 255.0, b: hex_b as f32 / 255.0 }
-    }
-
-    pub fn from_web(web_color: WebColor) -> Self {
-        match web_color {
-            WebColor::Blue => Color::blue(),
-            WebColor::DeepPink => Color::from_hexrgb(0xff, 0x14, 0x93),
-            WebColor::Green => Color::green(),
-            WebColor::Grey => Color::grey(),
-            WebColor::Red => Color::red(),
-        }
     }
 }
 
