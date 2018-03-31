@@ -1,9 +1,10 @@
 use super::{Color, WebColor};
 
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Sigil {
     Color(Color),
     Paragraph { line_height: f32, text: String, color: Color },
+    Ghost(u64),
 }
 
 impl Default for Sigil {
@@ -11,4 +12,3 @@ impl Default for Sigil {
         Sigil::Color(Color::from(WebColor::DeepPink))
     }
 }
-

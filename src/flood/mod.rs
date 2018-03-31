@@ -8,6 +8,7 @@ mod length;
 
 pub fn render_forever(width: u32, height: u32, flood: Flood) {
     let director = director::spawn(Plains::new(width, height), move |msg, carry| {
+        println!("{:?}", msg);
         match msg {
             DirectorMsg::ScreenReady(next_screen) => {
                 let mut plains = carry;
@@ -24,6 +25,18 @@ pub fn render_forever(width: u32, height: u32, flood: Flood) {
             }
             DirectorMsg::ScreenClosed => {
                 (Plains::default(), director::ScanFlow::Break)
+            }
+            DirectorMsg::TouchBegin(tag, (x, y)) => {
+                (carry, director::ScanFlow::Continue)
+            }
+            DirectorMsg::TouchMove(tag, (x, y)) => {
+                (carry, director::ScanFlow::Continue)
+            }
+            DirectorMsg::TouchCancel(tag) => {
+                (carry, director::ScanFlow::Continue)
+            }
+            DirectorMsg::TouchEnd(tag, (x, y)) => {
+                (carry, director::ScanFlow::Continue)
             }
         }
     });

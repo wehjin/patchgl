@@ -1,9 +1,10 @@
 use ::{Block, Sigil};
 use ::DirectorMsg;
 use ::ScreenMsg;
-use glium::{Display, Surface};
+use glium::{Display, Frame, Surface};
 use glium::backend::Facade;
 use glium::glutin::{ContextBuilder, ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowBuilder, WindowEvent};
+use glium::glutin::{ElementState, MouseButton};
 use glyffin::QuipRenderer;
 use model::Patch;
 use renderer::PatchRenderer;
@@ -11,19 +12,6 @@ use rusttype::Scale;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
-
-
-pub struct LocalScreen<'a> {
-    blocks: HashMap<u64, Block>,
-    patch_renderer: PatchRenderer,
-    quip_renderer: QuipRenderer<'a>,
-    display: Display,
-    status: ScreenStatus,
-}
-
-pub enum AwakenMessage {
-    ScreenMessage(ScreenMsg)
-}
 
 pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
     let (screen, screen_msg_receiver) = channel::<ScreenMsg>();
@@ -52,6 +40,17 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
                         local_screen.draw();
                         ControlFlow::Continue
                     }
+                    WindowEvent::CursorMoved { position, .. } => {
+                        local_screen.move_tracking(position, &director);
+                        ControlFlow::Continue
+                    }
+                    WindowEvent::MouseInput { state, button: MouseButton::Left, .. } => {
+                        match state {
+                            ElementState::Pressed => local_screen.begin_tracking(&director),
+                            ElementState::Released => local_screen.end_tracking(&director),
+                        }
+                        ControlFlow::Continue
+                    }
                     _ => {
                         ControlFlow::Continue
                     }
@@ -76,6 +75,16 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
     director.send(DirectorMsg::ScreenClosed).unwrap();
 }
 
+pub struct LocalScreen<'a> {
+    blocks: HashMap<u64, Block>,
+    patch_renderer: PatchRenderer,
+    quip_renderer: QuipRenderer<'a>,
+    display: Display,
+    status: ScreenStatus,
+    cursor: (f64, f64),
+    tracker_tag: Option<u64>,
+}
+
 impl<'a> LocalScreen<'a> {
     fn new(width: u32, height: u32, events_loop: &EventsLoop) -> Self {
         let display = get_display(width, height, events_loop);
@@ -87,12 +96,48 @@ impl<'a> LocalScreen<'a> {
             quip_renderer: QuipRenderer::new(dpi_factor, modelview, &display),
             display,
             status: ScreenStatus::Changed,
+            cursor: (-1.0, -1.0),
+            tracker_tag: None,
         };
         local_screen
     }
 
     fn status(&self) -> ScreenStatus {
         self.status
+    }
+
+    fn move_tracking(&mut self, cursor: (f64, f64), director: &Sender<DirectorMsg>) {
+        self.cursor = cursor;
+        if let Some(tag) = self.tracker_tag {
+            let (x, y) = cursor;
+            director.send(DirectorMsg::TouchMove(tag, cursor)).unwrap();
+        }
+    }
+
+    fn begin_tracking(&mut self, director: &Sender<DirectorMsg>) {
+        self.cancel_tracking(director);
+        self.blocks.iter().for_each(|(_, block)| {
+            if let Sigil::Ghost(tag) = block.sigil {
+                let (x, y) = self.cursor;
+                if block.is_hit(x as f32, y as f32) {
+                    director.send(DirectorMsg::TouchBegin(tag, (x, y))).unwrap();
+                }
+            }
+        });
+    }
+
+    fn cancel_tracking(&mut self, director: &Sender<DirectorMsg>) {
+        if let Some(tag) = self.tracker_tag {
+            self.tracker_tag = None;
+            director.send(DirectorMsg::TouchCancel(tag)).unwrap();
+        }
+    }
+
+    fn end_tracking(&mut self, director: &Sender<DirectorMsg>) {
+        if let Some(tag) = self.tracker_tag {
+            self.tracker_tag = None;
+            director.send(DirectorMsg::TouchEnd(tag, self.cursor)).unwrap();
+        }
     }
 
     fn on_dimensions(&mut self, width: u32, height: u32) {
@@ -112,52 +157,59 @@ impl<'a> LocalScreen<'a> {
             ScreenMsg::Close => {
                 self.status = self.status.will_close()
             }
+            ScreenMsg::ClaimTouch(tag) => {
+                if self.tracker_tag.is_none() {
+                    self.tracker_tag = Some(tag);
+                }
+            }
         }
     }
 
     fn draw(&mut self) {
         let mut target = self.display.draw();
         target.clear_color_and_depth((0.70, 0.80, 0.90, 1.0), 1.0);
-        {
-            let patch_renderer = &mut self.patch_renderer;
-            let blocks = &self.blocks;
-            blocks.iter().for_each(|(_, block)| {
-                match block.sigil {
-                    Sigil::Color(color) => {
-                        let patch = Patch::new(block.anchor.into(), block.width, block.height, block.approach, color);
-                        patch_renderer.set_patch(&patch);
-                        patch_renderer.draw(&mut target);
-                    }
-                    _ => ()
-                }
-            });
-        }
-        {
-            let quip_renderer = &mut self.quip_renderer;
-            let blocks = &self.blocks;
-            let dpi_factor = self.display.gl_window().hidpi_factor();
-            let display = &self.display;
-            blocks.iter().for_each(|(_, block)| {
-                match block.sigil {
-                    Sigil::Paragraph { line_height, ref text, ref color } => {
-                        quip_renderer.layout_paragraph(
-                            text,
-                            block.anchor.into(),
-                            Scale::uniform(line_height * dpi_factor),
-                            block.width as u32,
-                            block.approach,
-                            color.to_gl(),
-                            display,
-                        );
-                        quip_renderer.draw(&mut target);
-                    }
-                    _ => ()
-                }
-            });
-        }
+        self.draw_patches(&mut target);
+        self.draw_quips(&mut target);
         target.finish().unwrap();
         self.status = self.status.did_draw();
     }
+
+    fn draw_quips(&mut self, target: &mut Frame) {
+        let quip_renderer = &mut self.quip_renderer;
+        let blocks = &self.blocks;
+        let dpi_factor = self.display.gl_window().hidpi_factor();
+        let display = &self.display;
+        blocks.iter().for_each(|(_, block)| {
+            if let Sigil::Paragraph { line_height, ref text, ref color } = block.sigil {
+                quip_renderer.layout_paragraph(
+                    text,
+                    block.anchor.into(),
+                    Scale::uniform(line_height * dpi_factor),
+                    block.width as u32,
+                    block.approach,
+                    color.to_gl(),
+                    display,
+                );
+                quip_renderer.draw(target);
+            }
+        });
+    }
+
+    fn draw_patches(&mut self, target: &mut Frame) {
+        let patch_renderer = &mut self.patch_renderer;
+        let blocks = &self.blocks;
+        blocks.iter().for_each(|(_, block)| {
+            if let Sigil::Color(color) = block.sigil {
+                let patch = Patch::new(block.anchor.into(), block.width, block.height, block.approach, color);
+                patch_renderer.set_patch(&patch);
+                patch_renderer.draw(target);
+            }
+        });
+    }
+}
+
+pub enum AwakenMessage {
+    ScreenMessage(ScreenMsg)
 }
 
 

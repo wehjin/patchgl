@@ -26,17 +26,21 @@ mod local_screen;
 mod anchor;
 mod block;
 
-
 #[derive(Debug)]
 pub enum DirectorMsg {
     ScreenReady(Sender<ScreenMsg>),
     ScreenResized(u32, u32),
     ScreenClosed,
+    TouchBegin(u64, (f64, f64)),
+    TouchMove(u64, (f64, f64)),
+    TouchCancel(u64),
+    TouchEnd(u64, (f64, f64)),
 }
 
 #[derive(Debug)]
 pub enum ScreenMsg {
     AddBlock(u64, Block),
+    ClaimTouch(u64),
     Close,
 }
 

@@ -29,7 +29,7 @@ impl WebColor {
     }
 }
 
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, PartialEq, Debug, Default)]
 pub struct Color {
     a: f32,
     r: f32,

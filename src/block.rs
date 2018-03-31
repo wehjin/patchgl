@@ -21,3 +21,9 @@ impl Default for Block {
         block
     }
 }
+
+impl Block {
+    pub fn is_hit(&self, x: f32, y: f32) -> bool {
+        self.anchor.x >= x && x < (self.anchor.x + self.width) && self.anchor.y >= y && y < (self.anchor.y + self.height)
+    }
+}
