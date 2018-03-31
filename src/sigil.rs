@@ -6,7 +6,7 @@ use super::{Color, WebColor};
 pub enum Sigil {
     Color(Color),
     Paragraph { line_height: f32, text: String, color: Color },
-    Ghost(Sender<TouchMsg>),
+    Channel(u64, Sender<TouchMsg>),
 }
 
 impl Default for Sigil {

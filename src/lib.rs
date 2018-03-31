@@ -43,10 +43,10 @@ pub enum ScreenMsg {
 
 #[derive(Debug)]
 pub enum TouchMsg {
-    Begin(f64, f64),
-    Cancel,
-    Move(f64, f64),
-    End(f64, f64),
+    Begin(u64, f64, f64),
+    Cancel(u64),
+    Move(u64, f64, f64),
+    End(u64, f64, f64),
 }
 
 

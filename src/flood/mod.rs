@@ -13,18 +13,20 @@ pub enum Flood {
     Barrier(Position, Box<Flood>, Box<Flood>),
     Vessel(Padding, Box<Flood>),
     Sediment(Silt, Box<Flood>, Box<Flood>),
-    Sensor(u64, Box<Flood>, Sender<TouchMsg>),
-}
-
-impl Flood {
-    pub fn track(self, tag: u64, tracker: Sender<TouchMsg>) -> Self {
-        Flood::Sensor(tag, Box::new(self), tracker)
-    }
+    Ripple(Touching, Box<Flood>),
 }
 
 impl Default for Flood {
     fn default() -> Self {
         Flood::Color(Color::default())
+    }
+}
+
+impl Add<Touching> for Flood {
+    type Output = Flood;
+
+    fn add(self, rhs: Touching) -> <Self as Add<Touching>>::Output {
+        Flood::Ripple(rhs, Box::new(self))
     }
 }
 
@@ -60,6 +62,10 @@ impl Add<(Position, Flood)> for Flood {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum Touching {
+    Channel(u64, Sender<TouchMsg>)
+}
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Silt {

@@ -81,7 +81,7 @@ pub struct LocalScreen<'a> {
     display: Display,
     status: ScreenStatus,
     cursor: (f64, f64),
-    tracker: Option<Sender<TouchMsg>>,
+    tracker: Option<(u64, Sender<TouchMsg>)>,
 }
 
 impl<'a> LocalScreen<'a> {
@@ -108,37 +108,37 @@ impl<'a> LocalScreen<'a> {
     fn begin_tracking(&mut self) {
         self.cancel_tracking();
         let (x, y) = self.cursor;
-        let ghost_block = self.blocks.iter().find(|&(_, block)| {
+        let some_block = self.blocks.iter().find(|&(_, block)| {
             match block.sigil {
-                Sigil::Ghost(_) if block.is_hit(x as f32, y as f32) => true,
+                Sigil::Channel(_, _) if block.is_hit(x as f32, y as f32) => true,
                 _ => false,
             }
         });
-        if let Some((_, &Block { sigil: Sigil::Ghost(ref tracker), .. })) = ghost_block {
-            self.tracker = Some(tracker.clone());
-            tracker.send(TouchMsg::Begin(x, y)).unwrap();
+        if let Some((_, &Block { sigil: Sigil::Channel(tag, ref tracker), .. })) = some_block {
+            self.tracker = Some((tag, tracker.clone()));
+            tracker.send(TouchMsg::Begin(tag, x, y)).unwrap();
         }
     }
 
     fn move_tracking(&mut self, cursor: (f64, f64)) {
         self.cursor = cursor;
-        if let Some(ref tracker) = self.tracker {
+        if let Some((tag, ref tracker)) = self.tracker {
             let (x, y) = self.cursor;
-            tracker.send(TouchMsg::Move(x, y)).unwrap();
+            tracker.send(TouchMsg::Move(tag, x, y)).unwrap();
         }
     }
 
     fn cancel_tracking(&mut self) {
-        if let Some(ref tracker) = self.tracker {
-            tracker.send(TouchMsg::Cancel).unwrap();
+        if let Some((tag, ref tracker)) = self.tracker {
+            tracker.send(TouchMsg::Cancel(tag)).unwrap();
         }
         self.tracker = None;
     }
 
     fn end_tracking(&mut self) {
-        if let Some(ref tracker) = self.tracker {
+        if let Some((tag, ref tracker)) = self.tracker {
             let (x, y) = self.cursor;
-            tracker.send(TouchMsg::End(x, y)).unwrap();
+            tracker.send(TouchMsg::End(tag, x, y)).unwrap();
         }
         self.tracker = None;
     }

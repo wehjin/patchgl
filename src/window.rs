@@ -1,7 +1,7 @@
 use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Sigil};
-use ::flood::{Flood, Padding, Position};
+use ::flood::{Flood, Padding, Position, Touching};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::thread::JoinHandle;
@@ -25,7 +25,6 @@ pub fn render_forever<F>(width: u32, height: u32, on_window: F) where
 
 fn start_director(window: Sender<WindowMsg>) -> Sender<DirectorMsg> {
     let (director, _) = director::spawn(window, move |msg, window| {
-        println!("{:?}", msg);
         match msg {
             DirectorMsg::ScreenReady(next_screen) => {
                 window.send(WindowMsg::Screen(next_screen)).unwrap();
@@ -102,9 +101,11 @@ impl Floodplain {
 
 fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flood: &Flood) -> (f32, Vec<Block>) {
     match flood {
-        &Flood::Sensor(tag, ref flood, ref tracker) => {
+        &Flood::Ripple(Touching::Channel(tag, ref tracker), ref flood) => {
             let (max_approach, mut blocks) = build_blocks(left, top, width, height, approach, flood);
-            blocks.push(Block { sigil: Sigil::Ghost(tracker.clone()), width, height, anchor: Anchor { x: left, y: top }, approach: max_approach });
+            let sigil = Sigil::Channel(tag, tracker.clone());
+            let anchor = Anchor { x: left, y: top };
+            blocks.push(Block { sigil, width, height, anchor, approach: max_approach });
             (max_approach, blocks)
         }
         &Flood::Sediment(ref silt, ref far_flood, ref near_flood) => {
