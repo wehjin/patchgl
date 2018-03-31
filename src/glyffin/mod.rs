@@ -5,6 +5,8 @@ use rusttype::{Font, FontCollection, point, PositionedGlyph, Rect, Scale, vector
 use rusttype::gpu_cache::Cache;
 use std::borrow::Cow;
 
+pub const Z_FACTOR: f32 = -0.001;
+
 #[derive(Copy, Clone)]
 pub struct Vertex {
     position: [f32; 3],
@@ -50,7 +52,7 @@ impl<'a> QuipRenderer<'a> {
 
         implement_vertex!(Vertex, position, tex_coords, colour);
         let origin = point(x, y);
-        let z = -approach;
+        let z = approach * Z_FACTOR;
         let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
             if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
                 let gl_rect = Rect {
@@ -124,11 +126,11 @@ impl<'a> QuipRenderer<'a> {
             glium::texture::MipmapsOption::NoMipmap).unwrap();
         QuipRenderer {
             font: FontCollection::from_bytes(include_bytes!("Arial Unicode.ttf") as &[u8]).into_font().unwrap(),
-            program: program,
+            program,
             cache: Cache::new(cache_width, cache_height, 0.1, 0.1),
             cache_dimensions: (cache_width, cache_height),
-            texture: texture,
-            modelview: modelview,
+            texture,
+            modelview,
             vertex_buffer: glium::VertexBuffer::new(display, &[]).unwrap(),
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {

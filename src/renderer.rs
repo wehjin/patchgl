@@ -19,10 +19,10 @@ impl PatchRenderer {
         let fragment_shader_src = include_str!("shaders/patch_fragment_shader.glsl");
         let program = glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap();
         PatchRenderer {
-            program: program,
+            program,
             vertex_buffer: glium::VertexBuffer::empty_dynamic(display, Patch::vertex_count()).unwrap(),
             indices: glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList),
-            modelview: modelview,
+            modelview,
             color: Color::white().to_gl(),
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {

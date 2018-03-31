@@ -1,22 +1,26 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, Div, Mul};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Length {
+    Zero,
     FingerTip,
     Pixels(f32),
     Padding,
     Sum(Box<Length>, Box<Length>),
     Scale(f32, Box<Length>),
+    BottomBarHeight,
 }
 
 impl Length {
     pub fn to_f32(&self) -> f32 {
         match self {
+            &Length::Zero => 0.0,
             &Length::FingerTip => 44.0,
             &Length::Pixels(pixels) => pixels,
             &Length::Padding => 16.0,
             &Length::Sum(ref a, ref b) => a.to_f32() + b.to_f32(),
             &Length::Scale(factor, ref a) => a.to_f32() * factor,
+            &Length::BottomBarHeight => (Length::FingerTip + Length::Padding * 2).to_f32(),
         }
     }
 }
@@ -29,6 +33,14 @@ impl Add for Length {
     }
 }
 
+impl Mul<usize> for Length {
+    type Output = Length;
+
+    fn mul(self, rhs: usize) -> <Self as Mul<usize>>::Output {
+        self * rhs as f32
+    }
+}
+
 impl Mul<f32> for Length {
     type Output = Length;
 
@@ -37,10 +49,18 @@ impl Mul<f32> for Length {
     }
 }
 
-impl Mul<usize> for Length {
+impl Div<u32> for Length {
     type Output = Length;
 
-    fn mul(self, rhs: usize) -> <Self as Mul<usize>>::Output {
-        self * rhs as f32
+    fn div(self, rhs: u32) -> <Self as Div<u32>>::Output {
+        self / (rhs as f32)
+    }
+}
+
+impl Div<f32> for Length {
+    type Output = Length;
+
+    fn div(self, rhs: f32) -> <Self as Div<f32>>::Output {
+        self * rhs.recip()
     }
 }
