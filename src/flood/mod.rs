@@ -1,7 +1,7 @@
 use ::TouchMsg;
 use Color;
 pub use self::length::Length;
-use std::ops::{Add, BitAnd, Sub};
+use std::ops::Add;
 use std::sync::mpsc::Sender;
 
 mod length;
@@ -11,7 +11,7 @@ pub enum Flood {
     Color(Color),
     Text(String, Color),
     Barrier(Position, Box<Flood>, Box<Flood>),
-    Vessel(Thickness, Box<Flood>),
+    Vessel(Padding, Box<Flood>),
     Sediment(Silt, Box<Flood>, Box<Flood>),
     Sensor(u64, Box<Flood>, Sender<TouchMsg>),
 }
@@ -28,27 +28,27 @@ impl Default for Flood {
     }
 }
 
-impl Sub<Thickness> for Flood {
+impl Add<Padding> for Flood {
     type Output = Flood;
 
-    fn sub(self, rhs: Thickness) -> <Self as Sub<Thickness>>::Output {
+    fn add(self, rhs: Padding) -> <Self as Add<Padding>>::Output {
         Flood::Vessel(rhs, Box::new(self))
     }
 }
 
-impl BitAnd<(Silt, Flood)> for Flood {
+impl Add<(Silt, Flood)> for Flood {
     type Output = Flood;
 
-    fn bitand(self, (silt, far): (Silt, Flood)) -> <Self as BitAnd<(Silt, Flood)>>::Output {
+    fn add(self, (silt, far): (Silt, Flood)) -> <Self as Add<(Silt, Flood)>>::Output {
         Flood::Sediment(silt, Box::new(far), Box::new(self))
     }
 }
 
-impl BitAnd<Flood> for Flood {
+impl Add<Flood> for Flood {
     type Output = Flood;
 
-    fn bitand(self, rhs: Flood) -> <Self as BitAnd<Flood>>::Output {
-        self & (Silt::Minimum, rhs)
+    fn add(self, rhs: Flood) -> <Self as Add<Flood>>::Output {
+        self + (Silt::Minimum, rhs)
     }
 }
 
@@ -75,7 +75,7 @@ impl Silt {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub enum Thickness {
+pub enum Padding {
     Uniform(Length),
     Dual(Length, Length),
     Horizontal(Length),

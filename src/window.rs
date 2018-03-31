@@ -1,7 +1,7 @@
 use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Sigil, TouchMsg};
-use ::flood::{Flood, Length, Position, Thickness};
+use ::flood::{Flood, Length, Position, Padding};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::thread::JoinHandle;
@@ -124,14 +124,14 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flo
                 build_blocks(core_left, core_top, core_width.max(0.0), core_height.max(0.0), approach, flood)
             };
             match thickness {
-                &Thickness::Dual(ref h_length, ref v_length) => {
+                &Padding::Dual(ref h_length, ref v_length) => {
                     build_blocks_with_padding(h_length.to_f32(), v_length.to_f32())
                 }
-                &Thickness::Uniform(ref length) => {
+                &Padding::Uniform(ref length) => {
                     let pad = length.to_f32();
                     build_blocks_with_padding(pad, pad)
                 }
-                &Thickness::Horizontal(ref length) => {
+                &Padding::Horizontal(ref length) => {
                     build_blocks_with_padding(length.to_f32(), 0.0)
                 }
             }

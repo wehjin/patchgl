@@ -5,7 +5,7 @@ pub enum Length {
     Zero,
     FingerTip,
     Pixels(f32),
-    Padding,
+    Spacing,
     Sum(Box<Length>, Box<Length>),
     Scale(f32, Box<Length>),
 }
@@ -16,7 +16,7 @@ impl Length {
             &Length::Zero => 0.0,
             &Length::FingerTip => 44.0,
             &Length::Pixels(pixels) => pixels,
-            &Length::Padding => 16.0,
+            &Length::Spacing => 16.0,
             &Length::Sum(ref a, ref b) => a.to_f32() + b.to_f32(),
             &Length::Scale(factor, ref a) => a.to_f32() * factor,
         }
