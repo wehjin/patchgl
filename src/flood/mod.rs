@@ -84,7 +84,6 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, flood: &Flood) -> 
         &Flood::Color(color) => {
             let sigil = Sigil::Color(color);
             let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, ..Default::default() };
-            println!("Colorblock: {:?}", block);
             vec![block]
         }
         &Flood::Text(ref string, color) => {
