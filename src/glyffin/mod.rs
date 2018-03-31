@@ -28,7 +28,7 @@ impl<'a> QuipRenderer<'a> {
         self.modelview = modelview;
     }
 
-    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, scale: Scale, width: u32, approach: f32, colour: [f32; 4], display: &F) {
+    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: u32, approach: f32, colour: [f32; 4], display: &F) {
         let glyphs = layout_paragraph(&self.font, scale, width, text);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
@@ -49,7 +49,7 @@ impl<'a> QuipRenderer<'a> {
         }).unwrap();
 
         implement_vertex!(Vertex, position, tex_coords, colour);
-        let origin = point(0.0, 0.0);
+        let origin = point(x, y);
         let z = -approach;
         let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
             if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
