@@ -10,6 +10,9 @@ use patchgl::flood::{Flood, Length, Padding, Position};
 use patchgl::TouchMsg;
 use std::sync::mpsc::{channel, Sender};
 
+const UP_CODE: u64 = 32;
+const DOWN_CODE: u64 = 33;
+
 fn main() {
     let palette = Palette::new();
     window::render_forever(320, 400, move |window| {
@@ -33,15 +36,21 @@ fn flood_window(window: &Sender<WindowMsg>, flood: Flood) {
 fn flood_from_count(count: i32, palette: &Palette, counter: &Sender<TouchMsg>) -> Flood {
     let body = Flood::Text(format!("{}", count), palette.text);
     let bottom_bar = {
-        let up_button = Flood::Text(String::from("Up"), palette.text)
-            + Padding::Dual(Length::Spacing, Length::Spacing / 4)
-            + (Flood::Color(palette.button_background) + Padding::Uniform(Length::Spacing / 4))
-            + Flood::Color(palette.button_border)
-            .track(34, counter.clone());
-        up_button
+        let up_button = button(palette, counter, "Up", UP_CODE) + Padding::Horizontal(Length::Spacing / 4);
+        let down_button = button(palette, counter, "Down", DOWN_CODE) + Padding::Horizontal(Length::Spacing / 4);
+        down_button + (Position::Right(Length::Half), up_button)
     };
     let before_background = body + (Position::Bottom(Length::FingerTip), bottom_bar) + Padding::Uniform(Length::Spacing);
     (before_background) + Flood::Color(palette.background)
+}
+
+fn button(palette: &Palette, counter: &Sender<TouchMsg>, name: &str, code: u64) -> Flood {
+    let up_button = Flood::Text(String::from(name), palette.text)
+        + Padding::Dual(Length::Spacing, Length::Spacing / 4)
+        + (Flood::Color(palette.button_background) + Padding::Uniform(Length::Spacing / 4))
+        + Flood::Color(palette.button_border)
+        .track(code, counter.clone());
+    up_button
 }
 
 struct Palette {

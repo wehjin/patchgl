@@ -1,7 +1,7 @@
 use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
-use ::{Anchor, Block, Sigil, TouchMsg};
-use ::flood::{Flood, Length, Position, Padding};
+use ::{Anchor, Block, Sigil};
+use ::flood::{Flood, Padding, Position};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::thread::JoinHandle;
@@ -91,7 +91,7 @@ impl Floodplain {
 
     pub fn cycle(&self) {
         if let Some(ref screen) = self.screen {
-            let (_max_approach, blocks, _trackers) = build_blocks(0., 0., self.width as f32, self.height as f32, 0.0, &self.flood);
+            let (_max_approach, blocks) = build_blocks(0., 0., self.width as f32, self.height as f32, 0.0, &self.flood);
             blocks.into_iter().enumerate().for_each(|(i, block)| {
                 let msg = ScreenMsg::AddBlock(i as u64, block);
                 screen.send(msg).unwrap();
@@ -100,22 +100,20 @@ impl Floodplain {
     }
 }
 
-fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flood: &Flood) -> (f32, Vec<Block>, Vec<(u64, Sender<TouchMsg>)>) {
+fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flood: &Flood) -> (f32, Vec<Block>) {
     match flood {
         &Flood::Sensor(tag, ref flood, ref tracker) => {
-            let (max_approach, mut blocks, mut trackers) = build_blocks(left, top, width, height, approach, flood);
+            let (max_approach, mut blocks) = build_blocks(left, top, width, height, approach, flood);
             blocks.push(Block { sigil: Sigil::Ghost(tracker.clone()), width, height, anchor: Anchor { x: left, y: top }, approach: max_approach });
-            trackers.push((tag, tracker.clone()));
-            (max_approach, blocks, trackers)
+            (max_approach, blocks)
         }
         &Flood::Sediment(ref silt, ref far_flood, ref near_flood) => {
-            let (far_max_approach, mut blocks, mut trackers) = build_blocks(left, top, width, height, approach, far_flood);
+            let (far_max_approach, mut blocks) = build_blocks(left, top, width, height, approach, far_flood);
             let near_approach = silt.add_to(far_max_approach);
-            let (near_max_approach, near_blocks, near_trackers) = build_blocks(left, top, width, height, near_approach, near_flood);
+            let (near_max_approach, near_blocks) = build_blocks(left, top, width, height, near_approach, near_flood);
 
             blocks.extend(near_blocks);
-            trackers.extend(near_trackers);
-            (near_max_approach.max(far_max_approach), blocks, trackers)
+            (near_max_approach.max(far_max_approach), blocks)
         }
         &Flood::Vessel(ref thickness, ref flood) => {
             let build_blocks_with_padding = |h_pad: f32, v_pad: f32| {
@@ -125,40 +123,47 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flo
             };
             match thickness {
                 &Padding::Dual(ref h_length, ref v_length) => {
-                    build_blocks_with_padding(h_length.to_f32(), v_length.to_f32())
+                    build_blocks_with_padding(h_length.to_f32(width), v_length.to_f32(height))
                 }
                 &Padding::Uniform(ref length) => {
-                    let pad = length.to_f32();
+                    let pad = length.to_f32(width.max(height));
                     build_blocks_with_padding(pad, pad)
                 }
                 &Padding::Horizontal(ref length) => {
-                    build_blocks_with_padding(length.to_f32(), 0.0)
+                    build_blocks_with_padding(length.to_f32(width), 0.0)
                 }
             }
         }
         &Flood::Barrier(ref position, ref a_flood, ref b_flood) => {
-            let build_blocks_with_bottom_length = |length: &Length| {
-                let bottom_height = length.to_f32();
-                let top_height = height - bottom_height;
-                let barrier_y = top + top_height;
-                let (a_max_approach, mut blocks, mut trackers) = build_blocks(left, top, width, top_height, approach, a_flood);
-                let (b_max_approach, b_blocks, b_trackers) = build_blocks(left, barrier_y, width, bottom_height, approach, b_flood);
-                blocks.extend(b_blocks);
-                trackers.extend(b_trackers);
-                (a_max_approach.max(b_max_approach), blocks, trackers)
-            };
             match position {
-                &Position::Bottom(ref length) => build_blocks_with_bottom_length(length),
+                &Position::Right(ref length) => {
+                    let b_width = length.to_f32(width);
+                    let a_width = width - b_width;
+                    let (a_left, b_left) = (left, left + a_width);
+                    let (a_max_approach, mut blocks) = build_blocks(a_left, top, a_width, height, approach, a_flood);
+                    let (b_max_approach, b_blocks) = build_blocks(b_left, top, b_width, height, approach, b_flood);
+                    blocks.extend(b_blocks);
+                    (a_max_approach.max(b_max_approach), blocks)
+                }
+                &Position::Bottom(ref length) => {
+                    let b_height = length.to_f32(height);
+                    let a_height = height - b_height;
+                    let (a_top, b_top) = (top, top + a_height);
+                    let (a_max_approach, mut blocks) = build_blocks(left, a_top, width, a_height, approach, a_flood);
+                    let (b_max_approach, b_blocks) = build_blocks(left, b_top, width, b_height, approach, b_flood);
+                    blocks.extend(b_blocks);
+                    (a_max_approach.max(b_max_approach), blocks)
+                }
             }
         }
         &Flood::Text(ref string, color) => {
             let sigil = Sigil::Paragraph { line_height: height, text: string.to_owned(), color };
-            (approach, vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }], vec![])
+            (approach, vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }])
         }
         &Flood::Color(color) => {
             let sigil = Sigil::Color(color);
             let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach };
-            (approach, vec![block], vec![])
+            (approach, vec![block])
         }
     }
 }

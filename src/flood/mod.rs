@@ -84,5 +84,6 @@ pub enum Padding {
 #[derive(Clone, PartialEq, Debug)]
 pub enum Position {
     Bottom(Length),
+    Right(Length),
 }
 

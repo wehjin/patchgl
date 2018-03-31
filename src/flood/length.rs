@@ -8,17 +8,19 @@ pub enum Length {
     Spacing,
     Sum(Box<Length>, Box<Length>),
     Scale(f32, Box<Length>),
+    Half,
 }
 
 impl Length {
-    pub fn to_f32(&self) -> f32 {
+    pub fn to_f32(&self, context: f32) -> f32 {
         match self {
+            &Length::Half => context * 0.5,
             &Length::Zero => 0.0,
             &Length::FingerTip => 44.0,
             &Length::Pixels(pixels) => pixels,
             &Length::Spacing => 16.0,
-            &Length::Sum(ref a, ref b) => a.to_f32() + b.to_f32(),
-            &Length::Scale(factor, ref a) => a.to_f32() * factor,
+            &Length::Sum(ref a, ref b) => a.to_f32(context) + b.to_f32(context),
+            &Length::Scale(factor, ref a) => a.to_f32(context) * factor,
         }
     }
 }
