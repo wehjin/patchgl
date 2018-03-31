@@ -1,6 +1,10 @@
 use ::{director, DirectorMsg, screen, ScreenMsg};
 use ::{Anchor, Block, Color, Sigil};
+pub use self::length::Length;
+use std::ops::Sub;
 use std::sync::mpsc::Sender;
+
+mod length;
 
 pub fn render_forever(width: u32, height: u32, flood: Flood) {
     let director = director::spawn(Plains::new(width, height), move |msg, carry| {
@@ -31,26 +35,26 @@ pub enum Flood {
     Color(Color),
     Text(String, Color),
     Barrier(Position, Box<Flood>, Box<Flood>),
+    Vessel(Thickness, Box<Flood>),
 }
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+impl Sub<Thickness> for Flood {
+    type Output = Flood;
+
+    fn sub(self, rhs: Thickness) -> <Self as Sub<Thickness>>::Output {
+        Flood::Vessel(rhs, Box::new(self))
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum Thickness {
+    Uniform(Length),
+    Dual(Length, Length),
+}
+
+#[derive(Clone, PartialEq, Debug)]
 pub enum Position {
     BottomMinusLength(Length)
-}
-
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub enum Length {
-    FingerTip,
-    Pixels(f32),
-}
-
-impl Length {
-    pub fn to_f32(&self) -> f32 {
-        match self {
-            &Length::FingerTip => 44.0,
-            &Length::Pixels(pixels) => pixels,
-        }
-    }
 }
 
 struct Plains {
@@ -87,14 +91,31 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, flood: &Flood) -> 
             let sigil = Sigil::Paragraph { line_height: height, text: string.to_owned(), color };
             vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, ..Default::default() }]
         }
-        &Flood::Barrier(position, ref a_flood, ref b_flood) => {
-            let Position::BottomMinusLength(length) = position;
+        &Flood::Barrier(ref position, ref a_flood, ref b_flood) => {
+            let &Position::BottomMinusLength(ref length) = position;
             let bottom_height = length.to_f32();
             let top_height = height - bottom_height;
             let barrier_y = top + top_height;
             let mut blocks = build_blocks(left, top, width, top_height, a_flood);
             blocks.append(&mut build_blocks(left, barrier_y, width, bottom_height, b_flood));
             blocks
+        }
+        &Flood::Vessel(ref thickness, ref flood) => {
+            let build_blocks_with_padding = |h_pad: f32, v_pad: f32| {
+                let (core_left, core_top) = (left + h_pad, top + v_pad);
+                let (core_width, core_height) = (width - 2.0 * h_pad, height - 2.0 * v_pad);
+                build_blocks(core_left, core_top, core_width.max(0.0), core_height.max(0.0), flood)
+            };
+            match thickness {
+                &Thickness::Dual(ref h_length, ref v_length) => {
+                    let (h_pad, v_pad) = (h_length.to_f32(), v_length.to_f32());
+                    build_blocks_with_padding(h_pad, v_pad)
+                }
+                &Thickness::Uniform(ref length) => {
+                    let pad = length.to_f32();
+                    build_blocks_with_padding(pad, pad)
+                }
+            }
         }
     }
 }
