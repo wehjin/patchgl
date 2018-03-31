@@ -31,16 +31,18 @@ pub enum DirectorMsg {
     ScreenReady(Sender<ScreenMsg>),
     ScreenResized(u32, u32),
     ScreenClosed,
-    TouchBegin(u64, (f64, f64)),
-    TouchMove(u64, (f64, f64)),
-    TouchCancel(u64),
-    TouchEnd(u64, (f64, f64)),
 }
 
 #[derive(Debug)]
 pub enum ScreenMsg {
     AddBlock(u64, Block),
-    ClaimTouch(u64),
     Close,
 }
 
+#[derive(Debug)]
+pub enum TouchMsg {
+    Begin(f64, f64),
+    Cancel,
+    Move(f64, f64),
+    End(f64, f64),
+}

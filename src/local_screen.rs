@@ -1,6 +1,5 @@
 use ::{Block, Sigil};
-use ::DirectorMsg;
-use ::ScreenMsg;
+use ::{DirectorMsg, ScreenMsg, TouchMsg};
 use glium::{Display, Frame, Surface};
 use glium::backend::Facade;
 use glium::glutin::{ContextBuilder, ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowBuilder, WindowEvent};
@@ -41,13 +40,13 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
                         ControlFlow::Continue
                     }
                     WindowEvent::CursorMoved { position, .. } => {
-                        local_screen.move_tracking(position, &director);
+                        local_screen.move_tracking(position);
                         ControlFlow::Continue
                     }
                     WindowEvent::MouseInput { state, button: MouseButton::Left, .. } => {
                         match state {
-                            ElementState::Pressed => local_screen.begin_tracking(&director),
-                            ElementState::Released => local_screen.end_tracking(&director),
+                            ElementState::Pressed => local_screen.begin_tracking(),
+                            ElementState::Released => local_screen.end_tracking(),
                         }
                         ControlFlow::Continue
                     }
@@ -82,7 +81,7 @@ pub struct LocalScreen<'a> {
     display: Display,
     status: ScreenStatus,
     cursor: (f64, f64),
-    tracker_tag: Option<u64>,
+    tracker: Option<Sender<TouchMsg>>,
 }
 
 impl<'a> LocalScreen<'a> {
@@ -97,7 +96,7 @@ impl<'a> LocalScreen<'a> {
             display,
             status: ScreenStatus::Changed,
             cursor: (-1.0, -1.0),
-            tracker_tag: None,
+            tracker: None,
         };
         local_screen
     }
@@ -106,38 +105,42 @@ impl<'a> LocalScreen<'a> {
         self.status
     }
 
-    fn move_tracking(&mut self, cursor: (f64, f64), director: &Sender<DirectorMsg>) {
-        self.cursor = cursor;
-        if let Some(tag) = self.tracker_tag {
-            let (x, y) = cursor;
-            director.send(DirectorMsg::TouchMove(tag, cursor)).unwrap();
-        }
-    }
-
-    fn begin_tracking(&mut self, director: &Sender<DirectorMsg>) {
-        self.cancel_tracking(director);
-        self.blocks.iter().for_each(|(_, block)| {
-            if let Sigil::Ghost(tag) = block.sigil {
-                let (x, y) = self.cursor;
-                if block.is_hit(x as f32, y as f32) {
-                    director.send(DirectorMsg::TouchBegin(tag, (x, y))).unwrap();
-                }
+    fn begin_tracking(&mut self) {
+        self.cancel_tracking();
+        let (x, y) = self.cursor;
+        let ghost_block = self.blocks.iter().find(|&(_, block)| {
+            match block.sigil {
+                Sigil::Ghost(_) if block.is_hit(x as f32, y as f32) => true,
+                _ => false,
             }
         });
-    }
-
-    fn cancel_tracking(&mut self, director: &Sender<DirectorMsg>) {
-        if let Some(tag) = self.tracker_tag {
-            self.tracker_tag = None;
-            director.send(DirectorMsg::TouchCancel(tag)).unwrap();
+        if let Some((_, &Block { sigil: Sigil::Ghost(ref tracker), .. })) = ghost_block {
+            self.tracker = Some(tracker.clone());
+            tracker.send(TouchMsg::Begin(x, y)).unwrap();
         }
     }
 
-    fn end_tracking(&mut self, director: &Sender<DirectorMsg>) {
-        if let Some(tag) = self.tracker_tag {
-            self.tracker_tag = None;
-            director.send(DirectorMsg::TouchEnd(tag, self.cursor)).unwrap();
+    fn move_tracking(&mut self, cursor: (f64, f64)) {
+        self.cursor = cursor;
+        if let Some(ref tracker) = self.tracker {
+            let (x, y) = self.cursor;
+            tracker.send(TouchMsg::Move(x, y)).unwrap();
         }
+    }
+
+    fn cancel_tracking(&mut self) {
+        if let Some(ref tracker) = self.tracker {
+            tracker.send(TouchMsg::Cancel).unwrap();
+        }
+        self.tracker = None;
+    }
+
+    fn end_tracking(&mut self) {
+        if let Some(ref tracker) = self.tracker {
+            let (x, y) = self.cursor;
+            tracker.send(TouchMsg::End(x, y)).unwrap();
+        }
+        self.tracker = None;
     }
 
     fn on_dimensions(&mut self, width: u32, height: u32) {
@@ -156,11 +159,6 @@ impl<'a> LocalScreen<'a> {
             }
             ScreenMsg::Close => {
                 self.status = self.status.will_close()
-            }
-            ScreenMsg::ClaimTouch(tag) => {
-                if self.tracker_tag.is_none() {
-                    self.tracker_tag = Some(tag);
-                }
             }
         }
     }

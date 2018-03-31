@@ -1,5 +1,6 @@
 use ::{director, DirectorMsg, screen, ScreenMsg};
 use ::{Anchor, Block, Color, Sigil};
+use ::TouchMsg;
 pub use self::length::Length;
 use std::ops::{Add, BitAnd, Sub};
 use std::sync::mpsc::Sender;
@@ -26,18 +27,6 @@ pub fn render_forever(width: u32, height: u32, flood: Flood) {
             DirectorMsg::ScreenClosed => {
                 (Plains::default(), director::ScanFlow::Break)
             }
-            DirectorMsg::TouchBegin(tag, (x, y)) => {
-                (carry, director::ScanFlow::Continue)
-            }
-            DirectorMsg::TouchMove(tag, (x, y)) => {
-                (carry, director::ScanFlow::Continue)
-            }
-            DirectorMsg::TouchCancel(tag) => {
-                (carry, director::ScanFlow::Continue)
-            }
-            DirectorMsg::TouchEnd(tag, (x, y)) => {
-                (carry, director::ScanFlow::Continue)
-            }
         }
     });
     screen::start(width, height, director);
@@ -50,6 +39,13 @@ pub enum Flood {
     Barrier(Position, Box<Flood>, Box<Flood>),
     Vessel(Thickness, Box<Flood>),
     Sediment(Silt, Box<Flood>, Box<Flood>),
+    Sensor(u64, Box<Flood>, Sender<TouchMsg>),
+}
+
+impl Flood {
+    pub fn track(self, tag: u64, tracker: Sender<TouchMsg>) -> Self {
+        Flood::Sensor(tag, Box::new(self), tracker)
+    }
 }
 
 impl Sub<Thickness> for Flood {
@@ -108,7 +104,6 @@ pub enum Thickness {
 #[derive(Clone, PartialEq, Debug)]
 pub enum Position {
     Bottom(Length),
-    BottomBar,
 }
 
 struct Plains {
@@ -124,7 +119,7 @@ impl Plains {
 
     pub fn flood(&self, flood: &Flood) {
         if let Some(ref screen) = self.screen {
-            let (_, blocks) = build_blocks(0., 0., self.width as f32, self.height as f32, 0.0, flood);
+            let (_, blocks, _trackers) = build_blocks(0., 0., self.width as f32, self.height as f32, 0.0, flood);
             blocks.into_iter().enumerate().for_each(|(i, block)| {
                 let msg = ScreenMsg::AddBlock(i as u64, block);
                 screen.send(msg).unwrap();
@@ -133,15 +128,22 @@ impl Plains {
     }
 }
 
-fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flood: &Flood) -> (f32, Vec<Block>) {
+fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flood: &Flood) -> (f32, Vec<Block>, Vec<(u64, Sender<TouchMsg>)>) {
     match flood {
+        &Flood::Sensor(tag, ref flood, ref tracker) => {
+            let (max_approach, mut blocks, mut trackers) = build_blocks(left, top, width, height, approach, flood);
+            blocks.push(Block { sigil: Sigil::Ghost(tracker.clone()), width, height, anchor: Anchor { x: left, y: top }, approach: max_approach });
+            trackers.push((tag, tracker.clone()));
+            (max_approach, blocks, trackers)
+        }
         &Flood::Sediment(ref silt, ref far_flood, ref near_flood) => {
-            let (far_max_approach, far_blocks) = build_blocks(left, top, width, height, approach, far_flood);
+            let (far_max_approach, mut blocks, mut trackers) = build_blocks(left, top, width, height, approach, far_flood);
             let near_approach = silt.add_to(far_max_approach);
-            let (near_max_approach, near_blocks) = build_blocks(left, top, width, height, near_approach, near_flood);
-            let mut blocks = Vec::from(far_blocks);
+            let (near_max_approach, near_blocks, near_trackers) = build_blocks(left, top, width, height, near_approach, near_flood);
+
             blocks.extend(near_blocks);
-            (near_max_approach.max(far_max_approach), blocks)
+            trackers.extend(near_trackers);
+            (near_max_approach.max(far_max_approach), blocks, trackers)
         }
         &Flood::Vessel(ref thickness, ref flood) => {
             let build_blocks_with_padding = |h_pad: f32, v_pad: f32| {
@@ -167,25 +169,24 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flo
                 let bottom_height = length.to_f32();
                 let top_height = height - bottom_height;
                 let barrier_y = top + top_height;
-                let (a_max_approach, a_blocks) = build_blocks(left, top, width, top_height, approach, a_flood);
-                let (b_max_approach, b_blocks) = build_blocks(left, barrier_y, width, bottom_height, approach, b_flood);
-                let mut blocks = Vec::from(a_blocks);
+                let (a_max_approach, mut blocks, mut trackers) = build_blocks(left, top, width, top_height, approach, a_flood);
+                let (b_max_approach, b_blocks, b_trackers) = build_blocks(left, barrier_y, width, bottom_height, approach, b_flood);
                 blocks.extend(b_blocks);
-                (a_max_approach.max(b_max_approach), blocks)
+                trackers.extend(b_trackers);
+                (a_max_approach.max(b_max_approach), blocks, trackers)
             };
             match position {
                 &Position::Bottom(ref length) => build_blocks_with_bottom_length(length),
-                &Position::BottomBar => build_blocks_with_bottom_length(&Length::BottomBarHeight),
             }
         }
         &Flood::Text(ref string, color) => {
             let sigil = Sigil::Paragraph { line_height: height, text: string.to_owned(), color };
-            (approach, vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }])
+            (approach, vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }], vec![])
         }
         &Flood::Color(color) => {
             let sigil = Sigil::Color(color);
             let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach };
-            (approach, vec![block])
+            (approach, vec![block], vec![])
         }
     }
 }
