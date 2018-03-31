@@ -11,6 +11,7 @@ pub use base::{Color, WebColor, X11Color};
 pub use block::Block;
 pub use sigil::Sigil;
 use std::sync::mpsc::Sender;
+pub use window::WindowMsg;
 
 pub mod model;
 pub mod renderer;

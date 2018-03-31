@@ -5,43 +5,59 @@ extern crate rusttype;
 extern crate xml;
 
 use patchgl::{Color, X11Color};
+use patchgl::{window, WindowMsg};
 use patchgl::flood::{Flood, Length, Position, Thickness};
 use patchgl::TouchMsg;
-use patchgl::window;
-use std::sync::mpsc::channel;
-use std::thread;
-
+use std::sync::mpsc::{channel, Sender};
 
 fn main() {
-    let text_color = Color::from(X11Color::Indigo);
-    let background_color = Color::from(X11Color::Lavender);
-    let button_background_color = Color::from(X11Color::Thistle);
-    let button_border_color = Color::from(X11Color::MediumPurple);
-
-    let count = 0;
-    {
-        let count_flood =
-            Flood::Text(format!("{}", count), text_color) - Thickness::Uniform(Length::Padding);
-
-        let pressable_button_flood = Flood::Text(String::from("+"), text_color) - Thickness::Horizontal(Length::Padding)
-            & (Flood::Color(button_background_color) - Thickness::Uniform(Length::Padding / 4))
-            & Flood::Color(button_border_color);
-
-        let (tracker, tracker_msgs) = channel::<TouchMsg>();
-        thread::spawn(move || {
-            while let Ok(msg) = tracker_msgs.recv() {
-                if let TouchMsg::End(x, y) = msg {
-                    println!("CLICK: {},{}", x, y)
-                }
+    let palette = Palette::new();
+    window::render_forever(320, 400, move |window| {
+        let mut count = 0;
+        let (counter, counter_msgs) = channel::<TouchMsg>();
+        flood_window(&window, flood_from_count(count, &palette, &counter));
+        while let Ok(msg) = counter_msgs.recv() {
+            if let TouchMsg::End(x, y) = msg {
+                println!("CLICK: {},{}", x, y);
+                count = count + 1;
+                flood_window(&window, flood_from_count(count, &palette, &counter));
             }
-        });
+        }
+    });
+}
 
-        let button_flood = pressable_button_flood.track(34, tracker);
+fn flood_window(window: &Sender<WindowMsg>, flood: Flood) {
+    window.send(WindowMsg::Flood(flood)).unwrap_or(());
+}
 
-        let full_flood = (count_flood + (Position::Bottom(Length::BottomBarHeight), button_flood - Thickness::Uniform(Length::Padding)))
-            & Flood::Color(background_color);
+fn flood_from_count(count: i32, palette: &Palette, counter: &Sender<TouchMsg>) -> Flood {
+    let body = Flood::Text(format!("{}", count), palette.text);
+    let bottom_bar = {
+        let up_button = Flood::Text(String::from("Up"), palette.text) - Thickness::Dual(Length::Padding, Length::Padding / 4)
+            & (Flood::Color(palette.button_background) - Thickness::Uniform(Length::Padding / 4))
+            & Flood::Color(palette.button_border)
+            .track(34, counter.clone());
+        up_button
+    };
+    let before_background = body + (Position::Bottom(Length::FingerTip), bottom_bar) - Thickness::Uniform(Length::Padding);
+    (before_background) & Flood::Color(palette.background)
+}
 
-        window::render_forever(320, 400, full_flood);
+struct Palette {
+    pub text: Color,
+    pub background: Color,
+    pub button_background: Color,
+    pub button_border: Color,
+}
+
+impl Palette {
+    fn new() -> Self {
+        Palette {
+            text: Color::from(X11Color::Indigo),
+            background: Color::from(X11Color::Lavender),
+            button_background: Color::from(X11Color::Thistle),
+            button_border: Color::from(X11Color::MediumPurple),
+        }
     }
 }
 

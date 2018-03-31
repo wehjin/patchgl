@@ -1,5 +1,6 @@
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
+use std::thread::JoinHandle;
 use super::DirectorMsg;
 
 #[derive(Eq, PartialEq)]
@@ -8,26 +9,27 @@ pub enum ScanFlow {
     Continue,
 }
 
-pub fn spawn<T, F>(carry: T, f: F) -> Sender<DirectorMsg>
-    where F: Fn(DirectorMsg, T) -> (T, ScanFlow), F: Send + 'static, T: Send + 'static
+pub fn spawn<T, F>(carry: T, f: F) -> (Sender<DirectorMsg>, JoinHandle<()>) where
+    F: Fn(DirectorMsg, T) -> (T, ScanFlow), F: Send + 'static, T: Send + 'static
 {
-    let (sender, receiver) = channel::<DirectorMsg>();
-    thread::spawn(move || {
-        scan_messages(&receiver, carry, f);
+    let (director, director_msgs) = channel::<DirectorMsg>();
+    let director_thread = thread::spawn(move || {
+        scan_messages(&director_msgs, carry, f);
     });
-    sender
+    (director, director_thread)
 }
 
-pub fn scan_messages<T, F>(director_msg_receiver: &Receiver<DirectorMsg>, carry: T, f: F)
-    where F: Fn(DirectorMsg, T) -> (T, ScanFlow)
+pub fn scan_messages<T, F>(director_msgs: &Receiver<DirectorMsg>, carry: T, f: F) -> T where
+    F: Fn(DirectorMsg, T) -> (T, ScanFlow)
 {
-    let (mut data, mut flow) = (carry, ScanFlow::Continue);
+    let (mut active_carry, mut flow) = (carry, ScanFlow::Continue);
     while flow == ScanFlow::Continue {
-        let (new_carry, new_flow) = match director_msg_receiver.recv() {
-            Ok(msg) => f(msg, data),
-            Err(_) => (data, ScanFlow::Break)
+        let (new_carry, new_flow) = match director_msgs.recv() {
+            Ok(msg) => f(msg, active_carry),
+            Err(_) => (active_carry, ScanFlow::Break)
         };
-        data = new_carry;
+        active_carry = new_carry;
         flow = new_flow;
     }
+    active_carry
 }

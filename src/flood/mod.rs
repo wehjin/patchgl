@@ -1,5 +1,5 @@
-use Color;
 use ::TouchMsg;
+use Color;
 pub use self::length::Length;
 use std::ops::{Add, BitAnd, Sub};
 use std::sync::mpsc::Sender;
@@ -19,6 +19,12 @@ pub enum Flood {
 impl Flood {
     pub fn track(self, tag: u64, tracker: Sender<TouchMsg>) -> Self {
         Flood::Sensor(tag, Box::new(self), tracker)
+    }
+}
+
+impl Default for Flood {
+    fn default() -> Self {
+        Flood::Color(Color::default())
     }
 }
 

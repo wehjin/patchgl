@@ -8,7 +8,6 @@ pub enum Length {
     Padding,
     Sum(Box<Length>, Box<Length>),
     Scale(f32, Box<Length>),
-    BottomBarHeight,
 }
 
 impl Length {
@@ -20,7 +19,6 @@ impl Length {
             &Length::Padding => 16.0,
             &Length::Sum(ref a, ref b) => a.to_f32() + b.to_f32(),
             &Length::Scale(factor, ref a) => a.to_f32() * factor,
-            &Length::BottomBarHeight => (Length::FingerTip + Length::Padding * 2).to_f32(),
         }
     }
 }
