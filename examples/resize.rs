@@ -5,12 +5,13 @@ extern crate rusttype;
 extern crate xml;
 
 use patchgl::{Color, X11Color};
-use patchgl::flood;
+use patchgl::{window, WindowMsg};
 use patchgl::flood::Flood;
 
-
 fn main() {
-    let flood = Flood::Color(Color::from(X11Color::Thistle));
-    flood::render_forever(320, 400, flood);
+    window::render_forever(320, 400, |window| {
+        let flood = Flood::Color(Color::from(X11Color::Thistle));
+        window.send(WindowMsg::Flood(flood)).unwrap();
+    });
 }
 
