@@ -5,9 +5,9 @@ extern crate rusttype;
 extern crate xml;
 
 use patchgl::{Color, X11Color};
-use patchgl::flood;
 use patchgl::flood::{Flood, Length, Position, Thickness};
 use patchgl::TouchMsg;
+use patchgl::window;
 use std::sync::mpsc::channel;
 use std::thread;
 
@@ -41,7 +41,7 @@ fn main() {
         let full_flood = (count_flood + (Position::Bottom(Length::BottomBarHeight), button_flood - Thickness::Uniform(Length::Padding)))
             & Flood::Color(background_color);
 
-        flood::render_forever(320, 400, full_flood);
+        window::render_forever(320, 400, full_flood);
     }
 }
 

@@ -21,6 +21,7 @@ pub mod parser;
 pub mod director;
 pub mod screen;
 pub mod flood;
+pub mod window;
 mod sigil;
 mod local_screen;
 mod anchor;
@@ -46,3 +47,5 @@ pub enum TouchMsg {
     Move(f64, f64),
     End(f64, f64),
 }
+
+
