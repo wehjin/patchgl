@@ -2,9 +2,12 @@ use arrayvec;
 use arrayvec::ArrayVec;
 use glium;
 use glium::backend::Facade;
-use rusttype::{Font, FontCollection, point, PositionedGlyph, Rect, Scale, vector};
+use rusttype::{Font, FontCollection, PositionedGlyph, VMetrics};
+use rusttype::{Point, point, Rect, Scale, vector};
 use rusttype::gpu_cache::Cache;
 use std::borrow::Cow;
+use unicode_normalization::UnicodeNormalization;
+
 
 pub const Z_FACTOR: f32 = -0.001;
 
@@ -25,7 +28,7 @@ impl<'a> QuipRenderer<'a> {
     }
 
     pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: u32, approach: f32, colour: [f32; 4], display: &F) {
-        let glyphs = layout_paragraph(&self.font, scale, width, text);
+        let glyphs = layout_glyphs(&self.font, scale, width, text);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
         }
@@ -109,21 +112,15 @@ impl<'a> QuipRenderer<'a> {
     }
 }
 
-pub fn layout_paragraph<'a>(font: &'a Font, scale: Scale, width: u32, text: &str) -> Vec<PositionedGlyph<'a>> {
-    use unicode_normalization::UnicodeNormalization;
-    let mut result = Vec::new();
-    let v_metrics = font.v_metrics(scale);
-    let advance_height = v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
-    let mut caret = point(0.0, v_metrics.ascent);
+pub fn layout_glyphs<'a>(font: &'a Font, scale: Scale, width: u32, text: &str) -> Vec<PositionedGlyph<'a>> {
+    let mut glyph_writer = GlyphWriter::new(&font.v_metrics(scale));
     let mut last_glyph_id = None;
     for c in text.nfc() {
         if c.is_control() {
             match c {
-                '\r' => {
-                    caret = point(0.0, caret.y + advance_height);
-                }
-                '\n' => {}
-                _ => {}
+                '\r' => glyph_writer.advance_line(),
+                '\n' => (),
+                _ => (),
             }
             continue;
         }
@@ -132,22 +129,70 @@ pub fn layout_paragraph<'a>(font: &'a Font, scale: Scale, width: u32, text: &str
         } else {
             continue;
         };
-        if let Some(id) = last_glyph_id.take() {
-            caret.x += font.pair_kerning(scale, id, base_glyph.id());
-        }
+        let kerning = if let Some(id) = last_glyph_id.take() {
+            font.pair_kerning(scale, id, base_glyph.id())
+        } else {
+            0.0
+        };
         last_glyph_id = Some(base_glyph.id());
-        let mut glyph = base_glyph.scaled(scale).positioned(caret);
+
+        glyph_writer.advance_right(kerning);
+        let mut glyph = base_glyph.scaled(scale).positioned(glyph_writer.position());
         if let Some(bb) = glyph.pixel_bounding_box() {
             if bb.max.x > width as i32 {
-                caret = point(0.0, caret.y + advance_height);
-                glyph = glyph.into_unpositioned().positioned(caret);
+                glyph_writer.advance_right(-kerning);
+                glyph_writer.advance_line();
+                glyph = glyph.into_unpositioned().positioned(glyph_writer.position());
                 last_glyph_id = None;
             }
         }
-        caret.x += glyph.unpositioned().h_metrics().advance_width;
-        result.push(glyph);
+        glyph_writer.advance_right(glyph.unpositioned().h_metrics().advance_width);
+        glyph_writer.add_glyph(glyph);
     }
-    result
+    glyph_writer.take_glyphs()
+}
+
+struct GlyphWriter<'a> {
+    line_stride: f32,
+    caret: Point<f32>,
+    line: Vec<PositionedGlyph<'a>>,
+    page: Vec<Vec<PositionedGlyph<'a>>>,
+}
+
+impl<'a> GlyphWriter<'a> {
+    fn new(v_metrics: &VMetrics) -> Self {
+        let line_stride = v_metrics.ascent - v_metrics.descent + v_metrics.line_gap;
+        let caret = point(0.0, v_metrics.ascent);
+        GlyphWriter { line_stride, caret, line: Vec::new(), page: Vec::new() }
+    }
+    fn position(&self) -> Point<f32> {
+        self.caret
+    }
+    fn advance_line(&mut self) {
+        self.caret = point(0.0, self.caret.y + self.line_stride);
+        let mut line = Vec::new();
+        line.append(&mut self.line);
+        self.page.push(line);
+    }
+    fn advance_right(&mut self, amount: f32) {
+        self.caret.x += amount;
+    }
+    fn add_glyph(&mut self, glyph: PositionedGlyph<'a>) {
+        self.line.push(glyph);
+    }
+    fn take_glyphs(&mut self) -> Vec<PositionedGlyph<'a>> {
+        let mut lines = Vec::new();
+        lines.append(&mut self.page);
+        if !self.line.is_empty() {
+            let mut line = Vec::new();
+            line.append(&mut self.line);
+            lines.push(line);
+        }
+        lines.into_iter().fold(Vec::new(), |mut all, more| {
+            all.extend(more);
+            all
+        })
+    }
 }
 
 fn layout_vertices(z: f32, uv_rect: &Rect<f32>, gl_rect: &Rect<f32>, colour: &[f32; 4]) -> ArrayVec<[Vertex; 6]> {
