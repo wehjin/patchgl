@@ -15,47 +15,67 @@ const DOWN_CODE: u64 = 33;
 const RESET_CODE: u64 = 34;
 
 enum AppMsg {
-    Add,
-    Subtract,
-    Reset,
-    None,
+    Press(u64),
+    Cancel(u64),
+    Release(u64),
+    Ignore,
+}
+
+#[derive(Default, Debug)]
+struct Model {
+    count: i32,
+    active_code: Option<u64>,
+}
+
+impl Model {
+    pub fn count(&self) -> i32 { self.count }
+    pub fn update(&mut self, msg: AppMsg) {
+        match msg {
+            AppMsg::Press(code) => {
+                self.active_code = Some(code);
+            }
+            AppMsg::Cancel(code) => {
+                if self.active_code == Some(code) {
+                    self.active_code = None;
+                }
+            }
+            AppMsg::Release(code) => {
+                if self.active_code == Some(code) {
+                    match code {
+                        UP_CODE => self.count += 1,
+                        DOWN_CODE => self.count -= 1,
+                        RESET_CODE => self.count = 0,
+                        _ => (),
+                    }
+                    self.active_code = None
+                }
+            }
+            AppMsg::Ignore => ()
+        }
+    }
 }
 
 fn main() {
     let palette = Palette::new();
-    fn update(count: i32, msg: AppMsg) -> i32 {
-        match msg {
-            AppMsg::Add => count + 1,
-            AppMsg::Subtract => count - 1,
-            AppMsg::Reset => 0,
-            AppMsg::None => count,
-        }
-    }
-
     window::render_forever(320, 400, move |window| {
-        let mut count = 0;
         let (app, app_msgs) = channel::<TouchMsg>();
-        flood_window(&window, draw(count, &palette, &app));
-        while let Ok(msg) = app_msgs.recv() {
-            if let TouchMsg::End(code, _x, _y) = msg {
-                let msg = match code {
-                    UP_CODE => AppMsg::Add,
-                    DOWN_CODE => AppMsg::Subtract,
-                    RESET_CODE => AppMsg::Reset,
-                    _ => AppMsg::None,
-                };
-                count = update(count, msg);
-                flood_window(&window, draw(count, &palette, &app));
-            }
+        let mut model = Model::default();
+        window.send(WindowMsg::Flood(draw(&model, &palette, &app))).unwrap_or(());
+        while let Ok(touch_msg) = app_msgs.recv() {
+            let msg = match touch_msg {
+                TouchMsg::Begin(code, _, _) => AppMsg::Press(code),
+                TouchMsg::Cancel(code) => AppMsg::Cancel(code),
+                TouchMsg::Move(_, _, _) => AppMsg::Ignore,
+                TouchMsg::End(code, _, _) => AppMsg::Release(code),
+            };
+            model.update(msg);
+            window.send(WindowMsg::Flood(draw(&model, &palette, &app))).unwrap_or(());
         }
     });
 }
 
-fn flood_window(window: &Sender<WindowMsg>, flood: Flood) {
-    window.send(WindowMsg::Flood(flood)).unwrap_or(());
-}
-
-fn draw(count: i32, palette: &Palette, watcher: &Sender<TouchMsg>) -> Flood {
+fn draw(model: &Model, palette: &Palette, watcher: &Sender<TouchMsg>) -> Flood {
+    let count = model.count();
     let body = Flood::Text(format!("{}", count), palette.text);
     let bottom_bar = {
         let button_data = vec![("Up", UP_CODE), ("Down", DOWN_CODE), ("Reset", RESET_CODE)];
