@@ -1,4 +1,5 @@
 use arrayvec;
+use arrayvec::ArrayVec;
 use glium;
 use glium::backend::Facade;
 use rusttype::{Font, FontCollection, point, PositionedGlyph, Rect, Scale, vector};
@@ -6,13 +7,6 @@ use rusttype::gpu_cache::Cache;
 use std::borrow::Cow;
 
 pub const Z_FACTOR: f32 = -0.001;
-
-#[derive(Copy, Clone)]
-pub struct Vertex {
-    position: [f32; 3],
-    tex_coords: [f32; 2],
-    colour: [f32; 4],
-}
 
 pub struct QuipRenderer<'a> {
     pub font: Font<'a>,
@@ -59,37 +53,7 @@ impl<'a> QuipRenderer<'a> {
                     min: origin + vector(screen_rect.min.x as f32, screen_rect.min.y as f32),
                     max: origin + vector(screen_rect.max.x as f32, screen_rect.max.y as f32),
                 };
-                arrayvec::ArrayVec::<[Vertex; 6]>::from([
-                    Vertex {
-                        position: [gl_rect.min.x, gl_rect.max.y, z],
-                        tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour,
-                    },
-                    Vertex {
-                        position: [gl_rect.min.x, gl_rect.min.y, z],
-                        tex_coords: [uv_rect.min.x, uv_rect.min.y],
-                        colour,
-                    },
-                    Vertex {
-                        position: [gl_rect.max.x, gl_rect.min.y, z],
-                        tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour,
-                    },
-                    Vertex {
-                        position: [gl_rect.max.x, gl_rect.min.y, z],
-                        tex_coords: [uv_rect.max.x, uv_rect.min.y],
-                        colour,
-                    },
-                    Vertex {
-                        position: [gl_rect.max.x, gl_rect.max.y, z],
-                        tex_coords: [uv_rect.max.x, uv_rect.max.y],
-                        colour,
-                    },
-                    Vertex {
-                        position: [gl_rect.min.x, gl_rect.max.y, z],
-                        tex_coords: [uv_rect.min.x, uv_rect.max.y],
-                        colour,
-                    }])
+                layout_vertices(z, &uv_rect, &gl_rect, &colour)
             } else {
                 arrayvec::ArrayVec::new()
             }
@@ -184,4 +148,45 @@ pub fn layout_paragraph<'a>(font: &'a Font, scale: Scale, width: u32, text: &str
         result.push(glyph);
     }
     result
+}
+
+fn layout_vertices(z: f32, uv_rect: &Rect<f32>, gl_rect: &Rect<f32>, colour: &[f32; 4]) -> ArrayVec<[Vertex; 6]> {
+    ArrayVec::<[Vertex; 6]>::from([
+        Vertex {
+            position: [gl_rect.min.x, gl_rect.max.y, z],
+            tex_coords: [uv_rect.min.x, uv_rect.max.y],
+            colour: *colour,
+        },
+        Vertex {
+            position: [gl_rect.min.x, gl_rect.min.y, z],
+            tex_coords: [uv_rect.min.x, uv_rect.min.y],
+            colour: *colour,
+        },
+        Vertex {
+            position: [gl_rect.max.x, gl_rect.min.y, z],
+            tex_coords: [uv_rect.max.x, uv_rect.min.y],
+            colour: *colour,
+        },
+        Vertex {
+            position: [gl_rect.max.x, gl_rect.min.y, z],
+            tex_coords: [uv_rect.max.x, uv_rect.min.y],
+            colour: *colour,
+        },
+        Vertex {
+            position: [gl_rect.max.x, gl_rect.max.y, z],
+            tex_coords: [uv_rect.max.x, uv_rect.max.y],
+            colour: *colour,
+        },
+        Vertex {
+            position: [gl_rect.min.x, gl_rect.max.y, z],
+            tex_coords: [uv_rect.min.x, uv_rect.max.y],
+            colour: *colour,
+        }])
+}
+
+#[derive(Copy, Clone)]
+pub struct Vertex {
+    position: [f32; 3],
+    tex_coords: [f32; 2],
+    colour: [f32; 4],
 }
