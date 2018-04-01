@@ -6,25 +6,23 @@ use patchgl::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
-pub struct App<MsgT, MdlT, UpdF, DrwF> where
-    UpdF: Fn(&mut MdlT, MsgT) -> (),
-    DrwF: Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood
-{
-    update_f: UpdF,
-    draw_f: DrwF,
+pub struct App<MsgT, MdlT> {
+    update_f: Box<Fn(&mut MdlT, MsgT) -> ()>,
+    draw_f: Box<Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood>,
     msg: PhantomData<MsgT>,
     mdl: PhantomData<MdlT>,
 }
 
-impl<MsgT, MdlT, UpdF, DrwF> App<MsgT, MdlT, UpdF, DrwF> where
+impl<MsgT, MdlT> App<MsgT, MdlT> where
     MsgT: Send + 'static + From<TouchMsg>,
-    UpdF: Fn(&mut MdlT, MsgT) -> (),
-    DrwF: Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood,
 {
-    pub fn new(update: UpdF, draw: DrwF) -> Self {
+    pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
+        UpdF: Fn(&mut MdlT, MsgT) -> () + 'static,
+        DrwF: Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood + 'static,
+    {
         App {
-            update_f: update,
-            draw_f: draw,
+            update_f: Box::new(update),
+            draw_f: Box::new(draw),
             msg: PhantomData,
             mdl: PhantomData,
         }
@@ -64,25 +62,21 @@ impl Palette {
     }
 }
 
-struct RunningApp<MsgT, MdlT, UpdF, DrwF> where
+struct RunningApp<MsgT, MdlT> where
     MsgT: Send + 'static + From<TouchMsg>,
-    UpdF: Fn(&mut MdlT, MsgT) -> (),
-    DrwF: Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood,
 {
     app_msgs: Receiver<MsgT>,
     touch_sender: Sender<TouchMsg>,
     palette: Palette,
     window: Sender<WindowMsg>,
     model: MdlT,
-    app: App<MsgT, MdlT, UpdF, DrwF>,
+    app: App<MsgT, MdlT>,
 }
 
-impl<MsgT, MdlT, UpdF, DrwF> RunningApp<MsgT, MdlT, UpdF, DrwF> where
+impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     MsgT: Send + 'static + From<TouchMsg>,
-    UpdF: Fn(&mut MdlT, MsgT) -> (),
-    DrwF: Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood,
 {
-    pub fn new(app: App<MsgT, MdlT, UpdF, DrwF>, window: Sender<WindowMsg>, model: MdlT) -> Self
+    pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
         let touch_sender = channel_adapter::connect::<TouchMsg, MsgT>(&app_sender);
