@@ -9,7 +9,7 @@ mod length;
 #[derive(Clone, Debug)]
 pub enum Flood {
     Color(Color),
-    Text(String, Color),
+    Text(String, Color, Placement),
     Barrier(Position, Box<Flood>, Box<Flood>),
     Vessel(Padding, Box<Flood>),
     Sediment(Silt, Box<Flood>, Box<Flood>),
@@ -60,6 +60,29 @@ impl Add<(Position, Flood)> for Flood {
     fn add(self, (position, flood): (Position, Flood)) -> <Self as Add<(Position, Flood)>>::Output {
         Flood::Barrier(position, Box::new(self), Box::new(flood))
     }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum Placement {
+    Start,
+    Center,
+    End,
+    Custom(f32),
+}
+
+impl Into<f32> for Placement {
+    fn into(self) -> f32 {
+        match self {
+            Placement::Start => 0.0,
+            Placement::Center => 0.5,
+            Placement::End => 1.0,
+            Placement::Custom(placement) => placement,
+        }
+    }
+}
+
+impl Default for Placement {
+    fn default() -> Self { Placement::Center }
 }
 
 #[derive(Clone, Debug)]

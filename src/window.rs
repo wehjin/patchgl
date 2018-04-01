@@ -157,8 +157,13 @@ fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flo
                 }
             }
         }
-        &Flood::Text(ref string, color) => {
-            let sigil = Sigil::Paragraph { line_height: height, text: string.to_owned(), color };
+        &Flood::Text(ref string, color, placement) => {
+            let sigil = Sigil::Paragraph {
+                line_height: height,
+                text: string.to_owned(),
+                color,
+                placement: placement.into(),
+            };
             (approach, vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }])
         }
         &Flood::Color(color) => {

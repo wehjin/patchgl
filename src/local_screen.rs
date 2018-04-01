@@ -178,7 +178,7 @@ impl<'a> LocalScreen<'a> {
         let dpi_factor = self.display.gl_window().hidpi_factor();
         let display = &self.display;
         blocks.iter().for_each(|(_, block)| {
-            if let Sigil::Paragraph { line_height, ref text, ref color } = block.sigil {
+            if let Sigil::Paragraph { line_height, ref text, ref color, placement } = block.sigil {
                 quip_renderer.layout_paragraph(
                     text,
                     block.anchor.into(),
@@ -186,6 +186,7 @@ impl<'a> LocalScreen<'a> {
                     block.width as u32,
                     block.approach,
                     color.to_gl(),
+                    placement,
                     display,
                 );
                 quip_renderer.draw(target);

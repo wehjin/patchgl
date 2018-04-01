@@ -6,7 +6,7 @@ extern crate xml;
 
 use app::App;
 use app::Palette;
-use patchgl::flood::{Flood, Length, Padding, Position, Touching};
+use patchgl::flood::*;
 use patchgl::TouchMsg;
 use patchgl::window;
 use std::sync::mpsc::Sender;
@@ -138,8 +138,8 @@ impl From<TouchMsg> for AppMsg {
 
 fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
     let touch_watcher: Sender<TouchMsg> = channel_adapter::spawn(app, AppMsg::from);
-    let text = format!("{}", model.count);
-    let body = Flood::Text(text, palette.primary);
+    let text = format!("{:+}", model.count);
+    let body = Flood::Text(text, palette.primary, Placement::Center);
     let bottom_bar = {
         let enumerated = model.buttons.iter().enumerate().collect::<Vec<_>>();
         let empty_bar = Flood::Color(palette.light_background);

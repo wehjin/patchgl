@@ -45,7 +45,7 @@ pub fn draw(mdl: &Mdl, palette: &Palette) -> Flood {
 }
 
 fn flat_button_surface(label: &str, text_color: Color) -> Flood {
-    let text = Flood::Text(label.to_uppercase(), text_color);
+    let text = Flood::Text(label.to_uppercase(), text_color, Placement::Center);
     let padding = Padding::Dual(Length::Spacing, Length::Full / 4);
     text + padding
 }
