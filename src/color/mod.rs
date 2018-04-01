@@ -72,11 +72,16 @@ impl Color {
     pub fn red() -> Self { Color { a: 1.0, r: 1.0, g: 0.0, b: 0.0 } }
     pub fn green() -> Self { Color { a: 1.0, r: 0.0, g: 1.0, b: 0.0 } }
     pub fn blue() -> Self { Color { a: 1.0, r: 0.0, g: 0.0, b: 1.0 } }
-    pub fn new(a: f32, r: f32, g: f32, b: f32) -> Self {
-        Color { a, r, g, b }
+    pub fn custom_black(fraction: f32) -> Self { Color::custom_white((1.0 - fraction).max(0.0)) }
+    pub fn custom_white(fraction: f32) -> Self {
+        let fraction = fraction.min(1.0);
+        Color { a: 1.0, r: fraction, g: fraction, b: fraction }
     }
     pub fn from_hexrgb(hex_r: u8, hex_g: u8, hex_b: u8) -> Self {
         Color { a: 1.0, r: hex_r as f32 / 255.0, g: hex_g as f32 / 255.0, b: hex_b as f32 / 255.0 }
+    }
+    pub fn new(a: f32, r: f32, g: f32, b: f32) -> Self {
+        Color { a, r, g, b }
     }
 }
 

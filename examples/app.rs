@@ -1,4 +1,4 @@
-use patchgl::{Color, X11Color};
+use patchgl::Color;
 use patchgl::flood::Flood;
 use patchgl::WindowMsg;
 use std::marker::PhantomData;
@@ -41,19 +41,56 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
 }
 
 pub struct Palette {
-    pub text: Color,
-    pub background: Color,
-    pub button_idle_background: Color,
-    pub button_activated_background: Color,
+    pub primary: Color,
+    pub secondary: Color,
+    pub light_background: Color,
+    pub light_background_raised: Color,
+    pub light_background_text_primary: Color,
+    pub light_background_divider: Color,
 }
 
-impl Palette {
-    pub fn new() -> Self {
+impl Default for Palette {
+    fn default() -> Self {
         Palette {
-            text: Color::from(X11Color::Indigo),
-            background: Color::from(X11Color::Lavender),
-            button_idle_background: Color::from(X11Color::Lavender),
-            button_activated_background: Color::from(X11Color::Thistle),
+            primary: MaterialColor::Pink500.into(),
+            secondary: MaterialColor::PurpleA400.into(),
+            light_background: MaterialColor::LightBackground.into(),
+            light_background_raised: MaterialColor::LightBackgroundCard.into(),
+            light_background_text_primary: MaterialColor::LightBackgroundTextPrimary.into(),
+            light_background_divider: MaterialColor::LightBackgroundDivider.into(),
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub enum MaterialColor {
+    LightBackground,
+    LightBackgroundCard,
+    LightBackgroundTextPrimary,
+    LightBackgroundTextSecondary,
+    LightBackgroundTextDisabled,
+    LightBackgroundDivider,
+    PurpleA100,
+    PurpleA200,
+    PurpleA400,
+    PurpleA700,
+    Pink500,
+}
+
+impl Into<Color> for MaterialColor {
+    fn into(self) -> Color {
+        match self {
+            MaterialColor::LightBackground => Color::from_hexrgb(0xfa, 0xfa, 0xfa),
+            MaterialColor::LightBackgroundCard => Color::white(),
+            MaterialColor::LightBackgroundTextPrimary => Color::custom_black(0.87),
+            MaterialColor::LightBackgroundTextSecondary => Color::custom_black(0.54),
+            MaterialColor::LightBackgroundTextDisabled => Color::custom_black(0.38),
+            MaterialColor::LightBackgroundDivider => Color::custom_black(0.12),
+            MaterialColor::PurpleA100 => Color::from_hexrgb(0xea, 0x80, 0xfc),
+            MaterialColor::PurpleA200 => Color::from_hexrgb(0xe0, 0x40, 0xfb),
+            MaterialColor::PurpleA400 => Color::from_hexrgb(0xd5, 0x00, 0xf9),
+            MaterialColor::PurpleA700 => Color::from_hexrgb(0xaa, 0x00, 0xff),
+            MaterialColor::Pink500 => Color::from_hexrgb(0xe9, 0x1e, 0x64),
         }
     }
 }
@@ -74,7 +111,7 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
-        RunningApp { app_msgs, app_sender, palette: Palette::new(), window, model, app }
+        RunningApp { app_msgs, app_sender, palette: Palette::default(), window, model, app }
     }
 
     pub fn run(&mut self) {
