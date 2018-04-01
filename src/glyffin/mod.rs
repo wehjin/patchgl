@@ -30,10 +30,16 @@ impl<'a> QuipRenderer<'a> {
     }
 
     pub fn layout_paragraph<F: Facade>(
-        &mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: u32, approach: f32,
-        colour: [f32; 4], placement: f32, display: &F,
+        &mut self,
+        text: &str,
+        (x, y): (f32, f32),
+        scale: Scale,
+        width: u32,
+        approach: f32,
+        colour: [f32; 4],
+        placement: f32, display: &F,
     ) {
-        let glyphs = layout_glyphs(&self.font, scale, width, text, placement);
+        let glyphs = layout_fitted_glyphs(&self.font, text, scale, width, placement);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
         }
@@ -117,7 +123,20 @@ impl<'a> QuipRenderer<'a> {
     }
 }
 
-pub fn layout_glyphs<'a>(font: &'a Font, scale: Scale, width: u32, text: &str, placement: f32) -> Vec<PositionedGlyph<'a>> {
+fn layout_fitted_glyphs<'a>(font: &'a Font, text: &str, mut scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>> {
+    let mut some_glyphs: Option<Vec<PositionedGlyph>> = None;
+    while let None = some_glyphs {
+        let (glyphs, line_count) = layout_glyphs(font, text, scale, width, placement);
+        if line_count <= 1 || scale.x <= 1.0 {
+            some_glyphs = Some(glyphs);
+        } else {
+            scale.x = (scale.x * 0.95).max(1.0);
+        }
+    }
+    some_glyphs.expect("glyphs")
+}
+
+fn layout_glyphs<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, placement: f32) -> (Vec<PositionedGlyph<'a>>, usize) {
     let mut glyph_writer = GlyphWriter::new(&font.v_metrics(scale));
     let mut last_glyph_id = None;
     for c in text.nfc() {
