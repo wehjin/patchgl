@@ -156,7 +156,7 @@ struct GlyphWriter<'a> {
     line_stride: f32,
     caret: Point<f32>,
     line: Vec<PositionedGlyph<'a>>,
-    page: Vec<Vec<PositionedGlyph<'a>>>,
+    page: Vec<(f32, Vec<PositionedGlyph<'a>>)>,
 }
 
 impl<'a> GlyphWriter<'a> {
@@ -168,17 +168,18 @@ impl<'a> GlyphWriter<'a> {
     fn position(&self) -> Point<f32> {
         self.caret
     }
-    fn advance_line(&mut self) {
-        self.caret = point(0.0, self.caret.y + self.line_stride);
-        let mut line = Vec::new();
-        line.append(&mut self.line);
-        self.page.push(line);
-    }
     fn advance_right(&mut self, amount: f32) {
         self.caret.x += amount;
     }
     fn add_glyph(&mut self, glyph: PositionedGlyph<'a>) {
         self.line.push(glyph);
+    }
+    fn advance_line(&mut self) {
+        let line_width = self.caret.x;
+        self.caret = point(0.0, self.caret.y + self.line_stride);
+        let mut line = Vec::new();
+        line.append(&mut self.line);
+        self.page.push((line_width, line));
     }
     fn take_glyphs(&mut self) -> Vec<PositionedGlyph<'a>> {
         let mut lines = Vec::new();
@@ -186,10 +187,10 @@ impl<'a> GlyphWriter<'a> {
         if !self.line.is_empty() {
             let mut line = Vec::new();
             line.append(&mut self.line);
-            lines.push(line);
+            lines.push((self.caret.x, line));
         }
-        lines.into_iter().fold(Vec::new(), |mut all, more| {
-            all.extend(more);
+        lines.into_iter().fold(Vec::new(), |mut all, (_line_width, line_glyphs)| {
+            all.extend(line_glyphs);
             all
         })
     }
