@@ -14,7 +14,7 @@ pub struct App<MsgT, MdlT> {
 }
 
 impl<MsgT, MdlT> App<MsgT, MdlT> where
-    MsgT: Send + 'static + From<TouchMsg>,
+    MsgT: From<TouchMsg> + Send + 'static
 {
     pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
         UpdF: Fn(&mut MdlT, MsgT) -> () + 'static,
@@ -62,8 +62,7 @@ impl Palette {
     }
 }
 
-struct RunningApp<MsgT, MdlT> where
-    MsgT: Send + 'static + From<TouchMsg>,
+struct RunningApp<MsgT, MdlT>
 {
     app_msgs: Receiver<MsgT>,
     touch_sender: Sender<TouchMsg>,
@@ -74,7 +73,7 @@ struct RunningApp<MsgT, MdlT> where
 }
 
 impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
-    MsgT: Send + 'static + From<TouchMsg>,
+    MsgT: From<TouchMsg> + Send + 'static,
 {
     pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg>, model: MdlT) -> Self
     {
