@@ -15,40 +15,8 @@ use std::sync::mpsc::Sender;
 mod channel_adapter;
 mod app;
 
-const UP_CODE: u64 = 32;
-const DOWN_CODE: u64 = 33;
-const RESET_CODE: u64 = 34;
-
-enum AppMsg {
-    Press(u64),
-    Cancel(u64),
-    Release(u64),
-    Ignore,
-}
-
-impl From<TouchMsg> for AppMsg {
-    fn from(touch_msg: TouchMsg) -> Self {
-        match touch_msg {
-            TouchMsg::Begin(code, _, _) => AppMsg::Press(code),
-            TouchMsg::Cancel(code) => AppMsg::Cancel(code),
-            TouchMsg::Move(_, _, _) => AppMsg::Ignore,
-            TouchMsg::End(code, _, _) => AppMsg::Release(code),
-        }
-    }
-}
-
-#[derive(Default, Debug)]
-struct Model {
-    pub count: i32,
-    pub active_code: Option<u64>,
-}
-
-impl Model {
-    pub fn count(&self) -> i32 { self.count }
-}
-
 fn main() {
-    window::create(320, 400, |window| {
+    window::show(320, 400, |window| {
         let app = App::new(update, draw);
         app.run(Model::default(), window);
     });
@@ -78,6 +46,39 @@ fn update(model: &mut Model, msg: AppMsg) {
         AppMsg::Ignore => ()
     }
 }
+
+#[derive(Default, Debug)]
+struct Model {
+    pub count: i32,
+    pub active_code: Option<u64>,
+}
+
+impl Model {
+    pub fn count(&self) -> i32 { self.count }
+}
+
+enum AppMsg {
+    Press(u64),
+    Cancel(u64),
+    Release(u64),
+    Ignore,
+}
+
+impl From<TouchMsg> for AppMsg {
+    fn from(touch_msg: TouchMsg) -> Self {
+        match touch_msg {
+            TouchMsg::Begin(code, _, _) => AppMsg::Press(code),
+            TouchMsg::Cancel(code) => AppMsg::Cancel(code),
+            TouchMsg::Move(_, _, _) => AppMsg::Ignore,
+            TouchMsg::End(code, _, _) => AppMsg::Release(code),
+        }
+    }
+}
+
+const UP_CODE: u64 = 32;
+const DOWN_CODE: u64 = 33;
+const RESET_CODE: u64 = 34;
+
 
 fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
     let touch_watcher: Sender<TouchMsg> = channel_adapter::spawn(app, AppMsg::from);
