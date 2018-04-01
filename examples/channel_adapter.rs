@@ -1,25 +1,18 @@
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
-pub fn connect<StartT, DestT>(dest: &Sender<DestT>) -> Sender<StartT> where
-    DestT: Send + 'static + From<StartT>,
-    StartT: Send + 'static
+pub fn spawn<InT, OutT, F>(output_sender: &Sender<OutT>, convert: F) -> Sender<InT> where
+    InT: Send + 'static,
+    OutT: Send + 'static,
+    F: Fn(InT) -> OutT, F: Send + 'static
 {
-    start_with_transformer(dest, DestT::from)
-}
-
-pub fn start_with_transformer<StartT, DestT, F>(dest: &Sender<DestT>, f: F) -> Sender<StartT> where
-    DestT: Send + 'static,
-    StartT: Send + 'static,
-    F: Fn(StartT) -> DestT, F: Send + 'static
-{
-    let (input, input_msgs) = channel::<StartT>();
-    let output = dest.clone();
+    let (input_sender, input_msgs) = channel::<InT>();
+    let output_sender = output_sender.clone();
     thread::spawn(move || {
         while let Ok(input_msg) = input_msgs.recv() {
-            let output_msg = f(input_msg);
-            output.send(output_msg).unwrap()
+            let output_msg = convert(input_msg);
+            output_sender.send(output_msg).unwrap()
         }
     });
-    input
+    input_sender
 }

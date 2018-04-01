@@ -1,24 +1,22 @@
-use channel_adapter;
 use patchgl::{Color, X11Color};
 use patchgl::flood::Flood;
-use patchgl::TouchMsg;
 use patchgl::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 pub struct App<MsgT, MdlT> {
     update_f: Box<Fn(&mut MdlT, MsgT) -> ()>,
-    draw_f: Box<Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood>,
+    draw_f: Box<Fn(&MdlT, &Palette, &Sender<MsgT>) -> Flood>,
     msg: PhantomData<MsgT>,
     mdl: PhantomData<MdlT>,
 }
 
 impl<MsgT, MdlT> App<MsgT, MdlT> where
-    MsgT: From<TouchMsg> + Send + 'static
+    MsgT: Send + 'static
 {
     pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
         UpdF: Fn(&mut MdlT, MsgT) -> () + 'static,
-        DrwF: Fn(&MdlT, &Palette, &Sender<TouchMsg>) -> Flood + 'static,
+        DrwF: Fn(&MdlT, &Palette, &Sender<MsgT>) -> Flood + 'static,
     {
         App {
             update_f: Box::new(update),
@@ -32,8 +30,8 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
         (self.update_f)(model, msg);
     }
 
-    pub fn draw(&self, model: &MdlT, palette: &Palette, touch_sender: &Sender<TouchMsg>) -> Flood {
-        (self.draw_f)(model, palette, touch_sender)
+    pub fn draw(&self, model: &MdlT, palette: &Palette, app: &Sender<MsgT>) -> Flood {
+        (self.draw_f)(model, palette, app)
     }
 
     pub fn run(self, model: MdlT, window: Sender<WindowMsg>) {
@@ -65,7 +63,7 @@ impl Palette {
 struct RunningApp<MsgT, MdlT>
 {
     app_msgs: Receiver<MsgT>,
-    touch_sender: Sender<TouchMsg>,
+    app_sender: Sender<MsgT>,
     palette: Palette,
     window: Sender<WindowMsg>,
     model: MdlT,
@@ -73,13 +71,12 @@ struct RunningApp<MsgT, MdlT>
 }
 
 impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
-    MsgT: From<TouchMsg> + Send + 'static,
+    MsgT: Send + 'static,
 {
     pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
-        let touch_sender = channel_adapter::connect::<TouchMsg, MsgT>(&app_sender);
-        RunningApp { app_msgs, touch_sender, palette: Palette::new(), window, model, app }
+        RunningApp { app_msgs, app_sender, palette: Palette::new(), window, model, app }
     }
 
     pub fn run(&mut self) {
@@ -95,7 +92,7 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     }
 
     fn flood_window(&self) {
-        let flood = self.app.draw(&self.model, &self.palette, &self.touch_sender);
+        let flood = self.app.draw(&self.model, &self.palette, &self.app_sender);
         let flood_msg = WindowMsg::Flood(flood);
         self.window.send(flood_msg).unwrap();
     }

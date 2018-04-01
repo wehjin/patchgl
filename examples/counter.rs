@@ -79,7 +79,8 @@ fn update(model: &mut Model, msg: AppMsg) {
     }
 }
 
-fn draw(model: &Model, palette: &Palette, watcher: &Sender<TouchMsg>) -> Flood {
+fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
+    let touch_watcher: Sender<TouchMsg> = channel_adapter::spawn(app, AppMsg::from);
     let count = model.count();
     let body = Flood::Text(format!("{}", count), palette.text);
     let bottom_bar = {
@@ -94,7 +95,8 @@ fn draw(model: &Model, palette: &Palette, watcher: &Sender<TouchMsg>) -> Flood {
                 } else {
                     released_enabled_raised_button_from_palette(label, palette)
                 };
-                let interactive_button = button + Touching::Channel(code, watcher.clone());
+
+                let interactive_button = button + Touching::Channel(code, touch_watcher.clone());
                 interactive_button + segment_padding
             };
             bar + (Position::Right(Length::Full / (i as u32 + 1)), segment)
