@@ -48,7 +48,7 @@ impl<'a> QuipRenderer<'a> {
                 height: rect.height(),
                 format: glium::texture::ClientFormat::U8,
             });
-        }).unwrap();
+        }).expect("cache_queued");
 
         implement_vertex!(Vertex, position, tex_coords, colour);
         let origin = point(x, y);
@@ -94,7 +94,7 @@ impl<'a> QuipRenderer<'a> {
                 arrayvec::ArrayVec::new()
             }
         }).collect();
-        self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).unwrap();
+        self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).expect("VertextBuffer::new");
     }
 
     pub fn draw(&self, frame: &mut glium::Frame) {
@@ -106,7 +106,7 @@ impl<'a> QuipRenderer<'a> {
                    &self.program,
                    &uniforms,
                    &self.draw_parameters)
-             .unwrap();
+             .expect("frame.draw");
     }
 
     pub fn new<F: Facade>(cache_dpi_factor: f32, modelview: [[f32; 4]; 4], display: &F) -> Self {
