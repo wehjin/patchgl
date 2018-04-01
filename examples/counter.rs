@@ -55,31 +55,44 @@ fn flood_window(window: &Sender<WindowMsg>, flood: Flood) {
     window.send(WindowMsg::Flood(flood)).unwrap_or(());
 }
 
-fn draw(count: i32, palette: &Palette, app: &Sender<TouchMsg>) -> Flood {
+fn draw(count: i32, palette: &Palette, watcher: &Sender<TouchMsg>) -> Flood {
     let body = Flood::Text(format!("{}", count), palette.text);
     let bottom_bar = {
-        let up_button = button(palette, app, "Up", UP_CODE) + Padding::Horizontal(Length::Spacing / 4);
-        let down_button = button(palette, app, "Down", DOWN_CODE) + Padding::Horizontal(Length::Spacing / 4);
-        let reset_button = button(palette, app, "Reset", RESET_CODE) + Padding::Horizontal(Length::Spacing / 4);
-        down_button + (Position::Right(Length::Half), up_button) + (Position::Right(Length::Third), reset_button)
+        let button_data = vec![("Up", UP_CODE), ("Down", DOWN_CODE), ("Reset", RESET_CODE)];
+        let enumerated = button_data.into_iter().enumerate().collect::<Vec<_>>();
+        let bar_background = Flood::Color(palette.background);
+        let bar = enumerated.into_iter().fold(bar_background, |bar, (i, (label, code))| {
+            let segment_padding = Padding::Horizontal(Length::Spacing / 4);
+            let segment = {
+                let idle_button = idle_raised_enabled_button_from_palette(label, palette);
+                let interactive_button = idle_button + Touching::Channel(code, watcher.clone());
+                interactive_button + segment_padding
+            };
+            bar + (Position::Right(Length::Full / (i as u32 + 1)), segment)
+        });
+        bar
     };
     let before_background = body + (Position::Bottom(Length::FingerTip), bottom_bar) + Padding::Uniform(Length::Spacing);
     (before_background) + Flood::Color(palette.background)
 }
 
-fn button(palette: &Palette, counter: &Sender<TouchMsg>, name: &str, code: u64) -> Flood {
-    let button = Flood::Text(String::from(name), palette.text)
-        + Padding::Dual(Length::Spacing, Length::Spacing/2 )
-        + (Flood::Color(palette.button_background) + Padding::Uniform(Length::Spacing / 4))
-        + Flood::Color(palette.button_border)
-        + Touching::Channel(code, counter.clone());
+fn idle_raised_enabled_button_from_palette(label: &str, palette: &Palette) -> Flood {
+    let button = raised_enabled_button(label, palette.text, palette.button_idle_background, palette.button_border);
     button
+}
+
+fn raised_enabled_button(label: &str, text_color: Color, background_color: Color, border_color: Color) -> Flood {
+    let text = Flood::Text(String::from(label), text_color);
+    let text_padding = Padding::Dual(Length::Spacing, Length::Spacing / 2);
+    let background = Flood::Color(background_color) + Padding::Uniform(Length::Spacing / 4);
+    let border = Flood::Color(border_color);
+    text + text_padding + background + border
 }
 
 struct Palette {
     pub text: Color,
     pub background: Color,
-    pub button_background: Color,
+    pub button_idle_background: Color,
     pub button_border: Color,
 }
 
@@ -88,7 +101,7 @@ impl Palette {
         Palette {
             text: Color::from(X11Color::Indigo),
             background: Color::from(X11Color::Lavender),
-            button_background: Color::from(X11Color::Thistle),
+            button_idle_background: Color::from(X11Color::Thistle),
             button_border: Color::from(X11Color::MediumPurple),
         }
     }

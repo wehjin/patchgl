@@ -10,12 +10,14 @@ pub enum Length {
     Scale(f32, Box<Length>),
     Half,
     Third,
+    Full,
 }
 
 impl Length {
     pub fn to_f32(&self, context: f32) -> f32 {
         match self {
-            &Length::Half => context * 0.5,
+            &Length::Full => context,
+            &Length::Half => context / 2.0,
             &Length::Third => context / 3.0,
             &Length::Zero => 0.0,
             &Length::FingerTip => 44.0,
