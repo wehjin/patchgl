@@ -13,7 +13,7 @@ pub enum WindowMsg {
     Size(u32, u32),
 }
 
-pub fn render_forever<F>(width: u32, height: u32, on_window: F) where
+pub fn create<F>(width: u32, height: u32, on_window: F) where
     F: Fn(Sender<WindowMsg>), F: Send + 'static
 {
     let (window, _) = start_window(width, height);
