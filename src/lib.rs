@@ -23,6 +23,7 @@ pub mod director;
 pub mod screen;
 pub mod flood;
 pub mod window;
+pub mod color;
 mod sigil;
 mod local_screen;
 mod anchor;
