@@ -81,8 +81,8 @@ fn update(model: &mut Model, msg: AppMsg) {
 
 fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
     let touch_watcher: Sender<TouchMsg> = channel_adapter::spawn(app, AppMsg::from);
-    let count = model.count();
-    let body = Flood::Text(format!("{}", count), palette.text);
+    let text = format!("{}", model.count());
+    let body = Flood::Text(text, palette.text);
     let bottom_bar = {
         let button_data = vec![("Up", UP_CODE), ("Down", DOWN_CODE), ("Reset", RESET_CODE)];
         let enumerated = button_data.into_iter().enumerate().collect::<Vec<_>>();
@@ -109,18 +109,17 @@ fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
 
 
 fn released_enabled_raised_button_from_palette(label: &str, palette: &Palette) -> Flood {
-    enabled_raised_button(label, palette.text, palette.button_idle_background, palette.button_border)
+    enabled_raised_button(label, palette.text, palette.button_idle_background)
 }
 
 fn depressed_enabled_raised_button_from_palette(label: &str, palette: &Palette) -> Flood {
-    enabled_raised_button(label, palette.text, palette.button_activated_background, palette.button_border)
+    enabled_raised_button(label, palette.text, palette.button_activated_background)
 }
 
-fn enabled_raised_button(label: &str, text_color: Color, background_color: Color, border_color: Color) -> Flood {
-    let text = Flood::Text(String::from(label), text_color);
-    let text_padding = Padding::Dual(Length::Spacing, Length::Spacing / 2);
-    let background = Flood::Color(background_color) + Padding::Uniform(Length::Spacing / 4);
-    let border = Flood::Color(border_color);
-    text + text_padding + background + border
+fn enabled_raised_button(label: &str, text_color: Color, background_color: Color) -> Flood {
+    let text = Flood::Text(String::from(label).to_uppercase(), text_color);
+    let text_padding = Padding::Dual(Length::Spacing, Length::Full / 4);
+    let background = Flood::Color(background_color);
+    text + text_padding + background
 }
 

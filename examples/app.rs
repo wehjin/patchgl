@@ -45,7 +45,6 @@ pub struct Palette {
     pub background: Color,
     pub button_idle_background: Color,
     pub button_activated_background: Color,
-    pub button_border: Color,
 }
 
 impl Palette {
@@ -55,7 +54,6 @@ impl Palette {
             background: Color::from(X11Color::Lavender),
             button_idle_background: Color::from(X11Color::Lavender),
             button_activated_background: Color::from(X11Color::Thistle),
-            button_border: Color::from(X11Color::MediumPurple),
         }
     }
 }
