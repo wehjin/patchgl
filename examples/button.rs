@@ -23,7 +23,7 @@ pub fn update(mdl: &mut Mdl, msg: Msg) -> Option<Note> {
     }
 }
 
-pub fn draw(mdl: &Mdl, palette: &Palette) -> Flood {
+pub fn draw<MsgT>(mdl: &Mdl, palette: &Palette) -> Flood<MsgT> {
     match (&mdl.kind, &mdl.press_state) {
         (&Kind::ColoredFlat(ref label), &PressState::Up) => {
             flat_button_surface(label, palette.secondary)
@@ -44,7 +44,7 @@ pub fn draw(mdl: &Mdl, palette: &Palette) -> Flood {
     }
 }
 
-fn flat_button_surface(label: &str, text_color: Color) -> Flood {
+fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> {
     let text = Flood::Text(label.to_uppercase(), text_color, Placement::Center);
     let padding = Padding::Dual(Length::Spacing, Length::Full / 4);
     text + padding

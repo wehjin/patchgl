@@ -8,6 +8,7 @@ mod sdf;
 mod rectangle;
 mod typeface;
 mod alignment;
+mod channel_adapter;
 
 #[cfg(test)]
 mod tests {}

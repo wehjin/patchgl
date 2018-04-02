@@ -9,9 +9,8 @@ use app::Palette;
 use patchgl::flood::*;
 use patchgl::TouchMsg;
 use patchgl::window;
-use std::sync::mpsc::Sender;
+use std::sync::Arc;
 
-mod channel_adapter;
 mod app;
 mod button;
 
@@ -136,8 +135,7 @@ impl From<TouchMsg> for AppMsg {
     }
 }
 
-fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
-    let touch_watcher: Sender<TouchMsg> = channel_adapter::spawn(app, AppMsg::from);
+fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
     let text = format!("{:+}", model.count);
     let body = Flood::Text(text, palette.primary, Placement::Center);
     let bottom_bar = {
@@ -146,9 +144,11 @@ fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
         let bar = enumerated.into_iter().fold(empty_bar, |bar, (i, &(code, ref button_mdl))| {
             let segment = {
                 let button = button::draw(button_mdl, palette);
-                let touching = Sensing::Touch(code, touch_watcher.clone());
+                let sensor = Sensor::Touch(code, Arc::new(|touch_msg| {
+                    AppMsg::from(touch_msg)
+                }));
                 let segment_padding = Padding::Horizontal(Length::Spacing / 4);
-                button + touching + segment_padding
+                button + sensor + segment_padding
             };
             bar + (Position::Right(Length::Full / (i as u32 + 1)), segment)
         });

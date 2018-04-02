@@ -34,6 +34,7 @@ pub enum DirectorMsg {
     ScreenReady(Sender<ScreenMsg>),
     ScreenResized(u32, u32),
     ScreenClosed,
+    TouchMsg(TouchMsg),
 }
 
 #[derive(Debug)]
@@ -48,6 +49,17 @@ pub enum TouchMsg {
     Cancel(u64),
     Move(u64, f64, f64),
     End(u64, f64, f64),
+}
+
+impl TouchMsg {
+    pub fn tag(&self) -> u64 {
+        match self {
+            &TouchMsg::Begin(tag, _, _) => tag,
+            &TouchMsg::Cancel(tag) => tag,
+            &TouchMsg::Move(tag, _, _) => tag,
+            &TouchMsg::End(tag, _, _) => tag,
+        }
+    }
 }
 
 

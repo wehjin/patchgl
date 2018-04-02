@@ -1,12 +1,10 @@
-use ::TouchMsg;
-use std::sync::mpsc::Sender;
 use super::{Color, WebColor};
 
 #[derive(Clone, Debug)]
 pub enum Sigil {
     Color(Color),
     Paragraph { line_height: f32, text: String, color: Color, placement: f32 },
-    Channel(u64, Sender<TouchMsg>),
+    Touch(u64),
 }
 
 impl Default for Sigil {

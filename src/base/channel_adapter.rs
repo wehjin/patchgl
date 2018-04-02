@@ -1,6 +1,7 @@
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
+#[allow(dead_code)]
 pub fn spawn<InT, OutT, F>(output_sender: &Sender<OutT>, convert: F) -> Sender<InT> where
     InT: Send + 'static,
     OutT: Send + 'static,

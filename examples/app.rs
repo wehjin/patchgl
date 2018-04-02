@@ -6,7 +6,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 
 pub struct App<MsgT, MdlT> {
     update_f: Box<Fn(&mut MdlT, MsgT) -> ()>,
-    draw_f: Box<Fn(&MdlT, &Palette, &Sender<MsgT>) -> Flood>,
+    draw_f: Box<Fn(&MdlT, &Palette) -> Flood<MsgT>>,
     msg: PhantomData<MsgT>,
     mdl: PhantomData<MdlT>,
 }
@@ -16,7 +16,7 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
 {
     pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
         UpdF: Fn(&mut MdlT, MsgT) -> () + 'static,
-        DrwF: Fn(&MdlT, &Palette, &Sender<MsgT>) -> Flood + 'static,
+        DrwF: Fn(&MdlT, &Palette) -> Flood<MsgT> + 'static,
     {
         App {
             update_f: Box::new(update),
@@ -30,11 +30,11 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
         (self.update_f)(model, msg);
     }
 
-    pub fn draw(&self, model: &MdlT, palette: &Palette, app: &Sender<MsgT>) -> Flood {
-        (self.draw_f)(model, palette, app)
+    pub fn draw(&self, model: &MdlT, palette: &Palette) -> Flood<MsgT> {
+        (self.draw_f)(model, palette)
     }
 
-    pub fn run(self, model: MdlT, window: Sender<WindowMsg>) {
+    pub fn run(self, model: MdlT, window: Sender<WindowMsg<MsgT>>) {
         let mut running_app = RunningApp::new(self, window, model);
         running_app.run();
     }
@@ -98,9 +98,9 @@ impl Into<Color> for MaterialColor {
 struct RunningApp<MsgT, MdlT>
 {
     app_msgs: Receiver<MsgT>,
-    app_sender: Sender<MsgT>,
+    app_tx: Sender<MsgT>,
     palette: Palette,
-    window: Sender<WindowMsg>,
+    window: Sender<WindowMsg<MsgT>>,
     model: MdlT,
     app: App<MsgT, MdlT>,
 }
@@ -108,27 +108,32 @@ struct RunningApp<MsgT, MdlT>
 impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     MsgT: Send + 'static,
 {
-    pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg>, model: MdlT) -> Self
+    pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg<MsgT>>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
-        RunningApp { app_msgs, app_sender, palette: Palette::default(), window, model, app }
+        RunningApp { app_msgs, app_tx: app_sender, palette: Palette::default(), window, model, app }
     }
 
     pub fn run(&mut self) {
+        self.connect_window();
         self.flood_window();
         while let Ok(app_msg) = self.app_msgs.recv() {
             self.step(app_msg);
         }
     }
 
-    fn step(&mut self, msg: MsgT) {
-        self.app.update(&mut self.model, msg);
-        self.flood_window();
+    fn connect_window(&self) {
+        self.window.send(WindowMsg::Tx(self.app_tx.clone())).unwrap();
     }
 
     fn flood_window(&self) {
-        let flood = self.app.draw(&self.model, &self.palette, &self.app_sender);
+        let flood = self.app.draw(&self.model, &self.palette);
         let flood_msg = WindowMsg::Flood(flood);
         self.window.send(flood_msg).unwrap();
+    }
+
+    fn step(&mut self, msg: MsgT) {
+        self.app.update(&mut self.model, msg);
+        self.flood_window();
     }
 }

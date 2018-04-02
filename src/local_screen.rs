@@ -20,7 +20,7 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
     let (awaken_message_sender, awaken_message_receiver) = channel::<AwakenMessage>();
     spawn_awakener(&events_loop, awaken_message_sender, screen_msg_receiver);
 
-    let mut local_screen = LocalScreen::new(width, height, &events_loop);
+    let mut local_screen = LocalScreen::new(width, height, &events_loop, director.clone());
     events_loop.run_forever(|ev| {
         match ev {
             Event::WindowEvent { event, .. } => {
@@ -75,28 +75,30 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
 }
 
 pub struct LocalScreen<'a> {
+    director: Sender<DirectorMsg>,
     blocks: HashMap<u64, Block>,
     patch_renderer: PatchRenderer,
     quip_renderer: QuipRenderer<'a>,
     display: Display,
     status: ScreenStatus,
     cursor: (f64, f64),
-    tracker: Option<(u64, Sender<TouchMsg>)>,
+    touch_destination: Option<u64>,
 }
 
 impl<'a> LocalScreen<'a> {
-    fn new(width: u32, height: u32, events_loop: &EventsLoop) -> Self {
+    fn new(width: u32, height: u32, events_loop: &EventsLoop, director: Sender<DirectorMsg>) -> Self {
         let display = get_display(width, height, events_loop);
         let modelview = get_modelview(width, height, &display);
         let dpi_factor = display.gl_window().hidpi_factor();
         let local_screen = LocalScreen {
+            director,
             blocks: HashMap::<u64, Block>::new(),
             patch_renderer: PatchRenderer::new(&display, modelview),
             quip_renderer: QuipRenderer::new(dpi_factor, modelview, &display),
             display,
             status: ScreenStatus::Changed,
             cursor: (-1.0, -1.0),
-            tracker: None,
+            touch_destination: None,
         };
         local_screen
     }
@@ -105,42 +107,46 @@ impl<'a> LocalScreen<'a> {
         self.status
     }
 
+    fn send_touch(&self, touch_msg: TouchMsg) {
+        self.director.send(DirectorMsg::TouchMsg(touch_msg)).unwrap();
+    }
+
     fn begin_tracking(&mut self) {
         self.cancel_tracking();
         let (x, y) = self.cursor;
         let some_block = self.blocks.iter().find(|&(_, block)| {
             match block.sigil {
-                Sigil::Channel(_, _) if block.is_hit(x as f32, y as f32) => true,
+                Sigil::Touch(_) if block.is_hit(x as f32, y as f32) => true,
                 _ => false,
             }
         });
-        if let Some((_, &Block { sigil: Sigil::Channel(tag, ref tracker), .. })) = some_block {
-            self.tracker = Some((tag, tracker.clone()));
-            tracker.send(TouchMsg::Begin(tag, x, y)).unwrap();
+        if let Some((_, &Block { sigil: Sigil::Touch(tag), .. })) = some_block {
+            self.touch_destination = Some(tag);
+            self.send_touch(TouchMsg::Begin(tag, x, y));
         }
     }
 
     fn move_tracking(&mut self, cursor: (f64, f64)) {
         self.cursor = cursor;
-        if let Some((tag, ref tracker)) = self.tracker {
+        if let Some(tag) = self.touch_destination {
             let (x, y) = self.cursor;
-            tracker.send(TouchMsg::Move(tag, x, y)).unwrap();
+            self.send_touch(TouchMsg::Move(tag, x, y));
         }
     }
 
     fn cancel_tracking(&mut self) {
-        if let Some((tag, ref tracker)) = self.tracker {
-            tracker.send(TouchMsg::Cancel(tag)).unwrap();
+        if let Some(tag) = self.touch_destination {
+            self.send_touch(TouchMsg::Cancel(tag));
         }
-        self.tracker = None;
+        self.touch_destination = None;
     }
 
     fn end_tracking(&mut self) {
-        if let Some((tag, ref tracker)) = self.tracker {
+        if let Some(tag) = self.touch_destination {
             let (x, y) = self.cursor;
-            tracker.send(TouchMsg::End(tag, x, y)).unwrap();
+            self.send_touch(TouchMsg::End(tag, x, y));
         }
-        self.tracker = None;
+        self.touch_destination = None;
     }
 
     fn on_dimensions(&mut self, width: u32, height: u32) {
