@@ -2,7 +2,7 @@ use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Sigil};
 use ::Color;
-use ::flood::{Flood, Padding, Position, Sensor};
+use ::flood::*;
 use ::TouchMsg;
 use std::sync::Arc;
 use std::sync::mpsc::{channel, Sender};
@@ -117,7 +117,8 @@ impl<MsgT> Floodplain<MsgT> {
 
     pub fn cycle(&mut self) {
         if let Some(ref screen) = self.screen {
-            let mut blocklist = build_blocks(0., 0., self.width as f32, self.height as f32, 0.0, &self.flood);
+            let (left, top, width, height, approach) = (0.0, 0.0, self.width as f32, self.height as f32, 0.0);
+            let mut blocklist = build_blocks(&BlockRange { left, top, width, height, approach }, &self.flood);
             self.touch_adapters.clear();
             self.touch_adapters.append(&mut blocklist.touch_adapters);
             blocklist.blocks.into_iter()
@@ -156,77 +157,134 @@ impl<MsgT> Blocklist<MsgT> {
     pub fn push_touch_adapter(&mut self, touch_adapter: (u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)) {
         self.touch_adapters.push(touch_adapter);
     }
-    pub fn append(&mut self, rhs: &mut Blocklist<MsgT>) {
+    pub fn append(mut self, rhs: &mut Blocklist<MsgT>) -> Self {
         self.max_approach = self.max_approach.max(rhs.max_approach);
         self.blocks.append(&mut rhs.blocks);
         self.touch_adapters.append(&mut rhs.touch_adapters);
+        self
     }
 }
 
-fn build_blocks<MsgT>(left: f32, top: f32,
-                      width: f32, height: f32,
-                      approach: f32, flood: &Flood<MsgT>) -> Blocklist<MsgT>
+#[derive(Copy, Clone, Debug)]
+struct BlockRange {
+    pub left: f32,
+    pub top: f32,
+    pub width: f32,
+    pub height: f32,
+    pub approach: f32,
+}
+
+impl BlockRange {
+    pub fn with_approach(&self, approach: f32) -> Self {
+        let mut range = self.clone();
+        range.approach = approach;
+        range
+    }
+
+    pub fn with_padding(&self, h_pad: f32, v_pad: f32) -> Self {
+        BlockRange {
+            left: self.left + h_pad,
+            top: self.top + v_pad,
+            width: (self.width - 2.0 * h_pad).max(0.0),
+            height: (self.height - 2.0 * v_pad).max(0.0),
+            approach: self.approach,
+        }
+    }
+    pub fn split_width(&self, right_width: f32) -> (Self, Self) {
+        let right_width = right_width.min(self.width);
+        let left_width = self.width - right_width;
+        let left_range = BlockRange {
+            left: self.left,
+            top: self.top,
+            width: left_width,
+            height: self.height,
+            approach: self.approach,
+        };
+        let right_range = BlockRange {
+            left: self.left + left_width,
+            top: self.top,
+            width: right_width,
+            height: self.height,
+            approach: self.approach,
+        };
+        (left_range, right_range)
+    }
+    pub fn split_height(&self, bottom_height: f32) -> (Self, Self) {
+        let bottom_height = bottom_height.min(self.height);
+        let top_height = self.height - bottom_height;
+        let top_range = BlockRange {
+            left: self.left,
+            top: self.top,
+            width: self.width,
+            height: top_height,
+            approach: self.approach,
+        };
+        let bottom_range = BlockRange {
+            left: self.left,
+            top: self.top + top_height,
+            width: self.width,
+            height: bottom_height,
+            approach: self.approach,
+        };
+        (top_range, bottom_range)
+    }
+}
+
+fn build_blocks<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>
 {
     match flood {
+        &Flood::Dervish(Dervish::Sender(ref _sender), ref flood) => {
+            build_blocks(range, flood)
+        }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
-            let mut blocklist = build_blocks(left, top, width, height, approach, flood);
+            let mut blocklist = build_blocks(range, flood);
             let sigil = Sigil::Touch(tag);
-            let anchor = Anchor { x: left, y: top };
-            let block = Block { sigil, width, height, anchor, approach: blocklist.max_approach };
+            let anchor = Anchor { x: range.left, y: range.top };
+            let block = Block { sigil, width: range.width, height: range.height, anchor, approach: blocklist.max_approach };
             let touch_adapter = (tag, msg_adapter.clone());
             blocklist.push_block(block);
             blocklist.push_touch_adapter(touch_adapter);
             blocklist
         }
         &Flood::Sediment(ref silt, ref far_flood, ref near_flood) => {
-            let mut blocklist = build_blocks(left, top, width, height, approach, far_flood);
-            let near_approach = silt.add_to(blocklist.max_approach);
-            let mut near_blocklist = build_blocks(left, top, width, height, near_approach, near_flood);
-            blocklist.append(&mut near_blocklist);
-            blocklist
+            let mut far_blocklist = build_blocks(range, far_flood);
+            let near_approach = silt.add_to(far_blocklist.max_approach);
+            let mut near_blocklist = build_blocks(&range.with_approach(near_approach), near_flood);
+            far_blocklist.append(&mut near_blocklist)
         }
         &Flood::Vessel(ref thickness, ref flood) => {
-            let build_blocks_with_padding = |h_pad: f32, v_pad: f32| {
-                let (core_left, core_top) = (left + h_pad, top + v_pad);
-                let (core_width, core_height) = (width - 2.0 * h_pad, height - 2.0 * v_pad);
-                build_blocks(core_left, core_top, core_width.max(0.0), core_height.max(0.0), approach, flood)
-            };
             match thickness {
                 &Padding::Dual(ref h_length, ref v_length) => {
-                    build_blocks_with_padding(h_length.to_f32(width), v_length.to_f32(height))
+                    let h_pad = h_length.to_f32(range.width);
+                    let v_pad = v_length.to_f32(range.height);
+                    build_blocks(&range.with_padding(h_pad, v_pad), flood)
                 }
                 &Padding::Uniform(ref length) => {
-                    let pad = length.to_f32(width.max(height));
-                    build_blocks_with_padding(pad, pad)
+                    let pad = length.to_f32(range.width.max(range.height));
+                    build_blocks(&range.with_padding(pad, pad), flood)
                 }
                 &Padding::Horizontal(ref length) => {
-                    build_blocks_with_padding(length.to_f32(width), 0.0)
+                    let h_pad = length.to_f32(range.width);
+                    build_blocks(&range.with_padding(h_pad, 0.0), flood)
                 }
             }
         }
         &Flood::Barrier(ref position, ref a_flood, ref b_flood) => {
             match position {
                 &Position::Right(ref length) => {
-                    let b_width = length.to_f32(width);
-                    let a_width = width - b_width;
-                    let (a_left, b_left) = (left, left + a_width);
-                    let mut blocklist = build_blocks(a_left, top, a_width, height, approach, a_flood);
-                    let mut b_blocklist = build_blocks(b_left, top, b_width, height, approach, b_flood);
-                    blocklist.append(&mut b_blocklist);
-                    blocklist
+                    let right_width = length.to_f32(range.width);
+                    let (left_range, right_range) = range.split_width(right_width);
+                    build_blocks(&left_range, a_flood).append(&mut build_blocks(&right_range, b_flood))
                 }
                 &Position::Bottom(ref length) => {
-                    let b_height = length.to_f32(height);
-                    let a_height = height - b_height;
-                    let (a_top, b_top) = (top, top + a_height);
-                    let mut blocklist = build_blocks(left, a_top, width, a_height, approach, a_flood);
-                    let mut b_blocklist = build_blocks(left, b_top, width, b_height, approach, b_flood);
-                    blocklist.append(&mut b_blocklist);
-                    blocklist
+                    let bottom_height = length.to_f32(range.height);
+                    let (top_range, bottom_range) = range.split_height(bottom_height);
+                    build_blocks(&top_range, a_flood).append(&mut build_blocks(&bottom_range, b_flood))
                 }
             }
         }
         &Flood::Text(ref string, color, placement) => {
+            let &BlockRange { left, top, width, height, approach } = range;
             let sigil = Sigil::Paragraph {
                 line_height: height,
                 text: string.to_owned(),
@@ -237,6 +295,7 @@ fn build_blocks<MsgT>(left: f32, top: f32,
             Blocklist { max_approach: approach, blocks: vec![block], touch_adapters: Vec::new() }
         }
         &Flood::Color(color) => {
+            let &BlockRange { left, top, width, height, approach } = range;
             let sigil = Sigil::Color(color);
             let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach };
             Blocklist { max_approach: approach, blocks: vec![block], touch_adapters: Vec::new() }
