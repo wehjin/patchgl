@@ -15,7 +15,7 @@ mod app;
 mod button;
 
 fn main() {
-    window::show(320, 400, |window| {
+    window::show(640, 400, |window| {
         let app = App::new(update, draw);
         app.run(Model::default(), window);
     });
@@ -136,6 +136,10 @@ impl From<TouchMsg> for AppMsg {
 }
 
 fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
+    let edge_padding = Padding::Uniform(Length::Spacing);
+    let background = Flood::Color(palette.light_background);
+    let special = button::special(palette);
+
     let text = format!("{:+}", model.count);
     let body = Flood::Text(text, palette.primary, Placement::Center);
     let bottom_bar = {
@@ -154,6 +158,5 @@ fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
         });
         bar
     };
-    let before_background = body + (Position::Bottom(Length::FingerTip), bottom_bar) + Padding::Uniform(Length::Spacing);
-    (before_background) + Flood::Color(palette.light_background)
+    body + (Position::Bottom(Length::FingerTip), bottom_bar) + edge_padding + (Position::Bottom(Length::FingerTip), special) + background
 }

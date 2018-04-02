@@ -15,7 +15,7 @@ pub enum Flood<MsgT = ()> {
     Vessel(Padding, Box<Flood<MsgT>>),
     Sediment(Silt, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
     Ripple(Sensor<MsgT>, Box<Flood<MsgT>>),
-    Dervish(Dervish, Box<Flood<MsgT>>),
+    Dervish(Dervish),
 }
 
 impl<MsgT> Default for Flood<MsgT> {

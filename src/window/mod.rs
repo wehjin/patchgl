@@ -110,13 +110,10 @@ fn start_window<MsgT>(width: u32, height: u32) -> (Sender<WindowMsg<MsgT>>, Join
 pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>
 {
     match flood {
-        &Flood::Dervish(Dervish::Sender(ref sender), ref flood) => {
+        &Flood::Dervish(ref builder) => {
             let mut blocklist = build_placeholder_blocklist(range);
-            blocklist.push_whirling(WhirlingDervish {
-                blocklist: build_blocklist(range, flood),
-                range: range.clone(),
-                sender: sender.clone(),
-            });
+            let range = range.with_more_approach(1.0);
+            blocklist.push_dervish_settings(DervishSettings { range, dervish_builder: builder.clone() });
             blocklist
         }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
@@ -200,8 +197,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
 
 fn build_placeholder_blocklist<MsgT>(range: &BlockRange) -> Blocklist<MsgT> {
     let placeholder_flood = Flood::Color(Color::grey());
-    let placeholder_range = range.with_more_approach(-0.5);
-    let mut blocklist = build_blocklist(&placeholder_range, &placeholder_flood);
+    let mut blocklist = build_blocklist(range, &placeholder_flood);
     blocklist.update_max_approach(range.approach);
     blocklist
 }

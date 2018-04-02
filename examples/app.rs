@@ -40,6 +40,7 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Palette {
     pub primary: Color,
     pub secondary: Color,

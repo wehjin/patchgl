@@ -7,7 +7,7 @@ pub struct Blocklist<MsgT> {
     pub max_approach: f32,
     pub blocks: Vec<Block>,
     pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
-    pub whirlings: Vec<WhirlingDervish<MsgT>>,
+    pub whirlings: Vec<DervishSettings>,
 }
 
 impl<MsgT> Blocklist<MsgT> {
@@ -18,9 +18,8 @@ impl<MsgT> Blocklist<MsgT> {
     pub fn push_touch_adapter(&mut self, touch_adapter: (u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)) {
         self.touch_adapters.push(touch_adapter);
     }
-    pub fn push_whirling(&mut self, whirling: WhirlingDervish<MsgT>) {
-        self.update_max_approach(whirling.blocklist.max_approach);
-        self.whirlings.push(whirling);
+    pub fn push_dervish_settings(&mut self, settings: DervishSettings) {
+        self.whirlings.push(settings);
     }
     pub fn update_max_approach(&mut self, max_approach: f32) {
         self.max_approach = self.max_approach.max(max_approach)
