@@ -21,7 +21,7 @@ pub enum WindowMsg<MsgT = ()> {
     Screen(Sender<ScreenMsg>),
     Size(u32, u32),
     TouchMsg(TouchMsg),
-    Tx(Sender<MsgT>),
+    Watcher(Sender<MsgT>),
 }
 
 pub fn show<F, MsgT>(width: u32, height: u32, on_window: F) where
@@ -72,13 +72,13 @@ fn start_window<MsgT>(width: u32, height: u32) -> (Sender<WindowMsg<MsgT>>, Join
 {
     let (window, window_msgs) = channel::<WindowMsg<MsgT>>();
     let window_thread = thread::spawn(move || {
-        let mut some_observer: Option<Sender<MsgT>> = None;
+        let mut some_watcher: Option<Sender<MsgT>> = None;
         let mut floodplain = Floodplain::new(width, height);
         while let Ok(msg) = window_msgs.recv() {
             match msg {
                 WindowMsg::None => (),
-                WindowMsg::Tx(observer) => {
-                    some_observer = Some(observer);
+                WindowMsg::Watcher(watcher) => {
+                    some_watcher = Some(watcher);
                 }
                 WindowMsg::Screen(screen) => {
                     floodplain.screen = Some(screen);
@@ -94,10 +94,10 @@ fn start_window<MsgT>(width: u32, height: u32) -> (Sender<WindowMsg<MsgT>>, Join
                     floodplain.cycle();
                 }
                 WindowMsg::TouchMsg(touch_msg) => {
-                    if let Some(ref observer) = some_observer {
+                    if let Some(ref watcher) = some_watcher {
                         if let Some(adapter) = floodplain.find_touch_adapter(touch_msg.tag()) {
                             let msg = adapter(touch_msg);
-                            observer.send(msg).unwrap();
+                            watcher.send(msg).unwrap();
                         }
                     }
                 }

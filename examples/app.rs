@@ -124,7 +124,7 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     }
 
     fn connect_window(&self) {
-        self.window.send(WindowMsg::Tx(self.app_tx.clone())).unwrap();
+        self.window.send(WindowMsg::Watcher(self.app_tx.clone())).unwrap();
     }
 
     fn flood_window(&self) {
