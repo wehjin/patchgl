@@ -238,9 +238,13 @@ fn build_blocks<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT
         }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
             let mut blocklist = build_blocks(range, flood);
-            let sigil = Sigil::Touch(tag);
-            let anchor = Anchor { x: range.left, y: range.top };
-            let block = Block { sigil, width: range.width, height: range.height, anchor, approach: blocklist.max_approach };
+            let block = Block {
+                sigil: Sigil::Touch(tag),
+                width: range.width,
+                height: range.height,
+                anchor: Anchor { x: range.left, y: range.top },
+                approach: blocklist.max_approach,
+            };
             let touch_adapter = (tag, msg_adapter.clone());
             blocklist.push_block(block);
             blocklist.push_touch_adapter(touch_adapter);
