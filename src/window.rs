@@ -1,7 +1,7 @@
 use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Sigil};
-use ::flood::{Flood, Padding, Position, Touching};
+use ::flood::{Flood, Padding, Position, Sensing};
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::thread::JoinHandle;
@@ -101,7 +101,7 @@ impl Floodplain {
 
 fn build_blocks(left: f32, top: f32, width: f32, height: f32, approach: f32, flood: &Flood) -> (f32, Vec<Block>) {
     match flood {
-        &Flood::Ripple(Touching::Channel(tag, ref tracker), ref flood) => {
+        &Flood::Ripple(Sensing::Touch(tag, ref tracker), ref flood) => {
             let (max_approach, mut blocks) = build_blocks(left, top, width, height, approach, flood);
             let sigil = Sigil::Channel(tag, tracker.clone());
             let anchor = Anchor { x: left, y: top };

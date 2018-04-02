@@ -146,7 +146,7 @@ fn draw(model: &Model, palette: &Palette, app: &Sender<AppMsg>) -> Flood {
         let bar = enumerated.into_iter().fold(empty_bar, |bar, (i, &(code, ref button_mdl))| {
             let segment = {
                 let button = button::draw(button_mdl, palette);
-                let touching = Touching::Channel(code, touch_watcher.clone());
+                let touching = Sensing::Touch(code, touch_watcher.clone());
                 let segment_padding = Padding::Horizontal(Length::Spacing / 4);
                 button + touching + segment_padding
             };

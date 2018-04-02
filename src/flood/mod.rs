@@ -13,7 +13,7 @@ pub enum Flood {
     Barrier(Position, Box<Flood>, Box<Flood>),
     Vessel(Padding, Box<Flood>),
     Sediment(Silt, Box<Flood>, Box<Flood>),
-    Ripple(Touching, Box<Flood>),
+    Ripple(Sensing, Box<Flood>),
 }
 
 impl Default for Flood {
@@ -22,10 +22,10 @@ impl Default for Flood {
     }
 }
 
-impl Add<Touching> for Flood {
+impl Add<Sensing> for Flood {
     type Output = Flood;
 
-    fn add(self, rhs: Touching) -> <Self as Add<Touching>>::Output {
+    fn add(self, rhs: Sensing) -> <Self as Add<Sensing>>::Output {
         Flood::Ripple(rhs, Box::new(self))
     }
 }
@@ -86,8 +86,8 @@ impl Default for Placement {
 }
 
 #[derive(Clone, Debug)]
-pub enum Touching {
-    Channel(u64, Sender<TouchMsg>)
+pub enum Sensing {
+    Touch(u64, Sender<TouchMsg>)
 }
 
 #[derive(Clone, PartialEq, Debug)]
