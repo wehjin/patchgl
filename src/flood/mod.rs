@@ -8,7 +8,7 @@ use std::sync::Arc;
 mod length;
 
 #[derive(Clone, Debug)]
-pub enum Flood<MsgT> {
+pub enum Flood<MsgT = ()> {
     Color(Color),
     Text(String, Color, Placement),
     Barrier(Position, Box<Flood<MsgT>>, Box<Flood<MsgT>>),

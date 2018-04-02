@@ -9,7 +9,7 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::thread::JoinHandle;
 
-pub enum WindowMsg<MsgT> {
+pub enum WindowMsg<MsgT = ()> {
     None,
     Flood(Flood<MsgT>),
     Screen(Sender<ScreenMsg>),
@@ -102,7 +102,7 @@ fn start_window<MsgT>(width: u32, height: u32) -> (Sender<WindowMsg<MsgT>>, Join
 }
 
 #[derive(Default)]
-struct Floodplain<MsgT> {
+struct Floodplain<MsgT = ()> {
     pub width: u32,
     pub height: u32,
     pub screen: Option<Sender<ScreenMsg>>,
