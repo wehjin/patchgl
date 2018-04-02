@@ -24,6 +24,7 @@ pub mod screen;
 pub mod flood;
 pub mod window;
 pub mod color;
+pub mod dervish;
 mod sigil;
 mod local_screen;
 mod anchor;

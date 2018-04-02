@@ -14,6 +14,10 @@ impl BlockRange {
         range
     }
 
+    pub fn with_more_approach(&self, more: f32) -> Self {
+        self.with_approach(self.approach + more)
+    }
+
     pub fn with_padding(&self, h_pad: f32, v_pad: f32) -> Self {
         BlockRange {
             left: self.left + h_pad,

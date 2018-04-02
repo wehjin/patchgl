@@ -1,9 +1,10 @@
 use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
-use ::{Anchor, Block, Sigil};
+use ::{Anchor, Block, Color, Sigil};
+use ::dervish::*;
 use ::flood::*;
 use ::TouchMsg;
-pub use self::blocklist::BlockList;
+pub use self::blocklist::Blocklist;
 pub use self::blockrange::BlockRange;
 use self::floodplain::Floodplain;
 use std::sync::mpsc::{channel, Sender};
@@ -106,12 +107,17 @@ fn start_window<MsgT>(width: u32, height: u32) -> (Sender<WindowMsg<MsgT>>, Join
     (window, window_thread)
 }
 
-pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> BlockList<MsgT>
+pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>
 {
     match flood {
-        &Flood::Dervish(Dervish::Sender(ref _sender), ref flood) => {
-            let dervish_blocklist = build_blocklist(range, flood);
-            BlockList::new(dervish_blocklist.max_approach)
+        &Flood::Dervish(Dervish::Sender(ref sender), ref flood) => {
+            let mut blocklist = build_placeholder_blocklist(range);
+            blocklist.push_whirling(WhirlingDervish {
+                blocklist: build_blocklist(range, flood),
+                range: range.clone(),
+                sender: sender.clone(),
+            });
+            blocklist
         }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
             let mut blocklist = build_blocklist(range, flood);
@@ -172,14 +178,30 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> BlockLi
                 color,
                 placement: placement.into(),
             };
-            let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach };
-            BlockList { max_approach: approach, blocks: vec![block], touch_adapters: Vec::new() }
+            Blocklist {
+                max_approach: approach,
+                blocks: vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }],
+                touch_adapters: Vec::new(),
+                whirlings: Vec::new(),
+            }
         }
         &Flood::Color(color) => {
             let &BlockRange { left, top, width, height, approach } = range;
             let sigil = Sigil::Color(color);
-            let block = Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach };
-            BlockList { max_approach: approach, blocks: vec![block], touch_adapters: Vec::new() }
+            Blocklist {
+                max_approach: approach,
+                blocks: vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }],
+                touch_adapters: Vec::new(),
+                whirlings: Vec::new(),
+            }
         }
     }
+}
+
+fn build_placeholder_blocklist<MsgT>(range: &BlockRange) -> Blocklist<MsgT> {
+    let placeholder_flood = Flood::Color(Color::grey());
+    let placeholder_range = range.with_more_approach(-0.5);
+    let mut blocklist = build_blocklist(&placeholder_range, &placeholder_flood);
+    blocklist.update_max_approach(range.approach);
+    blocklist
 }

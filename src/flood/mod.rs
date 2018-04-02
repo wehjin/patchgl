@@ -1,5 +1,5 @@
+use ::dervish::*;
 use Color;
-pub use self::dervish::*;
 pub use self::extras::*;
 pub use self::length::Length;
 use std::ops::Add;
@@ -16,18 +16,6 @@ pub enum Flood<MsgT = ()> {
     Sediment(Silt, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
     Ripple(Sensor<MsgT>, Box<Flood<MsgT>>),
     Dervish(Dervish, Box<Flood<MsgT>>),
-}
-
-mod dervish {
-    use std::sync::mpsc::Sender;
-
-    #[derive(Debug)]
-    pub enum DervishMsg {}
-
-    #[derive(Clone, Debug)]
-    pub enum Dervish {
-        Sender(Sender<DervishMsg>)
-    }
 }
 
 impl<MsgT> Default for Flood<MsgT> {
