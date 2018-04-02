@@ -4,10 +4,13 @@ use ::{Anchor, Block, Sigil};
 use ::Color;
 use ::flood::*;
 use ::TouchMsg;
+use self::blockrange::BlockRange;
 use std::sync::Arc;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::thread::JoinHandle;
+
+mod blockrange;
 
 pub enum WindowMsg<MsgT = ()> {
     None,
@@ -143,6 +146,7 @@ impl<MsgT> Floodplain<MsgT> {
     }
 }
 
+#[derive(Default)]
 struct Blocklist<MsgT> {
     pub max_approach: f32,
     pub blocks: Vec<Block>,
@@ -150,6 +154,9 @@ struct Blocklist<MsgT> {
 }
 
 impl<MsgT> Blocklist<MsgT> {
+    pub fn new(max_approach: f32) -> Self {
+        Blocklist { max_approach, blocks: Vec::new(), touch_adapters: Vec::new() }
+    }
     pub fn push_block(&mut self, block: Block) {
         self.max_approach = self.max_approach.max(block.approach);
         self.blocks.push(block);
@@ -165,76 +172,12 @@ impl<MsgT> Blocklist<MsgT> {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-struct BlockRange {
-    pub left: f32,
-    pub top: f32,
-    pub width: f32,
-    pub height: f32,
-    pub approach: f32,
-}
-
-impl BlockRange {
-    pub fn with_approach(&self, approach: f32) -> Self {
-        let mut range = self.clone();
-        range.approach = approach;
-        range
-    }
-
-    pub fn with_padding(&self, h_pad: f32, v_pad: f32) -> Self {
-        BlockRange {
-            left: self.left + h_pad,
-            top: self.top + v_pad,
-            width: (self.width - 2.0 * h_pad).max(0.0),
-            height: (self.height - 2.0 * v_pad).max(0.0),
-            approach: self.approach,
-        }
-    }
-    pub fn split_width(&self, right_width: f32) -> (Self, Self) {
-        let right_width = right_width.min(self.width);
-        let left_width = self.width - right_width;
-        let left_range = BlockRange {
-            left: self.left,
-            top: self.top,
-            width: left_width,
-            height: self.height,
-            approach: self.approach,
-        };
-        let right_range = BlockRange {
-            left: self.left + left_width,
-            top: self.top,
-            width: right_width,
-            height: self.height,
-            approach: self.approach,
-        };
-        (left_range, right_range)
-    }
-    pub fn split_height(&self, bottom_height: f32) -> (Self, Self) {
-        let bottom_height = bottom_height.min(self.height);
-        let top_height = self.height - bottom_height;
-        let top_range = BlockRange {
-            left: self.left,
-            top: self.top,
-            width: self.width,
-            height: top_height,
-            approach: self.approach,
-        };
-        let bottom_range = BlockRange {
-            left: self.left,
-            top: self.top + top_height,
-            width: self.width,
-            height: bottom_height,
-            approach: self.approach,
-        };
-        (top_range, bottom_range)
-    }
-}
-
 fn build_blocks<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>
 {
     match flood {
         &Flood::Dervish(Dervish::Sender(ref _sender), ref flood) => {
-            build_blocks(range, flood)
+            let dervish_blocklist = build_blocks(range, flood);
+            Blocklist::new(dervish_blocklist.max_approach)
         }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
             let mut blocklist = build_blocks(range, flood);
