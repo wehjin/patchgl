@@ -107,7 +107,7 @@ struct Floodplain<MsgT = ()> {
     pub height: u32,
     pub screen: Option<Sender<ScreenMsg>>,
     pub flood: Flood<MsgT>,
-    pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync + 'static>)>,
+    pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
 }
 
 impl<MsgT> Floodplain<MsgT> {
@@ -145,7 +145,7 @@ impl<MsgT> Floodplain<MsgT> {
 struct Blocklist<MsgT> {
     pub max_approach: f32,
     pub blocks: Vec<Block>,
-    pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync + 'static>)>,
+    pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
 }
 
 impl<MsgT> Blocklist<MsgT> {
@@ -153,7 +153,7 @@ impl<MsgT> Blocklist<MsgT> {
         self.max_approach = self.max_approach.max(block.approach);
         self.blocks.push(block);
     }
-    pub fn push_touch_adapter(&mut self, touch_adapter: (u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync + 'static>)) {
+    pub fn push_touch_adapter(&mut self, touch_adapter: (u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)) {
         self.touch_adapters.push(touch_adapter);
     }
     pub fn append(&mut self, rhs: &mut Blocklist<MsgT>) {

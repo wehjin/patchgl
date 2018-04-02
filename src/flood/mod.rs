@@ -88,7 +88,7 @@ impl Default for Placement {
 
 #[derive(Clone)]
 pub enum Sensor<MsgT> where {
-    Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync + 'static>)
+    Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)
 }
 
 impl<MsgT> fmt::Debug for Sensor<MsgT> {
