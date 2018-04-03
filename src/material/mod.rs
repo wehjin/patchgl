@@ -3,37 +3,15 @@ use ::button;
 pub use ::button::Kind;
 use ::flood::Flood;
 pub use self::color::*;
-use std::collections::HashMap;
+pub use self::model::Model;
+
+mod color;
 
 pub struct Button<'a, MsgT> {
     pub id: u64,
     pub model: &'a Model,
     pub kind: Kind,
     pub _click_msg: MsgT,
-}
-
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
-pub struct Model {
-    pub button_models: HashMap<u64, button::Model>
-}
-
-impl Model {
-    fn get_button_model(&self, tag: u64) -> button::Model {
-        match self.button_models.get(&tag) {
-            Some(model) => *model,
-            None => button::Model::default(),
-        }
-    }
-    fn set_button_model(&mut self, tag: u64, button_model: button::Model) {
-        let button_models = &mut self.button_models;
-        button_models.insert(tag, button_model);
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum Msg {
-    None,
-    ButtonMsg(u64, button::Msg),
 }
 
 pub fn button<F:, MsgT>(wrap: F, palette: &Palette, button: Button<MsgT>) -> Flood<MsgT> where
@@ -65,4 +43,31 @@ pub fn update(model: &mut Model, msg: Msg) {
     }
 }
 
-mod color;
+mod model {
+    use ::button;
+    use std::collections::HashMap;
+
+    #[derive(Clone, Eq, PartialEq, Debug, Default)]
+    pub struct Model {
+        pub button_models: HashMap<u64, button::Model>
+    }
+
+    impl Model {
+        pub fn get_button_model(&self, tag: u64) -> button::Model {
+            match self.button_models.get(&tag) {
+                Some(model) => *model,
+                None => button::Model::default(),
+            }
+        }
+        pub fn set_button_model(&mut self, tag: u64, button_model: button::Model) {
+            let button_models = &mut self.button_models;
+            button_models.insert(tag, button_model);
+        }
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum Msg {
+    None,
+    ButtonMsg(u64, button::Msg),
+}
