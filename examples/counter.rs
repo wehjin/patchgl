@@ -7,7 +7,6 @@ extern crate xml;
 use app::App;
 use app::Palette;
 use patchgl::flood::*;
-use patchgl::TouchMsg;
 use patchgl::window;
 
 mod app;
@@ -22,147 +21,95 @@ fn main() {
 
 fn update(model: &mut Model, msg: AppMsg) {
     match msg {
-        AppMsg::Special(tag, range) => {
-            println!("Received range: {:?} with tag: {}", range, tag);
+        AppMsg::Up => {
+            model.count += 1;
         }
-        AppMsg::Press(code) => {
-            update_buttons(model, code, |active_code, &(button_code, _)| {
-                if button_code == active_code {
-                    Some(button::Msg::Press)
-                } else {
-                    Some(button::Msg::Unpress)
-                }
-            });
+        AppMsg::Down => {
+            model.count -= 1;
         }
-        AppMsg::Cancel(code) => {
-            update_buttons(model, code, |active_code, &(button_code, _)| {
-                if button_code == active_code {
-                    Some(button::Msg::Unpress)
-                } else {
-                    None
-                }
-            });
+        AppMsg::Reset => {
+            model.count = 0;
         }
-        AppMsg::Release(code) => {
-            update_buttons(model, code, |active_code, &(button_code, _)| {
-                if button_code == active_code {
-                    Some(button::Msg::Release)
-                } else {
-                    None
-                }
-            });
-        }
-        AppMsg::ButtonNotes(button_notes) => {
-            button_notes.iter().for_each(|&note| {
-                update(model, AppMsg::ButtonNote(note.to_owned()));
-            });
-        }
-        AppMsg::ButtonNote((button_code, button_note)) => {
-            match button_note {
-                button::Note::Clicked => {
-                    match button_code {
-                        UP_CODE => model.count += 1,
-                        DOWN_CODE => model.count -= 1,
-                        RESET_CODE => model.count = 0,
-                        _ => (),
-                    }
-                }
+        AppMsg::UpButtonMsg(button_msg) => {
+            if let Some(button::Note::Clicked(_)) = button::update(&mut model.up_button, button_msg) {
+                update(model, AppMsg::Up);
             }
         }
-        AppMsg::Ignore => ()
+        AppMsg::DownButtonMsg(button_msg) => {
+            if let Some(button::Note::Clicked(_)) = button::update(&mut model.down_button, button_msg) {
+                update(model, AppMsg::Down);
+            }
+        }
+        AppMsg::ResetButtonMsg(button_msg) => {
+            if let Some(button::Note::Clicked(_)) = button::update(&mut model.reset_button, button_msg) {
+                update(model, AppMsg::Reset);
+            }
+        }
     }
 }
-
-fn update_buttons<F>(model: &mut Model, active_code: u64, get_msg: F) where
-    F: Fn(u64, &(u64, button::Mdl)) -> Option<button::Msg>
-{
-    let mut notes = Vec::<(u64, button::Note)>::new();
-    let mut buttons = Vec::<(u64, button::Mdl)>::new();
-    model.buttons.iter()
-         .for_each(|coded_button| {
-             let &(button_code, ref button_mdl) = coded_button;
-             let mut mdl = button_mdl.clone();
-             if let Some(msg) = get_msg(active_code, coded_button) {
-                 if let Some(note) = button::update(&mut mdl, msg) {
-                     notes.push((button_code, note));
-                 }
-             }
-             buttons.push((button_code, mdl));
-         });
-    model.buttons = buttons;
-    update(model, AppMsg::ButtonNotes(notes));
-}
-
 
 #[derive(Clone, PartialEq, Debug)]
 struct Model {
     pub count: i32,
-    pub buttons: Vec<(u64, button::Mdl)>,
+    pub up_button: button::Model,
+    pub down_button: button::Model,
+    pub reset_button: button::Model,
 }
 
 impl Default for Model {
     fn default() -> Self {
         Model {
             count: 0,
-            buttons: vec![
-                (DOWN_CODE, button::Mdl::colored_flat("Down")),
-                (RESET_CODE, button::Mdl::plain_flat("Reset")),
-                (UP_CODE, button::Mdl::colored_flat("Up")),
-            ],
+            up_button: button::Model::default(),
+            down_button: button::Model::default(),
+            reset_button: button::Model::default(),
         }
     }
 }
-
-const UP_CODE: u64 = 32;
-const DOWN_CODE: u64 = 33;
-const RESET_CODE: u64 = 34;
 
 enum AppMsg {
-    Press(u64),
-    Cancel(u64),
-    Release(u64),
-    ButtonNotes(Vec<(u64, button::Note)>),
-    ButtonNote((u64, button::Note)),
-    Special(u64, window::BlockRange),
-    Ignore,
-}
-
-impl From<TouchMsg> for AppMsg {
-    fn from(touch_msg: TouchMsg) -> Self {
-        match touch_msg {
-            TouchMsg::Begin(code, _, _) => AppMsg::Press(code),
-            TouchMsg::Cancel(code) => AppMsg::Cancel(code),
-            TouchMsg::Move(_, _, _) => AppMsg::Ignore,
-            TouchMsg::End(code, _, _) => AppMsg::Release(code),
-        }
-    }
+    Up,
+    Down,
+    Reset,
+    UpButtonMsg(button::Msg),
+    DownButtonMsg(button::Msg),
+    ResetButtonMsg(button::Msg),
 }
 
 fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
     let edge_padding = Padding::Uniform(Length::Spacing);
     let background = Flood::Color(palette.light_background);
-    use std::sync::Arc;
-    let special = Flood::Escape(Raft::RangeAdapter(117, Arc::new(|tag, range| {
-        AppMsg::Special(tag, range.clone())
-    })));
 
     let text = format!("{:+}", model.count);
     let body = Flood::Text(text, palette.primary, Placement::Center);
     let bottom_bar = {
-        let enumerated = model.buttons.iter().enumerate().collect::<Vec<_>>();
-        let empty_bar = Flood::Color(palette.light_background);
-        let bar = enumerated.into_iter().fold(empty_bar, |bar, (i, &(code, ref button_mdl))| {
-            let segment = {
-                let button = button::draw(button_mdl, palette);
-                let sensor = Sensor::Touch(code, Arc::new(|touch_msg| {
-                    AppMsg::from(touch_msg)
-                }));
-                let segment_padding = Padding::Horizontal(Length::Spacing / 4);
-                button + sensor + segment_padding
-            };
-            bar + (Position::Right(Length::Full / (i as u32 + 1)), segment)
-        });
-        bar
+        let mut buttons = Vec::new();
+        buttons.push(button::flood(AppMsg::DownButtonMsg, palette, button::Button {
+            id: 32,
+            kind: button::Kind::ColoredFlat("Down".into()),
+            model: model.down_button,
+        }));
+        buttons.push(button::flood(AppMsg::ResetButtonMsg, palette, button::Button {
+            id: 33,
+            kind: button::Kind::PlainFlat("Reset".into()),
+            model: model.reset_button,
+        }));
+        buttons.push(button::flood(AppMsg::UpButtonMsg, palette, button::Button {
+            id: 34,
+            kind: button::Kind::ColoredFlat("Up".into()),
+            model: model.up_button,
+        }));
+        draw_bar(buttons, palette)
     };
-    body + (Position::Bottom(Length::FingerTip), bottom_bar) + edge_padding + (Position::Bottom(Length::FingerTip), special) + background
+    body + (Position::Bottom(Length::FingerTip), bottom_bar) + edge_padding + background
+}
+
+fn draw_bar(contents: Vec<Flood<AppMsg>>, palette: &Palette) -> Flood<AppMsg> {
+    let enumeration = contents.into_iter().enumerate().collect::<Vec<_>>();
+    enumeration.into_iter().fold(
+        Flood::Color(palette.light_background),
+        |bar, (i, button)| {
+            let segment = button + Padding::Horizontal(Length::Spacing / 4);
+            bar + (Position::Right(Length::Full / (i as u32 + 1)), segment)
+        })
 }

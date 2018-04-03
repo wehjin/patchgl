@@ -1,8 +1,34 @@
 use patchgl::Color;
 use patchgl::flood::*;
+use patchgl::TouchMsg;
+use std::sync::Arc;
 use super::app::Palette;
 
-pub fn update(mdl: &mut Mdl, msg: Msg) -> Option<Note> {
+pub struct Button {
+    pub id: u64,
+    pub kind: Kind,
+    pub model: Model,
+}
+
+pub fn flood<F, UpMsgT>(wrap: F, palette: &Palette, button: Button) -> Flood<UpMsgT> where
+    F: Fn(Msg) -> UpMsgT + Send + Sync + 'static
+{
+    let surface = draw(&button, palette);
+    surface + Sensor::Touch(button.id, Arc::new(move |touch_msg| {
+        wrap(if touch_msg.tag() == button.id {
+            match touch_msg {
+                TouchMsg::Begin(_, _, _) => Msg::Press,
+                TouchMsg::End(tag, _, _) => Msg::Release(tag),
+                TouchMsg::Move(_, _, _) => Msg::None,
+                TouchMsg::Cancel(_) => Msg::Unpress,
+            }
+        } else {
+            Msg::None
+        })
+    }))
+}
+
+pub fn update(mdl: &mut Model, msg: Msg) -> Option<Note> {
     match msg {
         Msg::Press => {
             mdl.press_state = PressState::Down;
@@ -12,19 +38,22 @@ pub fn update(mdl: &mut Mdl, msg: Msg) -> Option<Note> {
             mdl.press_state = PressState::Up;
             None
         }
-        Msg::Release => {
+        Msg::Release(tag) => {
             if mdl.press_state == PressState::Down {
                 mdl.press_state = PressState::Up;
-                Some(Note::Clicked)
+                Some(Note::Clicked(tag))
             } else {
                 None
             }
         }
+        Msg::None => {
+            None
+        }
     }
 }
 
-pub fn draw<MsgT>(mdl: &Mdl, palette: &Palette) -> Flood<MsgT> {
-    match (&mdl.kind, &mdl.press_state) {
+pub fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> {
+    match (&button.kind, &button.model.press_state) {
         (&Kind::ColoredFlat(ref label), &PressState::Up) => {
             flat_button_surface(label, palette.secondary)
         }
@@ -51,23 +80,14 @@ fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> {
 }
 
 
-#[derive(Clone, PartialEq, Debug)]
-pub struct Mdl {
-    pub kind: Kind,
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct Model {
     pub press_state: PressState,
 }
 
-impl Mdl {
-    pub fn colored_flat(label: &str) -> Self {
-        Mdl::new(Kind::ColoredFlat(String::from(label)))
-    }
-
-    pub fn plain_flat(label: &str) -> Self {
-        Mdl::new(Kind::PlainFlat(String::from(label)))
-    }
-
-    pub fn new(kind: Kind) -> Self {
-        Mdl { kind, press_state: PressState::Up }
+impl Default for Model {
+    fn default() -> Self {
+        Model { press_state: PressState::Up }
     }
 }
 
@@ -75,12 +95,13 @@ impl Mdl {
 pub enum Msg {
     Press,
     Unpress,
-    Release,
+    Release(u64),
+    None,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Note {
-    Clicked,
+    Clicked(u64),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
