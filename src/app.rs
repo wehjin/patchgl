@@ -1,6 +1,6 @@
-use patchgl::Color;
-use patchgl::flood::Flood;
-use patchgl::window::FloodplainMsg;
+use ::Color;
+use ::flood::Flood;
+use ::window::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
@@ -35,7 +35,7 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
         (self.draw_f)(model, palette)
     }
 
-    pub fn run(self, model: MdlT, window: Sender<FloodplainMsg<MsgT>>) {
+    pub fn run(self, model: MdlT, window: Sender<WindowMsg<MsgT>>) {
         let mut running_app = RunningApp::new(self, window, model);
         running_app.run();
     }
@@ -102,7 +102,7 @@ struct RunningApp<MsgT, MdlT>
     app_msgs: Receiver<MsgT>,
     app_tx: Sender<MsgT>,
     palette: Palette,
-    window: Sender<FloodplainMsg<MsgT>>,
+    window: Sender<WindowMsg<MsgT>>,
     model: MdlT,
     app: App<MsgT, MdlT>,
 }
@@ -111,7 +111,7 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     MsgT: Send + 'static,
     MdlT: Clone + PartialEq,
 {
-    pub fn new(app: App<MsgT, MdlT>, window: Sender<FloodplainMsg<MsgT>>, model: MdlT) -> Self
+    pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg<MsgT>>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
         RunningApp { app_msgs, app_tx: app_sender, palette: Palette::default(), window, model, app }
@@ -130,12 +130,12 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     }
 
     fn connect_window(&self) {
-        self.window.send(FloodplainMsg::Observe(self.app_tx.clone())).unwrap();
+        self.window.send(WindowMsg::Observe(self.app_tx.clone())).unwrap();
     }
 
     fn flood_window(&self) {
         let flood = self.app.draw(&self.model, &self.palette);
-        let flood_msg = FloodplainMsg::Flood(flood);
+        let flood_msg = WindowMsg::Flood(flood);
         self.window.send(flood_msg).unwrap();
     }
 }

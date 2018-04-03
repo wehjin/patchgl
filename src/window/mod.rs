@@ -5,13 +5,19 @@ use ::flood::*;
 use ::TouchMsg;
 pub use self::blocklist::Blocklist;
 pub use self::blockrange::BlockRange;
-pub use self::floodplain::*;
+pub use self::open_window::*;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 
 mod blockrange;
 mod blocklist;
-mod floodplain;
+mod open_window;
+
+pub enum WindowMsg<MsgT> {
+    Flood(Flood<MsgT>),
+    Observe(Sender<MsgT>),
+    WindowNote(WindowNote),
+}
 
 pub enum WindowNote {
     Screen(Sender<ScreenMsg>),
@@ -19,9 +25,9 @@ pub enum WindowNote {
     Touch(TouchMsg),
 }
 
-pub fn start<MsgT, F>(width: u32, height: u32, notify_floodplain: F) where
+pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
     MsgT: Send + Sync + 'static,
-    F: Fn(Sender<FloodplainMsg<MsgT>>), F: Send + Sync + 'static,
+    F: Fn(Sender<WindowMsg<MsgT>>), F: Send + Sync + 'static,
 {
     let range = BlockRange {
         left: 0.0,
@@ -30,16 +36,16 @@ pub fn start<MsgT, F>(width: u32, height: u32, notify_floodplain: F) where
         height: height as f32,
         approach: 0.0,
     };
-    let floodplain = spawn_floodplain::<MsgT>(range, Some(0));
+    let window = spawn_window::<MsgT>(range, Some(0));
     {
-        let floodplain = floodplain.clone();
+        let window = window.clone();
         thread::spawn(move || {
-            notify_floodplain(floodplain);
+            on_start(window);
         });
     }
 
     let send_window_note = move |window_note| {
-        floodplain.send(FloodplainMsg::WindowNote(window_note)).unwrap();
+        window.send(WindowMsg::WindowNote(window_note)).unwrap();
     };
     let (director, _) = director::spawn((), move |msg, _| {
         match msg {
@@ -63,44 +69,44 @@ pub fn start<MsgT, F>(width: u32, height: u32, notify_floodplain: F) where
     screen::start(width, height, director);
 }
 
-fn spawn_floodplain<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<FloodplainMsg<MsgT>> where
+fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<MsgT>> where
     MsgT: Send + Sync + 'static,
 {
-    let (floodplain, floodplain_msgs) = channel::<FloodplainMsg<MsgT>>();
+    let (window, window_msgs) = channel::<WindowMsg<MsgT>>();
     thread::spawn(move || {
-        let mut floodplain = Floodplain::new(range, seed);
-        while let Ok(msg) = floodplain_msgs.recv() {
+        let mut open_window = OpenWindow::new(range, seed);
+        while let Ok(msg) = window_msgs.recv() {
             match msg {
-                FloodplainMsg::Flood(flood) => {
-                    floodplain.flood = flood;
-                    floodplain.cycle();
+                WindowMsg::Flood(flood) => {
+                    open_window.flood = flood;
+                    open_window.cycle();
                 }
-                FloodplainMsg::Observe(observer) => {
-                    floodplain.observer = Some(observer);
-                    floodplain.cycle();
+                WindowMsg::Observe(observer) => {
+                    open_window.observer = Some(observer);
+                    open_window.cycle();
                 }
-                FloodplainMsg::WindowNote(window_msg) => {
+                WindowMsg::WindowNote(window_msg) => {
                     match window_msg {
                         WindowNote::Screen(screen) => {
-                            floodplain.screen = Some(screen);
-                            floodplain.cycle();
+                            open_window.screen = Some(screen);
+                            open_window.cycle();
                         }
                         WindowNote::Range(left, top, width, height) => {
-                            floodplain.range.left = left;
-                            floodplain.range.top = top;
-                            floodplain.range.width = width;
-                            floodplain.range.height = height;
-                            floodplain.cycle();
+                            open_window.range.left = left;
+                            open_window.range.top = top;
+                            open_window.range.width = width;
+                            open_window.range.height = height;
+                            open_window.cycle();
                         }
                         WindowNote::Touch(touch_msg) => {
-                            floodplain.touch(touch_msg);
+                            open_window.touch(touch_msg);
                         }
                     }
                 }
             }
         }
     });
-    floodplain
+    window
 }
 
 pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>

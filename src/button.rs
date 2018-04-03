@@ -1,8 +1,8 @@
-use patchgl::Color;
-use patchgl::flood::*;
-use patchgl::TouchMsg;
+use ::app::Palette;
+use ::Color;
+use ::flood::*;
+use ::TouchMsg;
 use std::sync::Arc;
-use super::app::Palette;
 
 pub struct Button {
     pub id: u64,

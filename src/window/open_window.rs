@@ -1,18 +1,11 @@
 use ::{Color, ScreenMsg, TouchMsg};
 use ::flood::Flood;
 use ::window::BlockRange;
-use ::window::WindowNote;
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 use super::build_blocklist;
 
-pub enum FloodplainMsg<MsgT> {
-    Flood(Flood<MsgT>),
-    Observe(Sender<MsgT>),
-    WindowNote(WindowNote),
-}
-
-pub struct Floodplain<MsgT> {
+pub struct OpenWindow<MsgT> {
     pub seed: Option<u64>,
     pub range: BlockRange,
     pub screen: Option<Sender<ScreenMsg>>,
@@ -22,9 +15,9 @@ pub struct Floodplain<MsgT> {
     pub observer: Option<Sender<MsgT>>,
 }
 
-impl<MsgT> Floodplain<MsgT> {
+impl<MsgT> OpenWindow<MsgT> {
     pub fn new(range: BlockRange, seed: Option<u64>) -> Self {
-        Floodplain {
+        OpenWindow {
             seed,
             range,
             screen: None,

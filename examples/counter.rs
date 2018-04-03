@@ -4,13 +4,11 @@ extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 
-use app::App;
-use app::Palette;
+use patchgl::app::App;
+use patchgl::app::Palette;
+use patchgl::button;
 use patchgl::flood::*;
 use patchgl::window;
-
-mod app;
-mod button;
 
 fn main() {
     window::start(640, 400, |window| {
