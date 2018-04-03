@@ -86,7 +86,8 @@ fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
             kind: button::Kind::ColoredFlat("Down".into()),
             model: model.down_button,
         }));
-        buttons.push(material::button(AppMsg::MaterialMsg, palette, material::Button {
+        buttons.push(material::button(palette, material::Button {
+            msg_wrap: AppMsg::MaterialMsg,
             id: 33,
             model: &model.material,
             kind: material::Kind::PlainFlat("Reset".into()),

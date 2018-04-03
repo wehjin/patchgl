@@ -7,22 +7,26 @@ pub use self::model::Model;
 
 mod color;
 
-pub struct Button<'a, MsgT> {
+pub struct Button<'a, F, MsgT> where
+    F: Fn(Msg) -> MsgT + Send + Sync + 'static,
+{
+    pub msg_wrap: F,
     pub id: u64,
     pub model: &'a Model,
     pub kind: Kind,
     pub _click_msg: MsgT,
 }
 
-pub fn button<F:, MsgT>(wrap: F, palette: &Palette, button: Button<MsgT>) -> Flood<MsgT> where
+pub fn button<'a, F, MsgT>(palette: &Palette, button: Button<'a, F, MsgT>) -> Flood<MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,
     MsgT: Send + Sync + 'static,
 {
     let button_model = button.model.get_button_model(button.id);
     let button_wrap = {
         let button_id = button.id;
+        let button_msg_wrap = button.msg_wrap;
         move |msg: button::Msg| {
-            wrap(Msg::ButtonMsg(button_id, msg))
+            (button_msg_wrap)(Msg::ButtonMsg(button_id, msg))
         }
     };
     button::flood(button_wrap, palette, button::Button {
