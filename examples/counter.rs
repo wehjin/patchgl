@@ -8,6 +8,7 @@ use patchgl::app::App;
 use patchgl::app::Palette;
 use patchgl::button;
 use patchgl::flood::*;
+use patchgl::material;
 use patchgl::window;
 
 fn main() {
@@ -38,10 +39,8 @@ fn update(model: &mut Model, msg: AppMsg) {
                 update(model, AppMsg::Down);
             }
         }
-        AppMsg::ResetButtonMsg(button_msg) => {
-            if let Some(button::Note::Clicked(_)) = button::update(&mut model.reset_button, button_msg) {
-                update(model, AppMsg::Reset);
-            }
+        AppMsg::MaterialMsg(material_msg) => {
+            material::update(&mut model.material, material_msg);
         }
     }
 }
@@ -51,7 +50,7 @@ struct Model {
     pub count: i32,
     pub up_button: button::Model,
     pub down_button: button::Model,
-    pub reset_button: button::Model,
+    pub material: material::Model,
 }
 
 impl Default for Model {
@@ -60,7 +59,7 @@ impl Default for Model {
             count: 0,
             up_button: button::Model::default(),
             down_button: button::Model::default(),
-            reset_button: button::Model::default(),
+            material: material::Model::default(),
         }
     }
 }
@@ -71,7 +70,7 @@ enum AppMsg {
     Reset,
     UpButtonMsg(button::Msg),
     DownButtonMsg(button::Msg),
-    ResetButtonMsg(button::Msg),
+    MaterialMsg(material::Msg),
 }
 
 fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
@@ -87,10 +86,11 @@ fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
             kind: button::Kind::ColoredFlat("Down".into()),
             model: model.down_button,
         }));
-        buttons.push(button::flood(AppMsg::ResetButtonMsg, palette, button::Button {
+        buttons.push(material::button(AppMsg::MaterialMsg, palette, material::Button {
             id: 33,
-            kind: button::Kind::PlainFlat("Reset".into()),
-            model: model.reset_button,
+            model: &model.material,
+            kind: material::Kind::PlainFlat("Reset".into()),
+            _click_msg: AppMsg::Reset,
         }));
         buttons.push(button::flood(AppMsg::UpButtonMsg, palette, button::Button {
             id: 34,

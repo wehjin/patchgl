@@ -10,8 +10,8 @@ pub struct Button {
     pub model: Model,
 }
 
-pub fn flood<F, UpMsgT>(wrap: F, palette: &Palette, button: Button) -> Flood<UpMsgT> where
-    F: Fn(Msg) -> UpMsgT + Send + Sync + 'static
+pub fn flood<F, MsgT>(wrap: F, palette: &Palette, button: Button) -> Flood<MsgT> where
+    F: Fn(Msg) -> MsgT + Send + Sync + 'static
 {
     let surface = draw(&button, palette);
     surface + Sensor::Touch(button.id, Arc::new(move |touch_msg| {
@@ -28,19 +28,19 @@ pub fn flood<F, UpMsgT>(wrap: F, palette: &Palette, button: Button) -> Flood<UpM
     }))
 }
 
-pub fn update(mdl: &mut Model, msg: Msg) -> Option<Note> {
+pub fn update(model: &mut Model, msg: Msg) -> Option<Note> {
     match msg {
         Msg::Press => {
-            mdl.press_state = PressState::Down;
+            model.press_state = PressState::Down;
             None
         }
         Msg::Unpress => {
-            mdl.press_state = PressState::Up;
+            model.press_state = PressState::Up;
             None
         }
         Msg::Release(tag) => {
-            if mdl.press_state == PressState::Down {
-                mdl.press_state = PressState::Up;
+            if model.press_state == PressState::Down {
+                model.press_state = PressState::Up;
                 Some(Note::Clicked(tag))
             } else {
                 None
@@ -52,7 +52,7 @@ pub fn update(mdl: &mut Model, msg: Msg) -> Option<Note> {
     }
 }
 
-pub fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> {
+fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> {
     match (&button.kind, &button.model.press_state) {
         (&Kind::ColoredFlat(ref label), &PressState::Up) => {
             flat_button_surface(label, palette.secondary)
