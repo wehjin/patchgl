@@ -1,4 +1,3 @@
-use ::dervish::*;
 use Color;
 pub use self::extras::*;
 pub use self::length::Length;
@@ -8,14 +7,14 @@ mod length;
 mod extras;
 
 #[derive(Clone, Debug)]
-pub enum Flood<MsgT = ()> {
+pub enum Flood<MsgT> {
     Color(Color),
     Text(String, Color, Placement),
     Barrier(Position, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
     Vessel(Padding, Box<Flood<MsgT>>),
     Sediment(Silt, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
     Ripple(Sensor<MsgT>, Box<Flood<MsgT>>),
-    Dervish(Dervish),
+    Escape(Raft<MsgT>),
 }
 
 impl<MsgT> Default for Flood<MsgT> {

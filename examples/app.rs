@@ -1,6 +1,6 @@
 use patchgl::Color;
 use patchgl::flood::Flood;
-use patchgl::WindowMsg;
+use patchgl::window::FloodplainMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
@@ -12,7 +12,8 @@ pub struct App<MsgT, MdlT> {
 }
 
 impl<MsgT, MdlT> App<MsgT, MdlT> where
-    MsgT: Send + 'static
+    MsgT: Send + 'static,
+    MdlT: Clone + PartialEq
 {
     pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
         UpdF: Fn(&mut MdlT, MsgT) -> () + 'static,
@@ -34,7 +35,7 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
         (self.draw_f)(model, palette)
     }
 
-    pub fn run(self, model: MdlT, window: Sender<WindowMsg<MsgT>>) {
+    pub fn run(self, model: MdlT, window: Sender<FloodplainMsg<MsgT>>) {
         let mut running_app = RunningApp::new(self, window, model);
         running_app.run();
     }
@@ -101,15 +102,16 @@ struct RunningApp<MsgT, MdlT>
     app_msgs: Receiver<MsgT>,
     app_tx: Sender<MsgT>,
     palette: Palette,
-    window: Sender<WindowMsg<MsgT>>,
+    window: Sender<FloodplainMsg<MsgT>>,
     model: MdlT,
     app: App<MsgT, MdlT>,
 }
 
 impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     MsgT: Send + 'static,
+    MdlT: Clone + PartialEq,
 {
-    pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg<MsgT>>, model: MdlT) -> Self
+    pub fn new(app: App<MsgT, MdlT>, window: Sender<FloodplainMsg<MsgT>>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
         RunningApp { app_msgs, app_tx: app_sender, palette: Palette::default(), window, model, app }
@@ -119,22 +121,21 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
         self.connect_window();
         self.flood_window();
         while let Ok(app_msg) = self.app_msgs.recv() {
-            self.step(app_msg);
+            let old_mdl = self.model.clone();
+            self.app.update(&mut self.model, app_msg);
+            if self.model != old_mdl {
+                self.flood_window();
+            }
         }
     }
 
     fn connect_window(&self) {
-        self.window.send(WindowMsg::Watcher(self.app_tx.clone())).unwrap();
+        self.window.send(FloodplainMsg::Observe(self.app_tx.clone())).unwrap();
     }
 
     fn flood_window(&self) {
         let flood = self.app.draw(&self.model, &self.palette);
-        let flood_msg = WindowMsg::Flood(flood);
+        let flood_msg = FloodplainMsg::Flood(flood);
         self.window.send(flood_msg).unwrap();
-    }
-
-    fn step(&mut self, msg: MsgT) {
-        self.app.update(&mut self.model, msg);
-        self.flood_window();
     }
 }

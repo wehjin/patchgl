@@ -11,7 +11,7 @@ pub use base::{Color, WebColor, X11Color};
 pub use block::Block;
 pub use sigil::Sigil;
 use std::sync::mpsc::Sender;
-pub use window::WindowMsg;
+pub use window::WindowNote;
 
 pub mod model;
 pub mod renderer;
@@ -24,7 +24,6 @@ pub mod screen;
 pub mod flood;
 pub mod window;
 pub mod color;
-pub mod dervish;
 mod sigil;
 mod local_screen;
 mod anchor;
@@ -44,7 +43,7 @@ pub enum ScreenMsg {
     Close,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum TouchMsg {
     Begin(u64, f64, f64),
     Cancel(u64),

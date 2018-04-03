@@ -1,119 +1,116 @@
 use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Color, Sigil};
-use ::dervish::*;
 use ::flood::*;
 use ::TouchMsg;
 pub use self::blocklist::Blocklist;
 pub use self::blockrange::BlockRange;
-use self::floodplain::Floodplain;
+pub use self::floodplain::*;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
-use std::thread::JoinHandle;
 
 mod blockrange;
 mod blocklist;
 mod floodplain;
 
-pub enum WindowMsg<MsgT = ()> {
-    None,
-    Flood(Flood<MsgT>),
+pub enum WindowNote {
     Screen(Sender<ScreenMsg>),
-    Size(u32, u32),
-    TouchMsg(TouchMsg),
-    Watcher(Sender<MsgT>),
+    Range(f32, f32, f32, f32),
+    Touch(TouchMsg),
 }
 
-pub fn show<F, MsgT>(width: u32, height: u32, on_window: F) where
-    F: Fn(Sender<WindowMsg<MsgT>>), F: Send + 'static,
-    MsgT: Send + 'static
+pub fn start<MsgT, F>(width: u32, height: u32, notify_floodplain: F) where
+    MsgT: Send + Sync + 'static,
+    F: Fn(Sender<FloodplainMsg<MsgT>>), F: Send + Sync + 'static,
 {
-    let (window, _) = start_window(width, height);
-    start_observer(on_window, window.clone());
+    let range = BlockRange {
+        left: 0.0,
+        top: 0.0,
+        width: width as f32,
+        height: height as f32,
+        approach: 0.0,
+    };
+    let floodplain = spawn_floodplain::<MsgT>(range, Some(0));
+    {
+        let floodplain = floodplain.clone();
+        thread::spawn(move || {
+            notify_floodplain(floodplain);
+        });
+    }
 
-    let director = start_director(window);
-    screen::start(width, height, director);
-}
-
-fn start_director<MsgT>(window: Sender<WindowMsg<MsgT>>) -> Sender<DirectorMsg> where
-    MsgT: Send + 'static
-{
-    let (director, _) = director::spawn(window, move |msg, window| {
+    let send_window_note = move |window_note| {
+        floodplain.send(FloodplainMsg::WindowNote(window_note)).unwrap();
+    };
+    let (director, _) = director::spawn((), move |msg, _| {
         match msg {
             DirectorMsg::ScreenReady(next_screen) => {
-                window.send(WindowMsg::Screen(next_screen)).unwrap();
-                (window, director::ScanFlow::Continue)
+                send_window_note(WindowNote::Screen(next_screen));
+                ((), director::ScanFlow::Continue)
             }
             DirectorMsg::ScreenResized(new_width, new_height) => {
-                window.send(WindowMsg::Size(new_width, new_height)).unwrap();
-                (window, director::ScanFlow::Continue)
+                send_window_note(WindowNote::Range(0.0, 0.0, new_width as f32, new_height as f32));
+                ((), director::ScanFlow::Continue)
             }
             DirectorMsg::ScreenClosed => {
-                (window, director::ScanFlow::Break)
+                ((), director::ScanFlow::Break)
             }
             DirectorMsg::TouchMsg(touch_msg) => {
-                window.send(WindowMsg::TouchMsg(touch_msg)).unwrap();
-                (window, director::ScanFlow::Continue)
+                send_window_note(WindowNote::Touch(touch_msg));
+                ((), director::ScanFlow::Continue)
             }
         }
     });
-    director
+    screen::start(width, height, director);
 }
 
-fn start_observer<F, MsgT>(on_window: F, window: Sender<WindowMsg<MsgT>>) -> JoinHandle<()> where
-    F: Fn(Sender<WindowMsg<MsgT>>), F: Send + 'static,
-    MsgT: Send + 'static
+fn spawn_floodplain<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<FloodplainMsg<MsgT>> where
+    MsgT: Send + Sync + 'static,
 {
-    thread::spawn(move || on_window(window))
-}
-
-fn start_window<MsgT>(width: u32, height: u32) -> (Sender<WindowMsg<MsgT>>, JoinHandle<()>)
-    where MsgT: Send + 'static
-{
-    let (window, window_msgs) = channel::<WindowMsg<MsgT>>();
-    let window_thread = thread::spawn(move || {
-        let mut some_watcher: Option<Sender<MsgT>> = None;
-        let mut floodplain = Floodplain::new(width, height);
-        while let Ok(msg) = window_msgs.recv() {
+    let (floodplain, floodplain_msgs) = channel::<FloodplainMsg<MsgT>>();
+    thread::spawn(move || {
+        let mut floodplain = Floodplain::new(range, seed);
+        while let Ok(msg) = floodplain_msgs.recv() {
             match msg {
-                WindowMsg::None => (),
-                WindowMsg::Watcher(watcher) => {
-                    some_watcher = Some(watcher);
-                }
-                WindowMsg::Screen(screen) => {
-                    floodplain.screen = Some(screen);
-                    floodplain.cycle();
-                }
-                WindowMsg::Size(width, height) => {
-                    floodplain.width = width;
-                    floodplain.height = height;
-                    floodplain.cycle();
-                }
-                WindowMsg::Flood(flood) => {
+                FloodplainMsg::Flood(flood) => {
                     floodplain.flood = flood;
                     floodplain.cycle();
                 }
-                WindowMsg::TouchMsg(touch_msg) => {
-                    if let Some(ref watcher) = some_watcher {
-                        if let Some(adapter) = floodplain.find_touch_adapter(touch_msg.tag()) {
-                            let msg = adapter(touch_msg);
-                            watcher.send(msg).unwrap();
+                FloodplainMsg::Observe(observer) => {
+                    floodplain.observer = Some(observer);
+                    floodplain.cycle();
+                }
+                FloodplainMsg::WindowNote(window_msg) => {
+                    match window_msg {
+                        WindowNote::Screen(screen) => {
+                            floodplain.screen = Some(screen);
+                            floodplain.cycle();
+                        }
+                        WindowNote::Range(left, top, width, height) => {
+                            floodplain.range.left = left;
+                            floodplain.range.top = top;
+                            floodplain.range.width = width;
+                            floodplain.range.height = height;
+                            floodplain.cycle();
+                        }
+                        WindowNote::Touch(touch_msg) => {
+                            floodplain.touch(touch_msg);
                         }
                     }
                 }
             }
         }
     });
-    (window, window_thread)
+    floodplain
 }
 
 pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>
 {
     match flood {
-        &Flood::Dervish(ref builder) => {
-            let mut blocklist = build_placeholder_blocklist(range);
-            let range = range.with_more_approach(1.0);
-            blocklist.push_dervish_settings(DervishSettings { range, dervish_builder: builder.clone() });
+        &Flood::Escape(ref raft) => {
+            let mut blocklist = build_placeholder_blocklist::<MsgT>(range);
+            let &Raft::RangeAdapter(tag, ref range_adapter) = raft;
+            let raft_msg = range_adapter(tag, &range.with_approach(blocklist.max_approach + 1.0));
+            blocklist.push_raft_msg(raft_msg);
             blocklist
         }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
@@ -179,7 +176,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
                 max_approach: approach,
                 blocks: vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }],
                 touch_adapters: Vec::new(),
-                whirlings: Vec::new(),
+                raft_msgs: Vec::new(),
             }
         }
         &Flood::Color(color) => {
@@ -189,7 +186,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
                 max_approach: approach,
                 blocks: vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }],
                 touch_adapters: Vec::new(),
-                whirlings: Vec::new(),
+                raft_msgs: Vec::new(),
             }
         }
     }

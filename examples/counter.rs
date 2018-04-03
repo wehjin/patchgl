@@ -9,13 +9,12 @@ use app::Palette;
 use patchgl::flood::*;
 use patchgl::TouchMsg;
 use patchgl::window;
-use std::sync::Arc;
 
 mod app;
 mod button;
 
 fn main() {
-    window::show(640, 400, |window| {
+    window::start(640, 400, |window| {
         let app = App::new(update, draw);
         app.run(Model::default(), window);
     });
@@ -23,6 +22,9 @@ fn main() {
 
 fn update(model: &mut Model, msg: AppMsg) {
     match msg {
+        AppMsg::Special(tag, range) => {
+            println!("Received range: {:?} with tag: {}", range, tag);
+        }
         AppMsg::Press(code) => {
             update_buttons(model, code, |active_code, &(button_code, _)| {
                 if button_code == active_code {
@@ -92,7 +94,7 @@ fn update_buttons<F>(model: &mut Model, active_code: u64, get_msg: F) where
 }
 
 
-#[derive(Debug)]
+#[derive(Clone, PartialEq, Debug)]
 struct Model {
     pub count: i32,
     pub buttons: Vec<(u64, button::Mdl)>,
@@ -121,6 +123,7 @@ enum AppMsg {
     Release(u64),
     ButtonNotes(Vec<(u64, button::Note)>),
     ButtonNote((u64, button::Note)),
+    Special(u64, window::BlockRange),
     Ignore,
 }
 
@@ -138,7 +141,10 @@ impl From<TouchMsg> for AppMsg {
 fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
     let edge_padding = Padding::Uniform(Length::Spacing);
     let background = Flood::Color(palette.light_background);
-    let special = button::special(palette);
+    use std::sync::Arc;
+    let special = Flood::Escape(Raft::RangeAdapter(117, Arc::new(|tag, range| {
+        AppMsg::Special(tag, range.clone())
+    })));
 
     let text = format!("{:+}", model.count);
     let body = Flood::Text(text, palette.primary, Placement::Center);

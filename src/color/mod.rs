@@ -29,12 +29,18 @@ impl WebColor {
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Debug, Default)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Color {
     a: f32,
     r: f32,
     g: f32,
     b: f32,
+}
+
+impl Default for Color {
+    fn default() -> Self {
+        WebColor::DeepPink.into()
+    }
 }
 
 impl From<WebColor> for Color {

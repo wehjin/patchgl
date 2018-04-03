@@ -1,5 +1,4 @@
 use patchgl::Color;
-use patchgl::dervish::*;
 use patchgl::flood::*;
 use super::app::Palette;
 
@@ -45,22 +44,6 @@ pub fn draw<MsgT>(mdl: &Mdl, palette: &Palette) -> Flood<MsgT> {
     }
 }
 
-pub fn special<MsgT>(palette: &Palette) -> Flood<MsgT> {
-    use std::sync::Arc;
-    let builder = Arc::new(|| {
-        use std::thread;
-        use std::sync::mpsc::channel;
-        let (dervish, dervish_msgs) = channel::<DervishMsg>();
-        thread::spawn(move || {
-            while let Ok(msg) = dervish_msgs.recv() {
-                match msg {}
-            }
-        });
-        dervish
-    });
-    Flood::Dervish(Dervish::Builder(builder))
-}
-
 fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> {
     let text = Flood::Text(label.to_uppercase(), text_color, Placement::Center);
     let padding = Padding::Dual(Length::Spacing, Length::Full / 4);
@@ -68,7 +51,7 @@ fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Mdl {
     pub kind: Kind,
     pub press_state: PressState,

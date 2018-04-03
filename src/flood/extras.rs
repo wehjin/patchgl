@@ -1,4 +1,5 @@
 use ::TouchMsg;
+use ::window::BlockRange;
 use std::fmt;
 use std::sync::Arc;
 use super::Length;
@@ -36,6 +37,18 @@ impl<MsgT> fmt::Debug for Sensor<MsgT> {
         match self {
             &Sensor::Touch(tag, _) => write!(f, "Sensor::Touch({})", tag)
         }
+    }
+}
+
+#[derive(Clone)]
+pub enum Raft<MsgT> {
+    RangeAdapter(u64, Arc<Fn(u64, &BlockRange) -> MsgT + Send + Sync>)
+}
+
+impl<MsgT> fmt::Debug for Raft<MsgT> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let &Raft::RangeAdapter(tag, _) = self;
+        write!(f, "Raft::RangeAdapter({}, Arc<Fn(u64, &BlockRange) -> MsgT + Send + Sync>", tag)
     }
 }
 

@@ -10,7 +10,8 @@ pub enum ScanFlow {
 }
 
 pub fn spawn<T, F>(carry: T, f: F) -> (Sender<DirectorMsg>, JoinHandle<()>) where
-    F: Fn(DirectorMsg, T) -> (T, ScanFlow), F: Send + 'static, T: Send + 'static
+    F: Fn(DirectorMsg, T) -> (T, ScanFlow), F: Send + 'static,
+    T: Send + 'static
 {
     let (director, director_msgs) = channel::<DirectorMsg>();
     let director_thread = thread::spawn(move || {
