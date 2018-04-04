@@ -14,7 +14,6 @@ use std::sync::mpsc::Sender;
 pub use window::WindowNote;
 
 pub mod material;
-pub mod model;
 pub mod rendering;
 pub mod glyffin;
 pub mod base;

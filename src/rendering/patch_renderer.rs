@@ -2,7 +2,7 @@ use Color;
 use glium;
 use glium::backend::Facade;
 use glium::Surface;
-use model::{Patch, Vertex};
+use super::model::{Patch, Vertex};
 
 pub struct PatchRenderer {
     pub program: glium::Program,
