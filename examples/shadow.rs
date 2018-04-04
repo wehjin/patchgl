@@ -11,7 +11,7 @@ use patchgl::window::WindowMsg;
 
 fn main() {
     window::start(320, 400, |window| {
-        let flood = Flood::Color(Color::black())
+        let flood = Flood::Color(Color::grey())
             + Padding::Uniform(Length::Full / 4)
             + (Stratum::Sub, Flood::Color(Color::white()));
         window.send(WindowMsg::Flood::<()>(flood)).unwrap();

@@ -75,6 +75,7 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
 }
 
 pub struct LocalScreen<'a> {
+    dimensions: (f32, f32),
     director: Sender<DirectorMsg>,
     blocks: HashMap<u64, Block>,
     patch_renderer: PatchRenderer,
@@ -92,6 +93,7 @@ impl<'a> LocalScreen<'a> {
         let modelview = get_modelview(width, height, &display);
         let dpi_factor = display.gl_window().hidpi_factor();
         let local_screen = LocalScreen {
+            dimensions: (width as f32, height as f32),
             director,
             blocks: HashMap::<u64, Block>::new(),
             patch_renderer: PatchRenderer::new(&display, modelview),
@@ -206,13 +208,14 @@ impl<'a> LocalScreen<'a> {
     fn draw_patches(&mut self, target: &mut Frame) {
         let patch_renderer = &mut self.patch_renderer;
         let shadow_renderer = &mut self.shadow_renderer;
+        let dimensions = self.dimensions;
         let blocks = &self.blocks;
         blocks.iter().for_each(|(_, block)| {
             if let Sigil::Color(color) = block.sigil {
                 let patch = Patch::new(block.anchor.into(), block.width, block.height, block.approach, color);
                 patch_renderer.set_patch(&patch);
                 patch_renderer.draw(target);
-                shadow_renderer.set_patch(&patch);
+                shadow_renderer.set_patch(&patch, dimensions);
                 shadow_renderer.draw(target);
             }
         });
