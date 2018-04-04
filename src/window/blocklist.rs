@@ -33,15 +33,8 @@ impl<MsgT> Blocklist<MsgT> where
         self.update_max_approach(block.approach);
         self.blocks.push(block);
     }
-    pub fn push_touch_adapter(&mut self, touch_adapter: (u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)) {
-        self.touch_adapters.push(touch_adapter);
-    }
     pub fn update_max_approach(&mut self, max_approach: f32) {
         self.max_approach = self.max_approach.max(max_approach)
-    }
-
-    pub fn push_raft_msg(&mut self, raft_msg: MsgT) {
-        self.raft_msgs.push(raft_msg);
     }
 
     pub fn append(mut self, rhs: &mut Blocklist<MsgT>) -> Self {

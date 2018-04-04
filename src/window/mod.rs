@@ -119,7 +119,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             let mut blocklist = build_placeholder_blocklist::<MsgT>(range);
             let &Raft::RangeAdapter(tag, ref range_adapter) = raft;
             let raft_msg = range_adapter(tag, &range.with_approach(blocklist.max_approach + 1.0));
-            blocklist.push_raft_msg(raft_msg);
+            blocklist.raft_msgs.push(raft_msg);
             blocklist
         }
         &Flood::Ripple(Sensor::Signal(ref signal), ref flood) => {
@@ -138,7 +138,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             };
             let touch_adapter = (tag, msg_adapter.clone());
             blocklist.push_block(block);
-            blocklist.push_touch_adapter(touch_adapter);
+            blocklist.touch_adapters.push(touch_adapter);
             blocklist
         }
         &Flood::Sediment(ref silt, ref far_flood, ref near_flood) => {
