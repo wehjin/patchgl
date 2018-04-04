@@ -6,6 +6,16 @@ use std::ops::Add;
 mod length;
 mod extras;
 
+
+pub fn bar<MsgT: Clone>(segments: Vec<Flood<MsgT>>) -> Flood<MsgT> {
+    let enumeration = segments.into_iter().enumerate().collect::<Vec<_>>();
+    enumeration.into_iter().fold(
+        Flood::Color(Color::default()),
+        |bar, (i, segment)| {
+            bar + (Position::Right(Length::Full / (i as u32 + 1)), segment)
+        })
+}
+
 #[derive(Clone, Debug)]
 pub enum Flood<MsgT> where
     MsgT: Clone
@@ -76,4 +86,3 @@ impl<MsgT> Add<(Position, Flood<MsgT>)> for Flood<MsgT> where
         Flood::Barrier(position, Box::new(self), Box::new(flood))
     }
 }
-
