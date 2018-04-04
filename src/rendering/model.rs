@@ -42,7 +42,7 @@ impl Patchwork {
 
 #[derive(Default)]
 pub struct Patch {
-    cage: Cage,
+    pub cage: Cage,
     pub color: Color,
 }
 
@@ -75,6 +75,6 @@ impl Patch {
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
-    position: [f32; 3],
+    pub position: [f32; 3],
 }
 implement_vertex!(Vertex, position);
