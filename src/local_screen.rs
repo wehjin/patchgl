@@ -1,7 +1,7 @@
 use ::{Block, Sigil};
 use ::{DirectorMsg, ScreenMsg, TouchMsg};
+use ::rendering::{PatchRenderer, ShadowRenderer};
 use ::rendering::model::Patch;
-use ::rendering::PatchRenderer;
 use glium::{Display, Frame, Surface};
 use glium::backend::Facade;
 use glium::glutin::{ContextBuilder, ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowBuilder, WindowEvent};
@@ -78,6 +78,7 @@ pub struct LocalScreen<'a> {
     director: Sender<DirectorMsg>,
     blocks: HashMap<u64, Block>,
     patch_renderer: PatchRenderer,
+    shadow_renderer: ShadowRenderer,
     quip_renderer: QuipRenderer<'a>,
     display: Display,
     status: ScreenStatus,
@@ -94,6 +95,7 @@ impl<'a> LocalScreen<'a> {
             director,
             blocks: HashMap::<u64, Block>::new(),
             patch_renderer: PatchRenderer::new(&display, modelview),
+            shadow_renderer: ShadowRenderer::new(&display, modelview),
             quip_renderer: QuipRenderer::new(dpi_factor, modelview, &display),
             display,
             status: ScreenStatus::Changed,
@@ -152,6 +154,7 @@ impl<'a> LocalScreen<'a> {
     fn on_dimensions(&mut self, width: u32, height: u32) {
         let modelview = get_modelview(width, height, &self.display);
         self.patch_renderer.set_modelview(modelview);
+        self.shadow_renderer.set_modelview(modelview);
         self.quip_renderer.set_modelview(modelview);
         self.draw();
     }
@@ -202,12 +205,15 @@ impl<'a> LocalScreen<'a> {
 
     fn draw_patches(&mut self, target: &mut Frame) {
         let patch_renderer = &mut self.patch_renderer;
+        let shadow_renderer = &mut self.shadow_renderer;
         let blocks = &self.blocks;
         blocks.iter().for_each(|(_, block)| {
             if let Sigil::Color(color) = block.sigil {
                 let patch = Patch::new(block.anchor.into(), block.width, block.height, block.approach, color);
                 patch_renderer.set_patch(&patch);
                 patch_renderer.draw(target);
+                shadow_renderer.set_patch(&patch);
+                shadow_renderer.draw(target);
             }
         });
     }

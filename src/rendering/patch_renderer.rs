@@ -45,7 +45,6 @@ impl PatchRenderer {
     }
 }
 
-
 const SURFACE_TRIANGLELIST_VERTEX_COUNT: usize = 6;
 
 impl Patch {
