@@ -158,6 +158,7 @@ impl<'a> LocalScreen<'a> {
 
     fn on_dimensions(&mut self, width: u32, height: u32) {
         let modelview = get_modelview(width, height, &self.display);
+        self.dimensions = (width as f32, height as f32);
         self.patch_renderer.set_modelview(modelview);
         self.shadow_renderer.set_modelview(modelview);
         self.quip_renderer.set_modelview(modelview);
