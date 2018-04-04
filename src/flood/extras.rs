@@ -95,14 +95,14 @@ impl<MsgT> fmt::Debug for Raft<MsgT> {
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub enum Silt {
-    Minimum,
+pub enum Stratum {
+    Sub,
 }
 
-impl Silt {
+impl Stratum {
     pub fn add_to(&self, rear_approach: f32) -> f32 {
         match self {
-            &Silt::Minimum => rear_approach + 1.0,
+            &Stratum::Sub => rear_approach + 1.0,
         }
     }
 }

@@ -14,7 +14,7 @@ pub enum Flood<MsgT> where
     Text(String, Color, Placement),
     Barrier(Position, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
     Vessel(Padding, Box<Flood<MsgT>>),
-    Sediment(Silt, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
+    Sediment(Stratum, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
     Ripple(Sensor<MsgT>, Box<Flood<MsgT>>),
     Escape(Raft<MsgT>),
 }
@@ -47,12 +47,12 @@ impl<MsgT> Add<Padding> for Flood<MsgT> where
     }
 }
 
-impl<MsgT> Add<(Silt, Flood<MsgT>)> for Flood<MsgT> where
+impl<MsgT> Add<(Stratum, Flood<MsgT>)> for Flood<MsgT> where
     MsgT: Clone
 {
     type Output = Flood<MsgT>;
 
-    fn add(self, (silt, far): (Silt, Flood<MsgT>)) -> <Self as Add<(Silt, Flood<MsgT>)>>::Output {
+    fn add(self, (silt, far): (Stratum, Flood<MsgT>)) -> <Self as Add<(Stratum, Flood<MsgT>)>>::Output {
         Flood::Sediment(silt, Box::new(far), Box::new(self))
     }
 }
@@ -63,7 +63,7 @@ impl<MsgT> Add<Flood<MsgT>> for Flood<MsgT> where
     type Output = Flood<MsgT>;
 
     fn add(self, rhs: Flood<MsgT>) -> <Self as Add<Flood<MsgT>>>::Output {
-        self + (Silt::Minimum, rhs)
+        self + (Stratum::Sub, rhs)
     }
 }
 
