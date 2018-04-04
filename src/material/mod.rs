@@ -14,7 +14,7 @@ pub struct Button<'a, F, MsgT> where
     pub id: u64,
     pub model: &'a Model,
     pub kind: Kind,
-    pub _click_msg: MsgT,
+    pub click_msg: MsgT,
 }
 
 pub fn button<'a, F, MsgT>(palette: &Palette, button: Button<'a, F, MsgT>) -> Flood<MsgT> where
@@ -33,6 +33,7 @@ pub fn button<'a, F, MsgT>(palette: &Palette, button: Button<'a, F, MsgT>) -> Fl
         id: button.id,
         kind: button.kind,
         model: button_model,
+        click_msg: button.click_msg,
     })
 }
 

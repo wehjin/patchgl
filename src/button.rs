@@ -1,59 +1,70 @@
 use ::app::Palette;
 use ::Color;
 use ::flood::*;
+use ::flood::Signal;
 use ::TouchMsg;
 use std::sync::Arc;
 
-pub struct Button {
+#[derive(Clone)]
+pub struct Button<MsgT> {
     pub id: u64,
     pub kind: Kind,
     pub model: Model,
+    pub click_msg: MsgT,
 }
 
-pub fn flood<F, MsgT>(wrap: F, palette: &Palette, button: Button) -> Flood<MsgT> where
-    MsgT: Clone,
+pub fn flood<F, MsgT>(wrap: F, palette: &Palette, button: Button<MsgT>) -> Flood<MsgT> where
+    MsgT: Clone + Send + Sync + 'static,
     F: Fn(Msg) -> MsgT + Send + Sync + 'static
 {
     let surface = draw(&button, palette);
-    surface + Sensor::Touch(button.id, Arc::new(move |touch_msg| {
-        wrap(if touch_msg.tag() == button.id {
-            match touch_msg {
-                TouchMsg::Begin(_, _, _) => Msg::Press,
-                TouchMsg::End(tag, _, _) => Msg::Release(tag),
-                TouchMsg::Move(_, _, _) => Msg::None,
-                TouchMsg::Cancel(_) => Msg::Unpress,
-            }
+    let touch_sensor = {
+        let button_id = button.id;
+        Sensor::Touch(button_id, Arc::new(move |touch_msg| {
+            let msg = if touch_msg.tag() == button_id {
+                match touch_msg {
+                    TouchMsg::Begin(_, _, _) => Msg::Press,
+                    TouchMsg::End(tag, _, _) => Msg::Release(tag),
+                    TouchMsg::Move(_, _, _) => Msg::None,
+                    TouchMsg::Cancel(_) => Msg::Unpress,
+                }
+            } else {
+                Msg::None
+            };
+            wrap(msg)
+        }))
+    };
+    let signal_sensor = {
+        let signal_number = button.model.signal_number;
+        let signal = if signal_number == 0 {
+            Signal::Set(button.id, 0)
         } else {
-            Msg::None
-        })
-    }))
+            Signal::GoIfGreater(button.id, signal_number, button.click_msg)
+        };
+        Sensor::Signal(signal)
+    };
+    surface + touch_sensor + signal_sensor
 }
 
-pub fn update(model: &mut Model, msg: Msg) -> Option<Note> {
+pub fn update(model: &mut Model, msg: Msg) {
     match msg {
         Msg::Press => {
             model.press_state = PressState::Down;
-            None
         }
         Msg::Unpress => {
             model.press_state = PressState::Up;
-            None
         }
-        Msg::Release(tag) => {
+        Msg::Release(_tag) => {
             if model.press_state == PressState::Down {
                 model.press_state = PressState::Up;
-                Some(Note::Clicked(tag))
-            } else {
-                None
+                model.signal_number += 1;
             }
         }
-        Msg::None => {
-            None
-        }
+        Msg::None => {}
     }
 }
 
-fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> where
+fn draw<MsgT>(button: &Button<MsgT>, palette: &Palette) -> Flood<MsgT> where
     MsgT: Clone
 {
     match (&button.kind, &button.model.press_state) {
@@ -88,11 +99,12 @@ fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> wher
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Model {
     pub press_state: PressState,
+    pub signal_number: u64,
 }
 
 impl Default for Model {
     fn default() -> Self {
-        Model { press_state: PressState::Up }
+        Model { press_state: PressState::Up, signal_number: 0 }
     }
 }
 
@@ -102,11 +114,6 @@ pub enum Msg {
     Unpress,
     Release(u64),
     None,
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum Note {
-    Clicked(u64),
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

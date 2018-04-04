@@ -6,7 +6,6 @@ extern crate xml;
 
 use patchgl::app::App;
 use patchgl::app::Palette;
-use patchgl::button;
 use patchgl::flood::*;
 use patchgl::material;
 use patchgl::window;
@@ -29,16 +28,6 @@ fn update(model: &mut Model, msg: AppMsg) {
         AppMsg::Reset => {
             model.count = 0;
         }
-        AppMsg::UpButtonMsg(button_msg) => {
-            if let Some(button::Note::Clicked(_)) = button::update(&mut model.up_button, button_msg) {
-                update(model, AppMsg::Up);
-            }
-        }
-        AppMsg::DownButtonMsg(button_msg) => {
-            if let Some(button::Note::Clicked(_)) = button::update(&mut model.down_button, button_msg) {
-                update(model, AppMsg::Down);
-            }
-        }
         AppMsg::MaterialMsg(material_msg) => {
             material::update(&mut model.material, material_msg);
         }
@@ -48,8 +37,6 @@ fn update(model: &mut Model, msg: AppMsg) {
 #[derive(Clone, PartialEq, Debug)]
 struct Model {
     pub count: i32,
-    pub up_button: button::Model,
-    pub down_button: button::Model,
     pub material: material::Model,
 }
 
@@ -57,8 +44,6 @@ impl Default for Model {
     fn default() -> Self {
         Model {
             count: 0,
-            up_button: button::Model::default(),
-            down_button: button::Model::default(),
             material: material::Model::default(),
         }
     }
@@ -69,8 +54,6 @@ enum AppMsg {
     Up,
     Down,
     Reset,
-    UpButtonMsg(button::Msg),
-    DownButtonMsg(button::Msg),
     MaterialMsg(material::Msg),
 }
 
@@ -82,22 +65,26 @@ fn draw(model: &Model, palette: &Palette) -> Flood<AppMsg> {
     let body = Flood::Text(text, palette.primary, Placement::Center);
     let bottom_bar = {
         let mut buttons = Vec::new();
-        buttons.push(button::flood(AppMsg::DownButtonMsg, palette, button::Button {
+        buttons.push(material::button(palette, material::Button {
+            msg_wrap: AppMsg::MaterialMsg,
             id: 32,
-            kind: button::Kind::ColoredFlat("Down".into()),
-            model: model.down_button,
+            model: &model.material,
+            kind: material::Kind::ColoredFlat("Down".into()),
+            click_msg: AppMsg::Down,
         }));
         buttons.push(material::button(palette, material::Button {
             msg_wrap: AppMsg::MaterialMsg,
             id: 33,
             model: &model.material,
             kind: material::Kind::PlainFlat("Reset".into()),
-            _click_msg: AppMsg::Reset,
+            click_msg: AppMsg::Reset,
         }));
-        buttons.push(button::flood(AppMsg::UpButtonMsg, palette, button::Button {
+        buttons.push(material::button(palette, material::Button {
+            msg_wrap: AppMsg::MaterialMsg,
             id: 34,
-            kind: button::Kind::ColoredFlat("Up".into()),
-            model: model.up_button,
+            model: &model.material,
+            kind: material::Kind::ColoredFlat("Up".into()),
+            click_msg: AppMsg::Up,
         }));
         draw_bar(buttons, palette)
     };
