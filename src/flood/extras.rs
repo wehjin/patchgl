@@ -112,6 +112,7 @@ pub enum Padding {
     Uniform(Length),
     Dual(Length, Length),
     Horizontal(Length),
+    Behind(Length),
 }
 
 #[derive(Clone, PartialEq, Debug)]

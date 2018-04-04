@@ -22,9 +22,11 @@ impl ShadowRenderer {
             display,
             SHADOW_TRIANGLELIST_VERTEX_COUNT).unwrap();
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-        let color = Color::red().to_gl();
+        let color = Color::new(0.5, 1.0, 0.0, 0.0).to_gl();
         let draw_parameters = glium::DrawParameters {
             depth: glium::Depth { test: glium::DepthTest::IfLess, write: true, ..Default::default() },
+            blend: glium::Blend::alpha_blending(),
+            smooth: Some(glium::Smooth::Nicest),
             ..Default::default()
         };
         ShadowRenderer { program, vertex_buffer, indices, modelview, color, draw_parameters }

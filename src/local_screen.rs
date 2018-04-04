@@ -12,6 +12,9 @@ use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
 
+pub const MAX_APPROACH: f32 = 32.0f32;
+const SCREEN_APPROACH: f32 = MAX_APPROACH * 1.0625;
+
 pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
     let (screen, screen_msg_receiver) = channel::<ScreenMsg>();
     director.send(DirectorMsg::ScreenReady(screen)).unwrap();
@@ -274,8 +277,13 @@ fn spawn_awakener(events_loop: &EventsLoop, awaken_message_sender: Sender<Awaken
 }
 
 fn get_display(width: u32, height: u32, events_loop: &EventsLoop) -> Display {
-    let context_builder = ContextBuilder::new().with_depth_buffer(24).with_vsync(true);
-    let window_builder = WindowBuilder::new().with_dimensions(width, height).with_title("PatchGL");
+    let context_builder = ContextBuilder::new()
+        .with_multisampling(4)
+        .with_depth_buffer(24)
+        .with_vsync(true);
+    let window_builder = WindowBuilder::new()
+        .with_dimensions(width, height)
+        .with_title("PatchGL");
     Display::new(window_builder, context_builder, events_loop).unwrap()
 }
 
@@ -286,7 +294,6 @@ fn get_modelview<F: Facade>(screen_width: u32, screen_height: u32, display: &F) 
     let ndc_width = 2.0f32 * screen_aspect / window_aspect;
     const NDC_HEIGHT: f32 = 2.0f32;
     const NDC_APPROACH: f32 = 2.0f32;
-    const SCREEN_APPROACH: f32 = 32.0f32;
     const NDC_APPROACH_PER_PIXEL: f32 = (1.0f32 / SCREEN_APPROACH) * NDC_APPROACH;
     [
         [1.0 / screen_width as f32 * ndc_width, 0.0, 0.0, 0.0],

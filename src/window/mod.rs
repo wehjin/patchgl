@@ -2,6 +2,7 @@ use ::{director, DirectorMsg};
 use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Color, Sigil};
 use ::flood::*;
+pub use ::screen::MAX_APPROACH;
 use ::TouchMsg;
 pub use self::blocklist::Blocklist;
 pub use self::blockrange::BlockRange;
@@ -149,6 +150,10 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
         }
         &Flood::Vessel(ref thickness, ref flood) => {
             match thickness {
+                &Padding::Behind(ref length) => {
+                    let a_pad = length.to_f32(MAX_APPROACH - 2.0);
+                    build_blocklist(&range.with_more_approach(a_pad), flood)
+                }
                 &Padding::Dual(ref h_length, ref v_length) => {
                     let h_pad = h_length.to_f32(range.width);
                     let v_pad = v_length.to_f32(range.height);
