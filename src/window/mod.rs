@@ -13,7 +13,9 @@ mod blockrange;
 mod blocklist;
 mod open_window;
 
-pub enum WindowMsg<MsgT> {
+pub enum WindowMsg<MsgT> where
+    MsgT: Clone
+{
     Flood(Flood<MsgT>),
     Observe(Sender<MsgT>),
     WindowNote(WindowNote),
@@ -26,7 +28,7 @@ pub enum WindowNote {
 }
 
 pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
-    MsgT: Send + Sync + 'static,
+    MsgT: Clone + Send + Sync + 'static,
     F: Fn(Sender<WindowMsg<MsgT>>), F: Send + Sync + 'static,
 {
     let range = BlockRange {
@@ -70,7 +72,7 @@ pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
 }
 
 fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<MsgT>> where
-    MsgT: Send + Sync + 'static,
+    MsgT: Clone + Send + Sync + 'static,
 {
     let (window, window_msgs) = channel::<WindowMsg<MsgT>>();
     thread::spawn(move || {
@@ -109,7 +111,8 @@ fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<
     window
 }
 
-pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT>
+pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT> where
+    MsgT: Clone
 {
     match flood {
         &Flood::Escape(ref raft) => {
@@ -117,6 +120,11 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             let &Raft::RangeAdapter(tag, ref range_adapter) = raft;
             let raft_msg = range_adapter(tag, &range.with_approach(blocklist.max_approach + 1.0));
             blocklist.push_raft_msg(raft_msg);
+            blocklist
+        }
+        &Flood::Ripple(Sensor::Signal(ref signal), ref flood) => {
+            let mut blocklist = build_blocklist(range, flood);
+            blocklist.signals.push(signal.clone());
             blocklist
         }
         &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
@@ -181,8 +189,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             Blocklist {
                 max_approach: approach,
                 blocks: vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }],
-                touch_adapters: Vec::new(),
-                raft_msgs: Vec::new(),
+                ..Default::default()
             }
         }
         &Flood::Color(color) => {
@@ -191,14 +198,15 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             Blocklist {
                 max_approach: approach,
                 blocks: vec![Block { sigil, width, height, anchor: Anchor { x: left, y: top }, approach }],
-                touch_adapters: Vec::new(),
-                raft_msgs: Vec::new(),
+                ..Default::default()
             }
         }
     }
 }
 
-fn build_placeholder_blocklist<MsgT>(range: &BlockRange) -> Blocklist<MsgT> {
+fn build_placeholder_blocklist<MsgT>(range: &BlockRange) -> Blocklist<MsgT> where
+    MsgT: Clone
+{
     let placeholder_flood = Flood::Color(Color::grey());
     let mut blocklist = build_blocklist(range, &placeholder_flood);
     blocklist.update_max_approach(range.approach);

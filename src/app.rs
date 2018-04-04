@@ -5,7 +5,9 @@ use ::window::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
-pub struct App<MsgT, MdlT> {
+pub struct App<MsgT, MdlT> where
+    MsgT: Clone
+{
     update_f: Box<Fn(&mut MdlT, MsgT) -> ()>,
     draw_f: Box<Fn(&MdlT, &Palette) -> Flood<MsgT>>,
     msg: PhantomData<MsgT>,
@@ -13,7 +15,7 @@ pub struct App<MsgT, MdlT> {
 }
 
 impl<MsgT, MdlT> App<MsgT, MdlT> where
-    MsgT: Send + 'static,
+    MsgT: Clone + Send + 'static,
     MdlT: Clone + PartialEq
 {
     pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
@@ -65,7 +67,8 @@ impl Default for Palette {
     }
 }
 
-struct RunningApp<MsgT, MdlT>
+struct RunningApp<MsgT, MdlT> where
+    MsgT: Clone
 {
     app_msgs: Receiver<MsgT>,
     app_tx: Sender<MsgT>,
@@ -76,7 +79,7 @@ struct RunningApp<MsgT, MdlT>
 }
 
 impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
-    MsgT: Send + 'static,
+    MsgT: Clone + Send + 'static,
     MdlT: Clone + PartialEq,
 {
     pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg<MsgT>>, model: MdlT) -> Self

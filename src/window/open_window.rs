@@ -5,7 +5,9 @@ use std::sync::Arc;
 use std::sync::mpsc::Sender;
 use super::build_blocklist;
 
-pub struct OpenWindow<MsgT> {
+pub struct OpenWindow<MsgT> where
+    MsgT: Clone
+{
     pub seed: Option<u64>,
     pub range: BlockRange,
     pub screen: Option<Sender<ScreenMsg>>,
@@ -15,7 +17,9 @@ pub struct OpenWindow<MsgT> {
     pub observer: Option<Sender<MsgT>>,
 }
 
-impl<MsgT> OpenWindow<MsgT> {
+impl<MsgT> OpenWindow<MsgT> where
+    MsgT: Clone
+{
     pub fn new(range: BlockRange, seed: Option<u64>) -> Self {
         OpenWindow {
             seed,

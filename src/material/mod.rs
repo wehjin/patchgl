@@ -19,7 +19,7 @@ pub struct Button<'a, F, MsgT> where
 
 pub fn button<'a, F, MsgT>(palette: &Palette, button: Button<'a, F, MsgT>) -> Flood<MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,
-    MsgT: Send + Sync + 'static,
+    MsgT: Clone + Send + Sync + 'static,
 {
     let button_model = button.model.get_button_model(button.id);
     let button_wrap = {

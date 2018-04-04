@@ -7,7 +7,9 @@ mod length;
 mod extras;
 
 #[derive(Clone, Debug)]
-pub enum Flood<MsgT> {
+pub enum Flood<MsgT> where
+    MsgT: Clone
+{
     Color(Color),
     Text(String, Color, Placement),
     Barrier(Position, Box<Flood<MsgT>>, Box<Flood<MsgT>>),
@@ -17,13 +19,17 @@ pub enum Flood<MsgT> {
     Escape(Raft<MsgT>),
 }
 
-impl<MsgT> Default for Flood<MsgT> {
+impl<MsgT> Default for Flood<MsgT> where
+    MsgT: Clone
+{
     fn default() -> Self {
         Flood::Color(Color::default())
     }
 }
 
-impl<MsgT> Add<Sensor<MsgT>> for Flood<MsgT> {
+impl<MsgT> Add<Sensor<MsgT>> for Flood<MsgT> where
+    MsgT: Clone
+{
     type Output = Flood<MsgT>;
 
     fn add(self, rhs: Sensor<MsgT>) -> <Self as Add<Sensor<MsgT>>>::Output {
@@ -31,7 +37,9 @@ impl<MsgT> Add<Sensor<MsgT>> for Flood<MsgT> {
     }
 }
 
-impl<MsgT> Add<Padding> for Flood<MsgT> {
+impl<MsgT> Add<Padding> for Flood<MsgT> where
+    MsgT: Clone
+{
     type Output = Flood<MsgT>;
 
     fn add(self, rhs: Padding) -> <Self as Add<Padding>>::Output {
@@ -39,7 +47,9 @@ impl<MsgT> Add<Padding> for Flood<MsgT> {
     }
 }
 
-impl<MsgT> Add<(Silt, Flood<MsgT>)> for Flood<MsgT> {
+impl<MsgT> Add<(Silt, Flood<MsgT>)> for Flood<MsgT> where
+    MsgT: Clone
+{
     type Output = Flood<MsgT>;
 
     fn add(self, (silt, far): (Silt, Flood<MsgT>)) -> <Self as Add<(Silt, Flood<MsgT>)>>::Output {
@@ -47,7 +57,9 @@ impl<MsgT> Add<(Silt, Flood<MsgT>)> for Flood<MsgT> {
     }
 }
 
-impl<MsgT> Add<Flood<MsgT>> for Flood<MsgT> {
+impl<MsgT> Add<Flood<MsgT>> for Flood<MsgT> where
+    MsgT: Clone
+{
     type Output = Flood<MsgT>;
 
     fn add(self, rhs: Flood<MsgT>) -> <Self as Add<Flood<MsgT>>>::Output {
@@ -55,7 +67,9 @@ impl<MsgT> Add<Flood<MsgT>> for Flood<MsgT> {
     }
 }
 
-impl<MsgT> Add<(Position, Flood<MsgT>)> for Flood<MsgT> {
+impl<MsgT> Add<(Position, Flood<MsgT>)> for Flood<MsgT> where
+    MsgT: Clone
+{
     type Output = Flood<MsgT>;
 
     fn add(self, (position, flood): (Position, Flood<MsgT>)) -> <Self as Add<(Position, Flood<MsgT>)>>::Output {

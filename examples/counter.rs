@@ -64,6 +64,7 @@ impl Default for Model {
     }
 }
 
+#[derive(Clone)]
 enum AppMsg {
     Up,
     Down,

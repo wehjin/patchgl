@@ -11,6 +11,7 @@ pub struct Button {
 }
 
 pub fn flood<F, MsgT>(wrap: F, palette: &Palette, button: Button) -> Flood<MsgT> where
+    MsgT: Clone,
     F: Fn(Msg) -> MsgT + Send + Sync + 'static
 {
     let surface = draw(&button, palette);
@@ -52,7 +53,9 @@ pub fn update(model: &mut Model, msg: Msg) -> Option<Note> {
     }
 }
 
-fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> {
+fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> where
+    MsgT: Clone
+{
     match (&button.kind, &button.model.press_state) {
         (&Kind::ColoredFlat(ref label), &PressState::Up) => {
             flat_button_surface(label, palette.secondary)
@@ -73,7 +76,9 @@ fn draw<MsgT>(button: &Button, palette: &Palette) -> Flood<MsgT> {
     }
 }
 
-fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> {
+fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> where
+    MsgT: Clone
+{
     let text = Flood::Text(label.to_uppercase(), text_color, Placement::Center);
     let padding = Padding::Dual(Length::Spacing, Length::Full / 4);
     text + padding

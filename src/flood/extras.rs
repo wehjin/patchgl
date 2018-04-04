@@ -28,14 +28,39 @@ impl Default for Placement {
 }
 
 #[derive(Clone)]
-pub enum Sensor<MsgT> where {
-    Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)
+pub enum Sensor<MsgT> where
+    MsgT: Clone
+{
+    Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>),
+    Signal(Signal<MsgT>),
 }
 
-impl<MsgT> fmt::Debug for Sensor<MsgT> {
+impl<MsgT> fmt::Debug for Sensor<MsgT> where
+    MsgT: Clone
+{
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
-            &Sensor::Touch(tag, _) => write!(f, "Sensor::Touch({})", tag)
+            &Sensor::Touch(tag, _) => write!(f, "Sensor::Touch({})", tag),
+            &Sensor::Signal(ref signal) => write!(f, "Sensor::{:?}", signal),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub enum Signal<MsgT> where
+    MsgT: Clone
+{
+    Set(u64),
+    SetAndGo(u64, MsgT),
+}
+
+impl<MsgT> fmt::Debug for Signal<MsgT> where
+    MsgT: Clone
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match self {
+            &Signal::Set(id) => write!(f, "Signal::Set({})", id),
+            &Signal::SetAndGo(id, _) => write!(f, "Signal::SetAndGo({}, MsgT)", id),
         }
     }
 }
