@@ -65,10 +65,10 @@ impl Patch {
 }
 
 fn left_panel(surface: (f32, f32, f32, f32, f32, f32), shadow: (f32, f32, f32, f32)) -> (Vertex, Vertex, Vertex, Vertex) {
-    let (surface_left, _surface_right, surface_bottom, _surface_top, surface_far, _) = surface;
+    let (surface_left, surface_right, surface_bottom, _surface_top, surface_far, _) = surface;
     let (shadow_left, shadow_top, _shadow_right, shadow_bottom) = shadow;
 
-    let panel_top_x = if shadow_left > surface_left {
+    let panel_top_x = if shadow_left > surface_left || surface_left == surface_right {
         shadow_left
     } else {
         surface_left
@@ -81,10 +81,10 @@ fn left_panel(surface: (f32, f32, f32, f32, f32, f32), shadow: (f32, f32, f32, f
 }
 
 fn right_panel(surface: (f32, f32, f32, f32, f32, f32), shadow: (f32, f32, f32, f32)) -> (Vertex, Vertex, Vertex, Vertex) {
-    let (_surface_left, surface_right, surface_bottom, _surface_top, surface_far, _) = surface;
+    let (surface_left, surface_right, surface_bottom, _surface_top, surface_far, _) = surface;
     let (_shadow_left, shadow_top, shadow_right, shadow_bottom) = shadow;
 
-    let panel_top_x = if shadow_right < surface_right {
+    let panel_top_x = if shadow_right < surface_right || surface_left == surface_right {
         shadow_right
     } else {
         surface_right
@@ -110,8 +110,13 @@ fn bottom_panel(surface: (f32, f32, f32, f32, f32, f32), shadow: (f32, f32, f32,
     } else {
         surface_right
     };
-    let lt_vertex = Vertex { position: [panel_top_left, surface_bottom, surface_far] };
-    let rt_vertex = Vertex { position: [panel_top_right, surface_bottom, surface_far] };
+    let panel_top_y = if surface_bottom == _surface_top {
+        shadow_bottom
+    } else {
+        surface_bottom
+    };
+    let lt_vertex = Vertex { position: [panel_top_left, panel_top_y, surface_far] };
+    let rt_vertex = Vertex { position: [panel_top_right, panel_top_y, surface_far] };
     let rb_vertex = Vertex { position: [shadow_right, shadow_bottom, 0.0] };
     let lb_vertex = Vertex { position: [shadow_left, shadow_bottom, 0.0] };
     (lt_vertex, rt_vertex, rb_vertex, lb_vertex)
@@ -122,7 +127,7 @@ fn shadow_dim((screen_width, screen_height): (f32, f32),
     let screen_half_height = screen_height / 2.0;
     let light_x = screen_width / 2.0;
     let light_y = -0.25 * screen_half_height;
-    let light_z = 2.0 * screen_half_height;
+    let light_z = 3.0 * screen_half_height;
     let distance_top_from_light = top - light_y;
     let distance_bottom_from_light = bottom - light_y;
     let distance_left_from_light = left - light_x;
