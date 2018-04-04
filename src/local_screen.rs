@@ -275,11 +275,14 @@ fn get_modelview<F: Facade>(screen_width: u32, screen_height: u32, display: &F) 
     let screen_aspect = screen_width as f32 / screen_height as f32;
     let window_aspect = window_width as f32 / window_height as f32;
     let ndc_width = 2.0f32 * screen_aspect / window_aspect;
-    let ndc_height = 2.0f32;
+    const NDC_HEIGHT: f32 = 2.0f32;
+    const NDC_APPROACH: f32 = 2.0f32;
+    const SCREEN_APPROACH: f32 = 32.0f32;
+    const NDC_APPROACH_PER_PIXEL: f32 = (1.0f32 / SCREEN_APPROACH) * NDC_APPROACH;
     [
         [1.0 / screen_width as f32 * ndc_width, 0.0, 0.0, 0.0],
-        [0.0, -1.0 / screen_height as f32 * ndc_height, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [-ndc_width / 2.0, ndc_height / 2.0, 0.0, 1.0f32],
+        [0.0, -1.0 / screen_height as f32 * NDC_HEIGHT, 0.0, 0.0],
+        [0.0, 0.0, -NDC_APPROACH_PER_PIXEL, 0.0],
+        [-ndc_width / 2.0, NDC_HEIGHT / 2.0, NDC_APPROACH / 2.0 - NDC_APPROACH_PER_PIXEL, 1.0f32],
     ]
 }

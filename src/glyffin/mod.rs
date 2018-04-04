@@ -11,8 +11,6 @@ use unicode_normalization::UnicodeNormalization;
 
 mod glyph_writer;
 
-pub const Z_FACTOR: f32 = -0.001;
-
 pub struct QuipRenderer<'a> {
     pub font: Font<'a>,
     pub program: glium::Program,
@@ -35,7 +33,7 @@ impl<'a> QuipRenderer<'a> {
         (x, y): (f32, f32),
         scale: Scale,
         width: u32,
-        approach: f32,
+        z: f32,
         colour: [f32; 4],
         placement: f32, display: &F,
     ) {
@@ -60,7 +58,6 @@ impl<'a> QuipRenderer<'a> {
 
         implement_vertex!(Vertex, position, tex_coords, colour);
         let origin = point(x, y);
-        let z = approach * Z_FACTOR;
         let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
             if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
                 let gl_rect = Rect {

@@ -1,6 +1,5 @@
 use cage::Cage;
 use Color;
-use glyffin::Z_FACTOR;
 use parser;
 use xml;
 
@@ -48,8 +47,7 @@ pub struct Patch {
 }
 
 impl Patch {
-    pub fn new((x, y): (f32, f32), width: f32, height: f32, approach: f32, color: Color) -> Self {
-        let z = approach * Z_FACTOR;
+    pub fn new((x, y): (f32, f32), width: f32, height: f32, z: f32, color: Color) -> Self {
         Patch { cage: Cage::from((x, x + width, y, y + height, z, z)), color }
     }
     pub fn from_attributes(attributes: &Vec<xml::attribute::OwnedAttribute>) -> Self {
