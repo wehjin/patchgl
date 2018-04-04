@@ -6,7 +6,7 @@ use glium::glutin::{ContextBuilder, ControlFlow, Event, EventsLoop, KeyboardInpu
 use glium::glutin::{ElementState, MouseButton};
 use glyffin::QuipRenderer;
 use model::Patch;
-use renderer::PatchRenderer;
+use rendering::PatchRenderer;
 use rusttype::Scale;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, Sender};

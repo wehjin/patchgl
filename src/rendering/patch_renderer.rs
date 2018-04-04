@@ -25,11 +25,7 @@ impl PatchRenderer {
             modelview,
             color: Color::white().to_gl(),
             draw_parameters: glium::DrawParameters {
-                depth: glium::Depth {
-                    test: glium::DepthTest::IfLess,
-                    write: true,
-                    ..Default::default()
-                },
+                depth: glium::Depth { test: glium::DepthTest::IfLess, write: true, ..Default::default() },
                 ..Default::default()
             },
         }
@@ -49,5 +45,3 @@ impl PatchRenderer {
         frame.draw(&self.vertex_buffer, &self.indices, &self.program, &uniforms, &self.draw_parameters).unwrap();
     }
 }
-
-

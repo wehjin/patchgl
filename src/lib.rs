@@ -15,7 +15,7 @@ pub use window::WindowNote;
 
 pub mod material;
 pub mod model;
-pub mod renderer;
+pub mod rendering;
 pub mod glyffin;
 pub mod base;
 pub mod ix;
