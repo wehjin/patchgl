@@ -137,9 +137,13 @@ fn start_timeout_timer<MsgT>(timeout: &Timeout<MsgT>, observer: Sender<MsgT>) wh
 
     // TODO Use one or a pool of threads for all timeouts.
     let msg = timeout.msg.clone();
-    let Duration::Seconds(secs) = timeout.duration;
+    let duration = timeout.duration;
     thread::spawn(move || {
-        thread::sleep(time::Duration::from_secs(secs));
+        const MILLIS_LOWER_LIMIT: u64 = 300;
+        match duration {
+            Duration::Seconds(secs) => thread::sleep(time::Duration::from_secs(secs)),
+            Duration::Milliseconds(millis) => thread::sleep(time::Duration::from_millis(millis.max(MILLIS_LOWER_LIMIT)))
+        };
         observer.send(msg).unwrap();
     });
 }

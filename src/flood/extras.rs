@@ -58,7 +58,8 @@ mod timeout {
 
     #[derive(Copy, Clone, Eq, PartialEq, Debug)]
     pub enum Duration {
-        Seconds(u64)
+        Seconds(u64),
+        Milliseconds(u64),
     }
 }
 

@@ -83,6 +83,10 @@ impl<T> Version<T> {
     pub fn enabled(value: T) -> Self {
         Version { value, counter: Counter::enabled() }
     }
+
+    pub fn restore(value: T, saved_counter: Counter) -> Self {
+        Version { value, counter: saved_counter }
+    }
 }
 
 impl<T> Clone for Version<T> where T: Clone {
