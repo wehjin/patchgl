@@ -195,7 +195,7 @@ impl<'a> LocalScreen<'a> {
         blocks.iter().for_each(|(_, block)| {
             if let Sigil::Paragraph { line_height, ref text, ref color, placement } = block.sigil {
                 quip_renderer.layout_paragraph(
-                    text,
+                    text.as_str(),
                     block.anchor.into(),
                     Scale::uniform(line_height * dpi_factor),
                     block.width as u32,
