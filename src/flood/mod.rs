@@ -2,12 +2,13 @@ use Color;
 pub use self::extras::*;
 pub use self::length::Length;
 pub use self::signal::Signal;
+pub use self::version::Version;
 use std::ops::Add;
 
 mod length;
 mod extras;
 mod signal;
-
+mod version;
 
 pub fn bar<MsgT: Clone>(segments: Vec<Flood<MsgT>>) -> Flood<MsgT> {
     let enumeration = segments.into_iter().enumerate().collect::<Vec<_>>();
