@@ -1,37 +1,32 @@
-use std::fmt;
+use ::flood::Version;
 
-#[derive(Clone)]
-pub enum Signal<MsgT> where
-    MsgT: Clone
-{
-    Set(u64, u64),
-    GoIfGreater(u64, u64, MsgT),
+#[derive(Debug)]
+pub struct Signal<MsgT> {
+    pub id: u64,
+    pub version: Version<MsgT>,
 }
 
-impl<MsgT> Signal<MsgT> where
-    MsgT: Clone
-{
-    pub fn id(&self) -> u64 {
-        match self {
-            &Signal::Set(id, _count) => id,
-            &Signal::GoIfGreater(id, _, _) => id,
-        }
+impl<MsgT> Signal<MsgT> where MsgT: Clone {
+    pub fn clone_value(&self) -> MsgT {
+        self.version.value.clone()
     }
-    pub fn count(&self) -> u64 {
-        match self {
-            &Signal::Set(_id, count) => count,
-            &Signal::GoIfGreater(_, count, _) => count,
+
+    pub fn upgrades_option(&self, other: &Option<&Self>) -> bool {
+        match other {
+            &Option::Some(ref other) => self.version.upgrades(&other.version),
+            &Option::None => self.version.upgrades_option(&Option::None),
         }
     }
 }
 
-impl<MsgT> fmt::Debug for Signal<MsgT> where
-    MsgT: Clone
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            &Signal::Set(id, count) => write!(f, "Signal::Set(id={}, count={})", id, count),
-            &Signal::GoIfGreater(id, count, _) => write!(f, "Signal::SetAndGo(id={}, count={}, msg=MsgT)", id, count),
-        }
+impl<MsgT> Clone for Signal<MsgT> where MsgT: Clone {
+    fn clone(&self) -> Self {
+        Signal { id: self.id, version: self.version.clone() }
+    }
+}
+
+impl<MsgT> From<(u64, Version<MsgT>)> for Signal<MsgT> where MsgT: Clone {
+    fn from((id, version): (u64, Version<MsgT>)) -> Self {
+        Signal { id, version: Version::from(version) }
     }
 }

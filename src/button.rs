@@ -2,6 +2,7 @@ use ::app::Palette;
 use ::Color;
 use ::flood::*;
 use ::flood::Signal;
+use ::flood::VersionCounter;
 use ::TouchMsg;
 use std::sync::Arc;
 
@@ -35,12 +36,8 @@ pub fn flood<F, MsgT>(wrap: F, palette: &Palette, button: Button<MsgT>) -> Flood
         }))
     };
     let signal_sensor = {
-        let signal_number = button.model.signal_number;
-        let signal = if signal_number == 0 {
-            Signal::Set(button.id, 0)
-        } else {
-            Signal::GoIfGreater(button.id, signal_number, button.click_msg)
-        };
+        let click_msg_version: Version<MsgT> = (button.click_msg, button.model.click_msg_version_counter).into();
+        let signal = Signal::from((button.id, click_msg_version));
         Sensor::Signal(signal)
     };
     surface + touch_sensor + signal_sensor
@@ -57,7 +54,7 @@ pub fn update(model: &mut Model, msg: Msg) {
         Msg::Release(_tag) => {
             if model.press_state == PressState::Down {
                 model.press_state = PressState::Up;
-                model.signal_number += 1;
+                model.click_msg_version_counter = model.click_msg_version_counter.bump();
             }
         }
         Msg::None => {}
@@ -99,12 +96,15 @@ fn flat_button_surface<MsgT>(label: &str, text_color: Color) -> Flood<MsgT> wher
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Model {
     pub press_state: PressState,
-    pub signal_number: u64,
+    pub click_msg_version_counter: VersionCounter,
 }
 
 impl Default for Model {
     fn default() -> Self {
-        Model { press_state: PressState::Up, signal_number: 0 }
+        Model {
+            press_state: PressState::Up,
+            click_msg_version_counter: VersionCounter::default(),
+        }
     }
 }
 

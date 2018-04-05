@@ -36,8 +36,7 @@ pub enum Sensor<MsgT> where
     Signal(Signal<MsgT>),
 }
 
-impl<MsgT> fmt::Debug for Sensor<MsgT> where
-    MsgT: Clone
+impl<MsgT> fmt::Debug for Sensor<MsgT> where MsgT: Clone + fmt::Debug
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {

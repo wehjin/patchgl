@@ -1,4 +1,4 @@
-use self::model::Id;
+pub use self::model::Counter;
 use std::fmt;
 
 mod model;
@@ -17,12 +17,12 @@ mod tests {
     fn into_tuple() {
         let version = Version::from(33);
         let into_tuple = version.into();
-        assert_eq!((33, Id::default()), into_tuple);
+        assert_eq!((33, Counter::default()), into_tuple);
     }
 
     #[test]
     fn from_tuple() {
-        let from_tuple = Version::from((33, Id::default()));
+        let from_tuple = Version::from((33, Counter::default()));
         assert_eq!(Version::from(33), from_tuple);
     }
 
@@ -55,41 +55,47 @@ mod tests {
 
 pub struct Version<T> {
     pub value: T,
-    pub id: Id,
+    pub counter: Counter,
 }
 
 impl<T> Version<T> {
     pub fn upgrades(&self, other: &Self) -> bool {
-        self.id.upgrades(&other.id)
+        self.counter.upgrades(&other.counter)
     }
 
     pub fn upgrades_option(&self, other: &Option<Self>) -> bool {
         match other {
             &Option::Some(ref other) => self.upgrades(other),
-            &Option::None => self.id.upgrades_option(&Option::None),
+            &Option::None => self.counter.upgrades_option(&Option::None),
         }
     }
 
     pub fn bump(&self, value: T) -> Self {
-        Version { value, id: self.id.bump() }
+        Version { value, counter: self.counter.bump() }
     }
 }
 
-impl<T> From<(T, Id)> for Version<T> {
-    fn from((value, id): (T, Id)) -> Self {
-        Version { value, id }
+impl<T> Clone for Version<T> where T: Clone {
+    fn clone(&self) -> Self {
+        Version { value: self.value.clone(), counter: self.counter.clone() }
+    }
+}
+
+impl<T> From<(T, Counter)> for Version<T> {
+    fn from((value, counter): (T, Counter)) -> Self {
+        Version { value, counter }
     }
 }
 
 impl<T> From<T> for Version<T> {
     fn from(value: T) -> Self {
-        Version { id: Id::default(), value }
+        Version { counter: Counter::default(), value }
     }
 }
 
-impl<T> Into<(T, Id)> for Version<T> {
-    fn into(self) -> (T, Id) {
-        (self.value, self.id)
+impl<T> Into<(T, Counter)> for Version<T> {
+    fn into(self) -> (T, Counter) {
+        (self.value, self.counter)
     }
 }
 
@@ -97,7 +103,7 @@ impl<T> PartialEq for Version<T> where
     T: PartialEq
 {
     fn eq(&self, other: &Self) -> bool {
-        self.id == other.id && self.value == other.value
+        self.counter == other.counter && self.value == other.value
     }
 }
 
@@ -105,7 +111,7 @@ impl<T> fmt::Debug for Version<T> where
     T: fmt::Debug
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "Version {{ value={:?}, id={:?} }}", self.value, self.id)
+        write!(f, "Version {{ value={:?}, counter={:?} }}", self.value, self.counter)
     }
 }
 

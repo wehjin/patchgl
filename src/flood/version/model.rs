@@ -4,13 +4,13 @@ mod tests {
 
     #[test]
     fn from_into_tuple() {
-        let model = Id::from((33, Enabled::False));
+        let model = Counter::from((33, Enabled::False));
         assert_eq!((33, Enabled::False), model.into());
     }
 
     #[test]
     fn default() {
-        let model = Id::default();
+        let model = Counter::default();
         assert_eq!((0, Enabled::False), model.into())
     }
 
@@ -18,8 +18,8 @@ mod tests {
     fn enabled_upgrades_enabled_when_number_is_higher() {
         let tests = vec![(33, 32, true), (33, 33, false), (33, 34, false)];
         tests.into_iter().for_each(|(a, b, expected)| {
-            let a = Id::from((a, Enabled::True));
-            let b = Id::from((b, Enabled::True));
+            let a = Counter::from((a, Enabled::True));
+            let b = Counter::from((b, Enabled::True));
             assert_eq!(expected, a.upgrades(&b));
         });
     }
@@ -28,8 +28,8 @@ mod tests {
     fn enabled_upgrades_disabled() {
         let tests = vec![(33, 32, true), (33, 33, true), (33, 34, true)];
         tests.into_iter().for_each(|(a, b, expected)| {
-            let a = Id::from((a, Enabled::True));
-            let b = Id::from((b, Enabled::False));
+            let a = Counter::from((a, Enabled::True));
+            let b = Counter::from((b, Enabled::False));
             assert_eq!(expected, a.upgrades(&b));
         });
     }
@@ -38,8 +38,8 @@ mod tests {
     fn disabled_never_upgrades_enabled() {
         let tests = vec![(33, 32, false), (33, 33, false), (33, 34, false)];
         tests.into_iter().for_each(|(a, b, expected)| {
-            let a = Id::from((a, Enabled::False));
-            let b = Id::from((b, Enabled::True));
+            let a = Counter::from((a, Enabled::False));
+            let b = Counter::from((b, Enabled::True));
             assert_eq!(expected, a.upgrades(&b));
         });
     }
@@ -48,27 +48,27 @@ mod tests {
     fn disabled_never_upgrades_disabled() {
         let tests = vec![(33, 32, false), (33, 33, false), (33, 34, false)];
         tests.into_iter().for_each(|(a, b, expected)| {
-            let a = Id::from((a, Enabled::False));
-            let b = Id::from((b, Enabled::False));
+            let a = Counter::from((a, Enabled::False));
+            let b = Counter::from((b, Enabled::False));
             assert_eq!(expected, a.upgrades(&b));
         });
     }
 
     #[test]
     fn disabled_upgrades_none() {
-        let a = Id::from((33, Enabled::False));
+        let a = Counter::from((33, Enabled::False));
         assert_eq!(false, a.upgrades_option(&Option::None));
     }
 
     #[test]
     fn enabled_upgrades_none() {
-        let a = Id::from((33, Enabled::True));
+        let a = Counter::from((33, Enabled::True));
         assert_eq!(true, a.upgrades_option(&Option::None));
     }
 
     #[test]
     fn bump_enables_model_and_increments_number() {
-        let model = Id::from((33, Enabled::False));
+        let model = Counter::from((33, Enabled::False));
         let bumped = model.bump();
         assert_eq!((34, Enabled::True), bumped.into());
     }
@@ -76,7 +76,7 @@ mod tests {
 
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Id {
+pub struct Counter {
     pub number: u64,
     pub enabled: Enabled,
 }
@@ -87,7 +87,7 @@ pub enum Enabled {
     False,
 }
 
-impl Id {
+impl Counter {
     pub fn upgrades(&self, other: &Self) -> bool {
         match (self.enabled, other.enabled) {
             (Enabled::True, Enabled::True) => self.number > other.number,
@@ -107,23 +107,23 @@ impl Id {
     }
 
     pub fn bump(&self) -> Self {
-        Id { number: self.number + 1, enabled: Enabled::True }
+        Counter { number: self.number + 1, enabled: Enabled::True }
     }
 }
 
-impl Default for Id {
+impl Default for Counter {
     fn default() -> Self {
-        Id { number: 0, enabled: Enabled::False }
+        Counter { number: 0, enabled: Enabled::False }
     }
 }
 
-impl From<(u64, Enabled)> for Id {
+impl From<(u64, Enabled)> for Counter {
     fn from((number, enabled): (u64, Enabled)) -> Self {
-        Id { number, enabled }
+        Counter { number, enabled }
     }
 }
 
-impl Into<(u64, Enabled)> for Id {
+impl Into<(u64, Enabled)> for Counter {
     fn into(self) -> (u64, Enabled) {
         (self.number, self.enabled)
     }

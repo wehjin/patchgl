@@ -77,22 +77,16 @@ impl<MsgT> OpenWindow<MsgT> where
 
     fn cycle_signals(&mut self, signals: Vec<Signal<MsgT>>) -> () {
         let mut go_msgs = Vec::new();
-        signals.into_iter()
-               .for_each(|signal| {
-                   match signal.clone() {
-                       Signal::Set(id, _count) => {
-                           self.set_signal(id, signal);
-                       }
-                       Signal::GoIfGreater(id, count, ref msg) => {
-                           match self.signals.get(&id) {
-                               Some(old_signal) if count <= old_signal.count() => (),
-                               _ => go_msgs.push(msg.clone()),
-                           }
-                           self.set_signal(id, signal);
-                       }
-                   }
-               });
-
+        signals.into_iter().for_each(|signal| {
+            let id = signal.id;
+            {
+                let old_signal = self.signals.get(&id);
+                if signal.upgrades_option(&old_signal) {
+                    go_msgs.push(signal.clone_value())
+                }
+            }
+            self.set_signal(id, signal);
+        });
         if let Some(ref observer) = self.observer {
             go_msgs.into_iter()
                    .for_each(|msg| {

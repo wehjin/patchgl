@@ -3,6 +3,7 @@ pub use self::extras::*;
 pub use self::length::Length;
 pub use self::signal::Signal;
 pub use self::version::Version;
+pub use self::version::Counter as VersionCounter;
 use std::ops::Add;
 
 mod length;
