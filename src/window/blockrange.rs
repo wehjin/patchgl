@@ -28,7 +28,7 @@ impl BlockRange {
         }
     }
     pub fn split_width(&self, right_width: f32) -> (Self, Self) {
-        let right_width = right_width.min(self.width);
+        let right_width = right_width.min(self.width).max(0.0);
         let left_width = self.width - right_width;
         let left_range = BlockRange {
             left: self.left,

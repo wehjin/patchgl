@@ -34,17 +34,22 @@ pub fn draw_focused_entry<MsgT>(entry: &Entry) -> Flood<MsgT> where
         + BOTTOM_LINE_HEIGHT
     ;
     let accent_dark_color: Color = material::Color::PinkA700.into();
-    let placeholder_color: Color = material::Color::LightBackgroundTextDisabled.into();
-    let transparent_flood = Flood::Color(argb::TRANSPARENT);
 
-    let text = Flood::Text(entry.placeholder_string(), placeholder_color, Placement::Start);
+    let placeholder_color: Color = material::Color::LightBackgroundTextDisabled.into();
+    let placeholder = Flood::Text(entry.placeholder_string(), placeholder_color, Placement::Start);
+
+    let input = Flood::Color(argb::TRANSPARENT)
+        + (Position::Left(Length::Pixels(1.0)), Flood::Color(accent_dark_color));
+
+    let input_and_placeholder = input + (Stratum::JustBelow, placeholder);
+
     let bottom_line = Flood::Color(accent_dark_color);
-    text
-        + (Position::Bottom(Length::Full * INPUT_BOTTOM_PADDING / FULL_HEIGHT), transparent_flood.clone())
+    input_and_placeholder
+        + (Position::Bottom(Length::Full * INPUT_BOTTOM_PADDING / FULL_HEIGHT), Flood::Color(argb::TRANSPARENT))
         + (Position::Bottom(Length::Full * BOTTOM_LINE_HEIGHT / FULL_HEIGHT), bottom_line)
-        + (Position::Top(Length::Full * LABEL_BOTTOM_PADDING / FULL_HEIGHT), transparent_flood.clone())
+        + (Position::Top(Length::Full * LABEL_BOTTOM_PADDING / FULL_HEIGHT), Flood::Color(argb::TRANSPARENT))
         + (Position::Top(Length::Full * LABEL_HEIGHT / FULL_HEIGHT), Flood::Text(entry.label.clone(), accent_dark_color, Placement::Start))
-        + (Position::Top(Length::Full * LABEL_TOP_PADDING / FULL_HEIGHT), transparent_flood.clone())
+        + (Position::Top(Length::Full * LABEL_TOP_PADDING / FULL_HEIGHT), Flood::Color(argb::TRANSPARENT))
 }
 
 
