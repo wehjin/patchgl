@@ -1,10 +1,12 @@
 use Color;
 pub use self::extras::*;
 pub use self::length::Length;
+pub use self::signal::Signal;
 use std::ops::Add;
 
 mod length;
 mod extras;
+mod signal;
 
 
 pub fn bar<MsgT: Clone>(segments: Vec<Flood<MsgT>>) -> Flood<MsgT> {
