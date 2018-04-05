@@ -9,7 +9,8 @@ pub struct ShadowRenderer {
     pub vertex_buffer: glium::VertexBuffer<Vertex>,
     pub indices: glium::index::NoIndices,
     modelview: [[f32; 4]; 4],
-    color: [f32; 4],
+    surface_alpha: f32,
+    shadow_color: [f32; 4],
     draw_parameters: glium::DrawParameters<'static>,
 }
 
@@ -22,14 +23,15 @@ impl ShadowRenderer {
             display,
             SHADOW_TRIANGLELIST_VERTEX_COUNT).unwrap();
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-        let color = Color::custom_white(0.4).to_gl();
+        let surface_alpha = 1.0;
+        let shadow_color = Color::custom_white(0.4).to_gl();
         let draw_parameters = glium::DrawParameters {
             depth: glium::Depth { test: glium::DepthTest::IfLess, write: true, ..Default::default() },
             blend: glium::Blend::alpha_blending(),
             smooth: Some(glium::Smooth::Nicest),
             ..Default::default()
         };
-        ShadowRenderer { program, vertex_buffer, indices, modelview, color, draw_parameters }
+        ShadowRenderer { program, vertex_buffer, indices, modelview, surface_alpha, shadow_color, draw_parameters }
     }
 
     pub fn set_modelview(&mut self, modelview: [[f32; 4]; 4]) {
@@ -38,11 +40,14 @@ impl ShadowRenderer {
 
     pub fn set_patch(&mut self, patch: &Patch, screen_dimensions: (f32, f32)) {
         self.vertex_buffer.write(&patch.shadow_trianglelist(screen_dimensions));
+        self.surface_alpha = patch.color.a;
     }
 
     pub fn draw(&self, frame: &mut glium::Frame) {
-        let uniforms = uniform! { modelview: self.modelview, uniformcolor: self.color };
-        frame.draw(&self.vertex_buffer, &self.indices, &self.program, &uniforms, &self.draw_parameters).unwrap();
+        if self.surface_alpha > 0.0 {
+            let uniforms = uniform! { modelview: self.modelview, uniformcolor: self.shadow_color };
+            frame.draw(&self.vertex_buffer, &self.indices, &self.program, &uniforms, &self.draw_parameters).unwrap();
+        }
     }
 }
 

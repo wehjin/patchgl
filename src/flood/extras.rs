@@ -96,13 +96,13 @@ impl<MsgT> fmt::Debug for Raft<MsgT> {
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Stratum {
-    Sub,
+    JustBelow,
 }
 
 impl Stratum {
     pub fn add_to(&self, rear_approach: f32) -> f32 {
         match self {
-            &Stratum::Sub => rear_approach + 1.0,
+            &Stratum::JustBelow => rear_approach + 0.001,
         }
     }
 }
@@ -112,6 +112,7 @@ pub enum Padding {
     Uniform(Length),
     Dual(Length, Length),
     Horizontal(Length),
+    Vertical(Length),
     Behind(Length),
 }
 

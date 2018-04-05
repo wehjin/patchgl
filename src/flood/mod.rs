@@ -73,7 +73,7 @@ impl<MsgT> Add<Flood<MsgT>> for Flood<MsgT> where
     type Output = Flood<MsgT>;
 
     fn add(self, rhs: Flood<MsgT>) -> <Self as Add<Flood<MsgT>>>::Output {
-        self + (Stratum::Sub, rhs)
+        self + (Stratum::JustBelow, rhs)
     }
 }
 

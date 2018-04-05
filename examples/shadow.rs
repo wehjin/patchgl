@@ -29,7 +29,7 @@ fn main() {
         let flood = bar1
             + (Position::Bottom(Length::Half), bar2)
             + Padding::Dual(Length::Spacing, Length::Full / 4)
-            + (Stratum::Sub, Flood::Color(Color::white()));
+            + (Stratum::JustBelow, Flood::Color(Color::white()));
         window.send(WindowMsg::Flood::<()>(flood)).unwrap();
     });
 }

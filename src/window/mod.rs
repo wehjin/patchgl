@@ -154,18 +154,22 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
                     let a_pad = length.to_f32(MAX_APPROACH - 2.0);
                     build_blocklist(&range.with_more_approach(a_pad), flood)
                 }
+                &Padding::Uniform(ref length) => {
+                    let pad = length.to_f32(range.width.max(range.height));
+                    build_blocklist(&range.with_padding(pad, pad), flood)
+                }
                 &Padding::Dual(ref h_length, ref v_length) => {
                     let h_pad = h_length.to_f32(range.width);
                     let v_pad = v_length.to_f32(range.height);
                     build_blocklist(&range.with_padding(h_pad, v_pad), flood)
                 }
-                &Padding::Uniform(ref length) => {
-                    let pad = length.to_f32(range.width.max(range.height));
-                    build_blocklist(&range.with_padding(pad, pad), flood)
-                }
                 &Padding::Horizontal(ref length) => {
                     let h_pad = length.to_f32(range.width);
                     build_blocklist(&range.with_padding(h_pad, 0.0), flood)
+                }
+                &Padding::Vertical(ref length) => {
+                    let v_pad = length.to_f32(range.height);
+                    build_blocklist(&range.with_padding(0.0, v_pad), flood)
                 }
             }
         }

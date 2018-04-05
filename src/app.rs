@@ -1,6 +1,6 @@
 use ::Color;
 use ::flood::Flood;
-use ::material::MaterialColor;
+use ::material;
 use ::window::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -57,12 +57,12 @@ pub struct Palette {
 impl Default for Palette {
     fn default() -> Self {
         Palette {
-            primary: MaterialColor::Pink500.into(),
-            secondary: MaterialColor::PurpleA400.into(),
-            light_background: MaterialColor::LightBackground.into(),
-            light_background_raised: MaterialColor::LightBackgroundCard.into(),
-            light_background_text_primary: MaterialColor::LightBackgroundTextPrimary.into(),
-            light_background_divider: MaterialColor::LightBackgroundDivider.into(),
+            primary: material::Color::Pink500.into(),
+            secondary: material::Color::PurpleA400.into(),
+            light_background: material::Color::LightBackground.into(),
+            light_background_raised: material::Color::LightBackgroundCard.into(),
+            light_background_text_primary: material::Color::LightBackgroundTextPrimary.into(),
+            light_background_divider: material::Color::LightBackgroundDivider.into(),
         }
     }
 }

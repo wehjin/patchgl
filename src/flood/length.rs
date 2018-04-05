@@ -16,10 +16,10 @@ pub enum Length {
 impl Length {
     pub fn to_f32(&self, context: f32) -> f32 {
         match self {
+            &Length::Zero => 0.0,
             &Length::Full => context,
             &Length::Half => context / 2.0,
             &Length::Third => context / 3.0,
-            &Length::Zero => 0.0,
             &Length::FingerTip => 44.0,
             &Length::Pixels(pixels) => pixels,
             &Length::Spacing => 16.0,

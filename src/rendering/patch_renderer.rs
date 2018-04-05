@@ -40,8 +40,10 @@ impl PatchRenderer {
     }
 
     pub fn draw(&self, frame: &mut glium::Frame) {
-        let uniforms = uniform! { modelview: self.modelview, uniformcolor: self.color };
-        frame.draw(&self.vertex_buffer, &self.indices, &self.program, &uniforms, &self.draw_parameters).unwrap();
+        if self.color[3] > 0.0 {
+            let uniforms = uniform! { modelview: self.modelview, uniformcolor: self.color };
+            frame.draw(&self.vertex_buffer, &self.indices, &self.program, &uniforms, &self.draw_parameters).unwrap();
+        }
     }
 }
 
