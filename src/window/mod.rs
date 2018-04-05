@@ -9,6 +9,7 @@ pub use self::blockrange::BlockRange;
 pub use self::open_window::*;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
+use std::fmt;
 
 mod blockrange;
 mod blocklist;
@@ -29,7 +30,7 @@ pub enum WindowNote {
 }
 
 pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
-    MsgT: Clone + Send + Sync + 'static,
+    MsgT: Clone + fmt::Debug + Send + Sync + 'static,
     F: Fn(Sender<WindowMsg<MsgT>>), F: Send + Sync + 'static,
 {
     let range = BlockRange {
@@ -73,7 +74,7 @@ pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
 }
 
 fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<MsgT>> where
-    MsgT: Clone + Send + Sync + 'static,
+    MsgT: Clone + fmt::Debug + Send + Sync + 'static,
 {
     let (window, window_msgs) = channel::<WindowMsg<MsgT>>();
     thread::spawn(move || {
@@ -121,6 +122,11 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             let &Raft::RangeAdapter(tag, ref range_adapter) = raft;
             let raft_msg = range_adapter(tag, &range.with_approach(blocklist.max_approach + 1.0));
             blocklist.raft_msgs.push(raft_msg);
+            blocklist
+        }
+        &Flood::Ripple(Sensor::Timeout(ref versioned_timeout), ref flood) => {
+            let mut blocklist = build_blocklist(range, flood);
+            blocklist.timeouts.push(versioned_timeout.clone());
             blocklist
         }
         &Flood::Ripple(Sensor::Signal(ref signal), ref flood) => {

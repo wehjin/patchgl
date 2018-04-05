@@ -54,7 +54,7 @@ pub fn update(model: &mut Model, msg: Msg) {
         Msg::Release(_tag) => {
             if model.press_state == PressState::Down {
                 model.press_state = PressState::Up;
-                model.click_msg_version_counter = model.click_msg_version_counter.bump();
+                model.click_msg_version_counter.bump();
             }
         }
         Msg::None => {}

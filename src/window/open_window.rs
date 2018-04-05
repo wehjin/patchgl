@@ -1,10 +1,10 @@
 use ::{Color, ScreenMsg, TouchMsg};
-use ::flood::Flood;
-use ::flood::Signal;
+use ::flood::{Flood, Signal, Timeout, Version, Duration};
 use ::window::BlockRange;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
+use std::fmt;
 use super::build_blocklist;
 
 pub struct OpenWindow<MsgT> where
@@ -18,10 +18,11 @@ pub struct OpenWindow<MsgT> where
     pub block_ids: Vec<u64>,
     pub observer: Option<Sender<MsgT>>,
     pub signals: HashMap<u64, Signal<MsgT>>,
+    pub timeouts: HashMap<u64, Version<Timeout<MsgT>>>,
 }
 
 impl<MsgT> OpenWindow<MsgT> where
-    MsgT: Clone
+    MsgT: Clone + fmt::Debug + Send + 'static
 {
     pub fn new(range: BlockRange, seed: Option<u64>) -> Self {
         OpenWindow {
@@ -33,6 +34,7 @@ impl<MsgT> OpenWindow<MsgT> where
             block_ids: Vec::new(),
             observer: None,
             signals: HashMap::new(),
+            timeouts: HashMap::new(),
         }
     }
 
@@ -71,11 +73,26 @@ impl<MsgT> OpenWindow<MsgT> where
 
             // TODO Erase blocks that were not overwritten.
 
-            self.cycle_signals(blocklist.signals)
+            self.cycle_signals(blocklist.signals);
+            self.cycle_timeouts(blocklist.timeouts);
         }
     }
 
-    fn cycle_signals(&mut self, signals: Vec<Signal<MsgT>>) -> () {
+    fn cycle_timeouts(&mut self, timeout_versions: Vec<Version<Timeout<MsgT>>>) {
+        timeout_versions.into_iter().for_each(|timeout_version| {
+            let id = timeout_version.value.id;
+            if let Some(ref observer) = self.observer {
+                let old_timeout_version = self.timeouts.get(&id);
+                if timeout_version.upgrades_option(&old_timeout_version) {
+                    start_timeout_timer(&timeout_version.value, observer.clone());
+                }
+            }
+            let timeouts = &mut self.timeouts;
+            timeouts.insert(id, timeout_version);
+        });
+    }
+
+    fn cycle_signals(&mut self, signals: Vec<Signal<MsgT>>) {
         let mut go_msgs = Vec::new();
         signals.into_iter().for_each(|signal| {
             let id = signal.id;
@@ -112,3 +129,18 @@ impl<MsgT> OpenWindow<MsgT> where
         }
     }
 }
+
+fn start_timeout_timer<MsgT>(timeout: &Timeout<MsgT>, observer: Sender<MsgT>) where
+    MsgT: Clone + fmt::Debug + Send + 'static
+{
+    use std::{thread, time};
+
+    // TODO Use one or a pool of threads for all timeouts.
+    let msg = timeout.msg.clone();
+    let Duration::Seconds(secs) = timeout.duration;
+    thread::spawn(move || {
+        thread::sleep(time::Duration::from_secs(secs));
+        observer.send(msg).unwrap();
+    });
+}
+

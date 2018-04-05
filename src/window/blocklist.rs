@@ -1,5 +1,5 @@
 use ::{Block, TouchMsg};
-use ::flood::Signal;
+use ::flood::{Signal, Timeout, Version};
 use std::sync::Arc;
 
 pub struct Blocklist<MsgT> where
@@ -10,6 +10,7 @@ pub struct Blocklist<MsgT> where
     pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
     pub raft_msgs: Vec<MsgT>,
     pub signals: Vec<Signal<MsgT>>,
+    pub timeouts: Vec<Version<Timeout<MsgT>>>,
 }
 
 impl<MsgT> Default for Blocklist<MsgT> where
@@ -22,6 +23,7 @@ impl<MsgT> Default for Blocklist<MsgT> where
             touch_adapters: Vec::new(),
             raft_msgs: Vec::new(),
             signals: Vec::new(),
+            timeouts: Vec::new(),
         }
     }
 }
@@ -43,6 +45,7 @@ impl<MsgT> Blocklist<MsgT> where
         self.touch_adapters.append(&mut rhs.touch_adapters);
         self.raft_msgs.append(&mut rhs.raft_msgs);
         self.signals.append(&mut rhs.signals);
+        self.timeouts.append(&mut rhs.timeouts);
         self
     }
 }

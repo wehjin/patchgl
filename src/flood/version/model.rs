@@ -68,8 +68,9 @@ mod tests {
 
     #[test]
     fn bump_enables_model_and_increments_number() {
-        let model = Counter::from((33, Enabled::False));
-        let bumped = model.bump();
+        let counter = Counter::from((33, Enabled::False));
+        let mut bumped = counter.to_owned();
+        bumped.bump();
         assert_eq!((34, Enabled::True), bumped.into());
     }
 }
@@ -88,6 +89,10 @@ pub enum Enabled {
 }
 
 impl Counter {
+    pub fn enabled() -> Self {
+        Counter { number: 1, enabled: Enabled::True }
+    }
+
     pub fn upgrades(&self, other: &Self) -> bool {
         match (self.enabled, other.enabled) {
             (Enabled::True, Enabled::True) => self.number > other.number,
@@ -106,8 +111,9 @@ impl Counter {
         }
     }
 
-    pub fn bump(&self) -> Self {
-        Counter { number: self.number + 1, enabled: Enabled::True }
+    pub fn bump(&mut self) {
+        self.number += 1;
+        self.enabled = Enabled::True;
     }
 }
 

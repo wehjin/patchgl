@@ -4,6 +4,8 @@ use std::fmt;
 use std::sync::Arc;
 use super::Length;
 use super::Signal;
+pub use self::timeout::*;
+use ::flood::Version;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Placement {
@@ -28,12 +30,45 @@ impl Default for Placement {
     fn default() -> Self { Placement::Center }
 }
 
+mod timeout {
+    use std::fmt;
+
+    pub struct Timeout<MsgT> {
+        pub id: u64,
+        pub msg: MsgT,
+        pub duration: Duration,
+    }
+
+    impl<MsgT> Clone for Timeout<MsgT> where MsgT: Clone {
+        fn clone(&self) -> Self {
+            Timeout {
+                id: self.id,
+                msg: self.msg.clone(),
+                duration: self.duration,
+            }
+        }
+    }
+
+    impl<MsgT> fmt::Debug for Timeout<MsgT> where MsgT: fmt::Debug {
+        fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+            write!(f, "Timeout {{ id={:?}, msg={:?}, duration={:?} }}",
+                   self.id, self.msg, self.duration)
+        }
+    }
+
+    #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+    pub enum Duration {
+        Seconds(u64)
+    }
+}
+
 #[derive(Clone)]
 pub enum Sensor<MsgT> where
     MsgT: Clone
 {
     Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>),
     Signal(Signal<MsgT>),
+    Timeout(Version<Timeout<MsgT>>),
 }
 
 impl<MsgT> fmt::Debug for Sensor<MsgT> where MsgT: Clone + fmt::Debug
@@ -41,11 +76,11 @@ impl<MsgT> fmt::Debug for Sensor<MsgT> where MsgT: Clone + fmt::Debug
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             &Sensor::Touch(tag, _) => write!(f, "Sensor::Touch({})", tag),
-            &Sensor::Signal(ref signal) => write!(f, "Sensor::{:?}", signal),
+            &Sensor::Signal(ref signal) => write!(f, "Sensor::Signal({:?})", signal),
+            &Sensor::Timeout(ref versioned_timeout) => write!(f, "Sensor::Timeout({:?})", versioned_timeout),
         }
     }
 }
-
 
 #[derive(Clone)]
 pub enum Raft<MsgT> {

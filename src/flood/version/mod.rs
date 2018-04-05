@@ -29,7 +29,11 @@ mod tests {
     #[test]
     fn bumped_upgrades_original() {
         let a = Version::from(33);
-        let b = a.bump(26);
+        let b = {
+            let mut b = a.to_owned();
+            b.bump(26);
+            b
+        };
         assert!(b.upgrades(&a));
     }
 
@@ -48,7 +52,8 @@ mod tests {
 
     #[test]
     fn bumped_upgrades_none() {
-        let a = Version::from(33).bump(13);
+        let mut a = Version::from(33);
+        a.bump(13);
         assert!(a.upgrades_option(&Option::None));
     }
 }
@@ -63,15 +68,20 @@ impl<T> Version<T> {
         self.counter.upgrades(&other.counter)
     }
 
-    pub fn upgrades_option(&self, other: &Option<Self>) -> bool {
+    pub fn upgrades_option(&self, other: &Option<&Self>) -> bool {
         match other {
             &Option::Some(ref other) => self.upgrades(other),
             &Option::None => self.counter.upgrades_option(&Option::None),
         }
     }
 
-    pub fn bump(&self, value: T) -> Self {
-        Version { value, counter: self.counter.bump() }
+    pub fn bump(&mut self, value: T) {
+        self.value = value;
+        self.counter.bump();
+    }
+
+    pub fn enabled(value: T) -> Self {
+        Version { value, counter: Counter::enabled() }
     }
 }
 
