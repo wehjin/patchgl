@@ -6,6 +6,7 @@ pub use self::color::*;
 pub use self::model::Model;
 
 mod color;
+pub mod entry;
 
 pub struct Button<'a, F, MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,

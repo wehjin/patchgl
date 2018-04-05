@@ -175,6 +175,11 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
         }
         &Flood::Barrier(ref position, ref a_flood, ref b_flood) => {
             match position {
+                &Position::Top(ref length) => {
+                    let top_height = length.to_f32(range.height);
+                    let (top_range, bottom_range) = range.split_height(range.height - top_height);
+                    build_blocklist(&bottom_range, a_flood).append(&mut build_blocklist(&top_range, b_flood))
+                }
                 &Position::Right(ref length) => {
                     let right_width = length.to_f32(range.width);
                     let (left_range, right_range) = range.split_width(right_width);

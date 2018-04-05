@@ -47,7 +47,7 @@ impl BlockRange {
         (left_range, right_range)
     }
     pub fn split_height(&self, bottom_height: f32) -> (Self, Self) {
-        let bottom_height = bottom_height.min(self.height);
+        let bottom_height = bottom_height.min(self.height).max(0.0);
         let top_height = self.height - bottom_height;
         let top_range = BlockRange {
             left: self.left,

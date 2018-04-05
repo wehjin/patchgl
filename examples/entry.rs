@@ -4,31 +4,23 @@ extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 
-use patchgl::Color;
-use patchgl::color::argb;
-use patchgl::flood::*;
-use patchgl::material;
-use patchgl::window;
-use patchgl::window::WindowMsg;
-
 fn main() {
+    use patchgl::window;
     window::start(320, 400, |window| {
-        let accent_color: Color = material::Color::PinkA200.into();
-        let placeholder_color: Color = material::Color::LightBackgroundTextDisabled.into();
-        let background_flood = Flood::Color(material::Color::LightBackground.into());
+        use patchgl::window::WindowMsg;
+        use patchgl::flood::*;
+        use patchgl::material;
+        use patchgl::material::entry::*;
 
-        let text = Flood::Text("Placeholder".into(), placeholder_color, Placement::Start);
-        let bottom_line = Flood::Color(accent_color);
-        let entry = text +
-            (Position::Bottom(Length::Pixels(8.0)), Flood::Color(argb::TRANSPARENT)) +
-            (Position::Bottom(Length::Pixels(2.0)), bottom_line) +
-            (Position::Bottom(Length::Pixels(8.0)), Flood::Color(argb::TRANSPARENT));
-
-        let flood = entry
-            + Padding::Dual(Length::Spacing, Length::Full * 0.4)
-            + (Stratum::JustBelow, background_flood);
+        let entry = Entry {
+            id: 26,
+            label: "Label".into(),
+            placeholder: Some("Placeholder".into()),
+        };
+        let flood = draw_focused_entry(&entry)
+            + Padding::Dual(Length::Spacing, Length::Full * 0.35)
+            + (Stratum::JustBelow, Flood::Color(material::Color::LightBackground.into()));
 
         window.send(WindowMsg::Flood::<()>(flood)).unwrap();
     });
 }
-
