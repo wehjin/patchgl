@@ -85,6 +85,9 @@ impl Color {
         let fraction = fraction.min(1.0);
         Color { a: 1.0, r: fraction, g: fraction, b: fraction }
     }
+    pub fn hex_white(hex: u8) -> Self {
+        Color::from_hexrgb(hex, hex, hex)
+    }
     pub fn from_hexrgb(hex_r: u8, hex_g: u8, hex_b: u8) -> Self {
         Color { a: 1.0, r: hex_r as f32 / 255.0, g: hex_g as f32 / 255.0, b: hex_b as f32 / 255.0 }
     }

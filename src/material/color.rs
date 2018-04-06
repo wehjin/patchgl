@@ -28,7 +28,7 @@ pub enum Color {
 impl Into<ArgbColor> for Color {
     fn into(self) -> ArgbColor {
         match self {
-            Color::LightBackground => ArgbColor::from_hexrgb(0xfa, 0xfa, 0xfa),
+            Color::LightBackground => ArgbColor::hex_white(0xe0),
             Color::LightBackgroundCard => ArgbColor::white(),
             Color::LightBackgroundTextPrimary => ArgbColor::custom_black(0.87),
             Color::LightBackgroundTextSecondary => ArgbColor::custom_black(0.54),

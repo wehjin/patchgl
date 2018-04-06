@@ -18,6 +18,7 @@ pub enum Length {
     Inverse(Box<Length>),
     Product(Box<Length>, Box<Length>),
     Text(String),
+    CardApproach,
 }
 
 impl Length {
@@ -38,6 +39,7 @@ impl Length {
             &Length::Cross => alt_context,
             &Length::Product(ref a, ref b) => a.to_f32(context, alt_context, scribe) * b.to_f32(context, alt_context, scribe),
             &Length::Text(ref text) => alt_context * scribe.size_text(text),
+            &Length::CardApproach => 2.0,
         }
     }
 
@@ -98,6 +100,22 @@ impl Div<u32> for Length {
     type Output = Length;
 
     fn div(self, rhs: u32) -> <Self as Div<u32>>::Output {
+        self / (rhs as f32)
+    }
+}
+
+impl Div<i32> for Length {
+    type Output = Length;
+
+    fn div(self, rhs: i32) -> <Self as Div<i32>>::Output {
+        self / (rhs as f32)
+    }
+}
+
+impl Div<usize> for Length {
+    type Output = Length;
+
+    fn div(self, rhs: usize) -> <Self as Div<usize>>::Output {
         self / (rhs as f32)
     }
 }

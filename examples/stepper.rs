@@ -4,12 +4,9 @@ extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 
-use patchgl::flood::*;
-use patchgl::material::components::stepper::*;
-
 fn main() {
     use patchgl::window;
-    window::start(320, 400, |window| {
+    window::start(640, 400, |window| {
         use patchgl::app::App;
 
         let app = App::new(update, draw);
@@ -24,21 +21,30 @@ enum Msg {}
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 struct Mdl {}
 
+use patchgl::flood::*;
+
 fn draw(_mdl: &Mdl) -> Flood<Msg> {
     use patchgl::material::Palette;
+    use patchgl::material::components::stepper::*;
 
     let palette = Palette::default();
 
-    let content: Flood<Msg> = Stepper {
-        id: vec![1],
-        label: "First this",
-        index: 0,
-        condition: StepCondition::Active,
+    let stepper: Flood<Msg> = Stepper {
         palette: &palette,
+        id: vec![1],
+        active_index: 0,
+        steps: vec![
+            Step { label: "Fee" },
+            Step { label: "Fi" },
+            Step { label: "Fo" },
+            Step { label: "Fum" },
+        ],
     }.into();
 
-    content
-        + Padding::Dual(Length::Spacing * 1.5, Length::Full * 0.45)
+    Flood::Color(palette.light_background_raised) + Padding::Behind(Length::CardApproach)
+        + (Position::Top(Length::Spacing / 2), Flood::Color(palette.transparent))
+        + (Position::Top(Length::Full * 0.15), stepper)
+        + Padding::Uniform(Length::Spacing * 1.5)
         + (Stratum::JustBelow, Flood::Color(palette.light_background))
 }
 
