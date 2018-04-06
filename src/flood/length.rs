@@ -14,7 +14,7 @@ pub enum Length {
     Full,
     Min(Box<Length>, Box<Length>),
     Negative(Box<Length>),
-    Transverse,
+    Cross,
     Inverse(Box<Length>),
     Product(Box<Length>, Box<Length>),
     Text(String),
@@ -35,7 +35,7 @@ impl Length {
             &Length::Min(ref a, ref b) => a.to_f32(context, alt_context, scribe).min(b.to_f32(context, alt_context, scribe)),
             &Length::Negative(ref a) => -a.to_f32(context, alt_context, scribe),
             &Length::Inverse(ref a) => 1.0 / a.to_f32(context, alt_context, scribe),
-            &Length::Transverse => alt_context,
+            &Length::Cross => alt_context,
             &Length::Product(ref a, ref b) => a.to_f32(context, alt_context, scribe) * b.to_f32(context, alt_context, scribe),
             &Length::Text(ref text) => alt_context * scribe.size_text(text),
         }

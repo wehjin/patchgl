@@ -8,6 +8,7 @@ pub use self::palette::Palette;
 mod color;
 pub mod entry;
 pub mod palette;
+pub mod components;
 
 pub struct Button<'a, F, MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,
