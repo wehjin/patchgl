@@ -25,7 +25,9 @@ pub struct StepMdl {}
 impl<'a, MsgT> Into<Flood<MsgT>> for Step<'a> where MsgT: Clone {
     fn into(self) -> Flood<MsgT> {
         let digit_on_badge = {
-            let digit = Flood::Text(format!("{}", self.index + 1), self.palette.dark_background_text_primary, Placement::Center);
+            let digit = Flood::Text(format!("{}", self.index + 1), self.palette.dark_background_text_primary, Placement::Center)
+                + Padding::Uniform(Length::Full * 0.15);
+
             let badge = {
                 let color = match self.condition {
                     StepCondition::Active => self.palette.primary,
