@@ -69,7 +69,7 @@ impl<'a> QuipRenderer<'a> {
                 arrayvec::ArrayVec::new()
             }
         }).collect();
-        self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).expect("VertextBuffer::new");
+        self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).expect("VertexBuffer::new");
     }
 
     pub fn draw(&self, frame: &mut glium::Frame) {
