@@ -27,6 +27,7 @@ pub mod window;
 pub mod color;
 pub mod app;
 pub mod button;
+pub mod scribe;
 mod sigil;
 mod local_screen;
 mod anchor;
