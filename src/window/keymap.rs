@@ -42,6 +42,8 @@ pub fn code_to_string(keycode: VirtualKeyCode) -> Option<String> {
         VirtualKeyCode::Comma => Some(",".into()),
         VirtualKeyCode::Period => Some(".".into()),
         VirtualKeyCode::Apostrophe => Some("'".into()),
+        VirtualKeyCode::Colon => Some(":".into()),
+        VirtualKeyCode::Semicolon => Some(";".into()),
         _ => None,
     }
 }

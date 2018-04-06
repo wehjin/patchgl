@@ -54,6 +54,14 @@ impl Add for Length {
     }
 }
 
+impl Add<i32> for Length {
+    type Output = Length;
+
+    fn add(self, rhs: i32) -> <Self as Add<i32>>::Output {
+        Length::Sum(Box::new(self), Box::new(Length::Pixels(rhs as f32)))
+    }
+}
+
 impl Sub for Length {
     type Output = Length;
 

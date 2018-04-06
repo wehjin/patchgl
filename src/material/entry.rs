@@ -162,7 +162,8 @@ fn draw_focused_entry<F, MsgT>(entry: &Entry<F, MsgT>) -> Flood<MsgT> where
                 let color: Color = material::color::Color::LightBackgroundTextPrimary.into();
                 let flood = Flood::Text(pretext_string.to_owned(), color, Placement::Start);
                 let pretext_width = Length::Text(pretext_string.to_owned());
-                let length = pretext_width.min(Length::Full - cursor_width.clone());
+                let pretext_width_with_fuzz = pretext_width + 4;
+                let length = pretext_width_with_fuzz.min(Length::Full - cursor_width.clone());
                 cursor_and_runway + (Position::Left(length), flood)
             }
             None => cursor_and_runway
