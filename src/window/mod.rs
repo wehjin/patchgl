@@ -171,24 +171,24 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
         &Flood::Vessel(ref thickness, ref flood) => {
             match thickness {
                 &Padding::Behind(ref length) => {
-                    let a_pad = length.to_f32(MAX_APPROACH - 2.0);
+                    let a_pad = length.to_f32(MAX_APPROACH - 2.0, 0.0);
                     build_blocklist(&range.with_more_approach(a_pad), flood)
                 }
                 &Padding::Uniform(ref length) => {
-                    let pad = length.to_f32(range.width.max(range.height));
+                    let pad = length.to_f32(range.width.max(range.height), range.width.min(range.height));
                     build_blocklist(&range.with_padding(pad, pad), flood)
                 }
                 &Padding::Dual(ref h_length, ref v_length) => {
-                    let h_pad = h_length.to_f32(range.width);
-                    let v_pad = v_length.to_f32(range.height);
+                    let h_pad = h_length.to_f32(range.width, range.height);
+                    let v_pad = v_length.to_f32(range.height, range.width);
                     build_blocklist(&range.with_padding(h_pad, v_pad), flood)
                 }
                 &Padding::Horizontal(ref length) => {
-                    let h_pad = length.to_f32(range.width);
+                    let h_pad = length.to_f32(range.width, range.height);
                     build_blocklist(&range.with_padding(h_pad, 0.0), flood)
                 }
                 &Padding::Vertical(ref length) => {
-                    let v_pad = length.to_f32(range.height);
+                    let v_pad = length.to_f32(range.height, range.width);
                     build_blocklist(&range.with_padding(0.0, v_pad), flood)
                 }
             }
@@ -196,22 +196,22 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
         &Flood::Barrier(ref position, ref a_flood, ref b_flood) => {
             match position {
                 &Position::Left(ref length) => {
-                    let left_width = length.to_f32(range.width);
+                    let left_width = length.to_f32(range.width, range.height);
                     let (left_range, right_range) = range.split_width(range.width - left_width);
                     build_blocklist(&right_range, a_flood).append(&mut build_blocklist(&left_range, b_flood))
                 }
                 &Position::Top(ref length) => {
-                    let top_height = length.to_f32(range.height);
+                    let top_height = length.to_f32(range.height, range.width);
                     let (top_range, bottom_range) = range.split_height(range.height - top_height);
                     build_blocklist(&bottom_range, a_flood).append(&mut build_blocklist(&top_range, b_flood))
                 }
                 &Position::Right(ref length) => {
-                    let right_width = length.to_f32(range.width);
+                    let right_width = length.to_f32(range.width, range.height);
                     let (left_range, right_range) = range.split_width(right_width);
                     build_blocklist(&left_range, a_flood).append(&mut build_blocklist(&right_range, b_flood))
                 }
                 &Position::Bottom(ref length) => {
-                    let bottom_height = length.to_f32(range.height);
+                    let bottom_height = length.to_f32(range.height, range.width);
                     let (top_range, bottom_range) = range.split_height(bottom_height);
                     build_blocklist(&top_range, a_flood).append(&mut build_blocklist(&bottom_range, b_flood))
                 }

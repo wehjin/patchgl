@@ -162,7 +162,11 @@ fn draw_focused_entry<F, MsgT>(entry: &Entry<F, MsgT>) -> Flood<MsgT> where
                 let color: Color = material::color::Color::LightBackgroundTextPrimary.into();
                 let flood = Flood::Text(pretext_string.to_owned(), color, Placement::Start);
                 // TODO Add a way to properly measure width or use an alternative element that takes width from content instead of the container.
-                let estimated_width = Length::Spacing * 0.7 * pretext_string.len();
+                let estimated_width = {
+                    let input_height = Length::Transverse;
+                    let input_width = input_height * 0.28;
+                    Length::Full / input_width * pretext_string.len()
+                };
                 let length = estimated_width.min(Length::Full - cursor_width.clone());
                 cursor_and_runway + (Position::Left(length), flood)
             }

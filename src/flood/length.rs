@@ -12,11 +12,14 @@ pub enum Length {
     Third,
     Full,
     Min(Box<Length>, Box<Length>),
-    Neg(Box<Length>),
+    Negative(Box<Length>),
+    Transverse,
+    Inverse(Box<Length>),
+    Product(Box<Length>, Box<Length>),
 }
 
 impl Length {
-    pub fn to_f32(&self, context: f32) -> f32 {
+    pub fn to_f32(&self, context: f32, alt_context: f32) -> f32 {
         match self {
             &Length::Zero => 0.0,
             &Length::Full => context,
@@ -25,10 +28,13 @@ impl Length {
             &Length::FingerTip => 44.0,
             &Length::Pixels(pixels) => pixels,
             &Length::Spacing => 16.0,
-            &Length::Sum(ref a, ref b) => a.to_f32(context) + b.to_f32(context),
-            &Length::Scale(factor, ref a) => a.to_f32(context) * factor,
-            &Length::Min(ref a, ref b) => a.to_f32(context).min(b.to_f32(context)),
-            &Length::Neg(ref a) => -a.to_f32(context),
+            &Length::Sum(ref a, ref b) => a.to_f32(context, alt_context) + b.to_f32(context, alt_context),
+            &Length::Scale(factor, ref a) => a.to_f32(context, alt_context) * factor,
+            &Length::Min(ref a, ref b) => a.to_f32(context, alt_context).min(b.to_f32(context, alt_context)),
+            &Length::Negative(ref a) => -a.to_f32(context, alt_context),
+            &Length::Inverse(ref a) => 1.0 / a.to_f32(context, alt_context),
+            &Length::Transverse => alt_context,
+            &Length::Product(ref a, ref b) => a.to_f32(context, alt_context) * b.to_f32(context, alt_context),
         }
     }
 
@@ -49,7 +55,7 @@ impl Sub for Length {
     type Output = Length;
 
     fn sub(self, rhs: Length) -> <Self as Sub<Length>>::Output {
-        Length::Sum(Box::new(self), Box::new(Length::Neg(Box::new(rhs))))
+        Length::Sum(Box::new(self), Box::new(Length::Negative(Box::new(rhs))))
     }
 }
 
@@ -66,6 +72,14 @@ impl Mul<f32> for Length {
 
     fn mul(self, rhs: f32) -> <Self as Mul<f32>>::Output {
         Length::Scale(rhs, Box::new(self))
+    }
+}
+
+impl Div for Length {
+    type Output = Length;
+
+    fn div(self, rhs: Length) -> <Self as Div<Length>>::Output {
+        Length::Product(Box::new(self), Box::new(Length::Inverse(Box::new(rhs))))
     }
 }
 
