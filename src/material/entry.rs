@@ -155,12 +155,15 @@ fn draw_focused_entry<F, MsgT>(entry: &Entry<F, MsgT>) -> Flood<MsgT> where
             Flood::Color(cursor_color)
         };
         let runway = Flood::Color(argb::TRANSPARENT);
-        let cursor_and_runway = runway + (Position::Left(Length::Pixels(1.0)), cursor);
+        let cursor_width = Length::Pixels(1.0);
+        let cursor_and_runway = runway + (Position::Left(cursor_width.clone()), cursor);
         match entry.mdl.pretext {
             Some(ref pretext_string) => {
                 let color: Color = material::color::Color::LightBackgroundTextPrimary.into();
                 let flood = Flood::Text(pretext_string.to_owned(), color, Placement::Start);
-                let length = (Length::Spacing * 0.7 * pretext_string.len()).min(Length::Full - Length::Pixels(1.0));
+                // TODO Add a way to properly measure width or use an alternative element that takes width from content instead of the container.
+                let estimated_width = Length::Spacing * 0.7 * pretext_string.len();
+                let length = estimated_width.min(Length::Full - cursor_width.clone());
                 cursor_and_runway + (Position::Left(length), flood)
             }
             None => cursor_and_runway
