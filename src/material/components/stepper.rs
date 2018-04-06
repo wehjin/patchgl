@@ -2,7 +2,7 @@ use ::flood::*;
 use ::material;
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct Step<'a> {
+pub struct Stepper<'a> {
     pub id: Vec<u64>,
     pub label: &'a str,
     pub index: u32,
@@ -17,12 +17,12 @@ pub enum StepCondition {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum StepMsg {}
+pub enum StepperMsg {}
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
-pub struct StepMdl {}
+pub struct StepperMdl {}
 
-impl<'a, MsgT> Into<Flood<MsgT>> for Step<'a> where MsgT: Clone {
+impl<'a, MsgT> Into<Flood<MsgT>> for Stepper<'a> where MsgT: Clone {
     fn into(self) -> Flood<MsgT> {
         let digit_on_badge = {
             let digit = Flood::Text(format!("{}", self.index + 1), self.palette.dark_background_text_primary, Placement::Center)

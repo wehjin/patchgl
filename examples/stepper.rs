@@ -5,7 +5,7 @@ extern crate rusttype;
 extern crate xml;
 
 use patchgl::flood::*;
-use patchgl::material::components::step::*;
+use patchgl::material::components::stepper::*;
 
 fn main() {
     use patchgl::window;
@@ -29,7 +29,7 @@ fn draw(_mdl: &Mdl) -> Flood<Msg> {
 
     let palette = Palette::default();
 
-    let content: Flood<Msg> = Step {
+    let content: Flood<Msg> = Stepper {
         id: vec![1],
         label: "First this",
         index: 0,
