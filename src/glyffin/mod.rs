@@ -2,14 +2,12 @@ use arrayvec;
 use arrayvec::ArrayVec;
 use glium;
 use glium::backend::Facade;
-use rusttype::{point, Rect, Scale, vector};
+use rusttype::{point, Rect, vector};
 use rusttype::gpu_cache::Cache;
 use std::borrow::Cow;
-use scribe;
-use rusttype::{Font, FontCollection};
+use scribe::{Scribe, Scale};
 
 pub struct QuipRenderer<'a> {
-    pub font: Font<'a>,
     pub program: glium::Program,
     pub cache: Cache,
     pub cache_dimensions: (u32, u32),
@@ -17,6 +15,7 @@ pub struct QuipRenderer<'a> {
     modelview: [[f32; 4]; 4],
     vertex_buffer: glium::VertexBuffer<Vertex>,
     draw_parameters: glium::DrawParameters<'static>,
+    scribe: Scribe<'a>,
 }
 
 impl<'a> QuipRenderer<'a> {
@@ -25,7 +24,7 @@ impl<'a> QuipRenderer<'a> {
     }
 
     pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: u32, z: f32, colour: [f32; 4], placement: f32, display: &F) {
-        let glyphs = scribe::layout_fitted_glyphs(&self.font, text, scale, width, placement);
+        let glyphs = self.scribe.fit_glyphs(text, scale, width, placement);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
         }
@@ -86,9 +85,9 @@ impl<'a> QuipRenderer<'a> {
                 format: glium::texture::ClientFormat::U8,
             },
             glium::texture::UncompressedFloatFormat::U8,
-            glium::texture::MipmapsOption::NoMipmap).unwrap();
+            glium::texture::MipmapsOption::NoMipmap,
+        ).unwrap();
         QuipRenderer {
-            font: FontCollection::from_bytes(include_bytes!("Arial Unicode.ttf") as &[u8]).into_font().unwrap(),
             program,
             cache: Cache::new(cache_width, cache_height, 0.1, 0.1),
             cache_dimensions: (cache_width, cache_height),
@@ -104,6 +103,7 @@ impl<'a> QuipRenderer<'a> {
                 blend: glium::Blend::alpha_blending(),
                 ..Default::default()
             },
+            scribe: Scribe::default(),
         }
     }
 }

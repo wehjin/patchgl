@@ -7,7 +7,7 @@ use glium::backend::Facade;
 use glium::glutin::{ContextBuilder, ControlFlow, Event, EventsLoop, KeyboardInput, VirtualKeyCode, WindowBuilder, WindowEvent};
 use glium::glutin::{ElementState, MouseButton};
 use glyffin::QuipRenderer;
-use rusttype::Scale;
+use scribe::Scale;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
