@@ -6,7 +6,7 @@ extern crate xml;
 
 fn main() {
     use patchgl::window;
-    window::start(640, 400, |window| {
+    window::start(768, 768, |window| {
         use patchgl::app::App;
 
         let app = App::new(update, draw);
@@ -43,7 +43,7 @@ fn draw(_mdl: &Mdl) -> Flood<Msg> {
 
     Flood::Color(palette.light_background_raised) + Padding::Behind(Length::CardApproach)
         + (Position::Top(Length::Spacing / 2), Flood::Color(palette.transparent))
-        + (Position::Top(Length::Full * 0.15), stepper)
+        + (Position::Top(Length::Full * 0.10), stepper)
         + Padding::Uniform(Length::Spacing * 1.5)
         + (Stratum::JustBelow, Flood::Color(palette.light_background))
 }
