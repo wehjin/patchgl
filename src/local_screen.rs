@@ -184,6 +184,9 @@ impl<'a> LocalScreen<'a> {
             ScreenMsg::Close => {
                 self.status = self.status.will_close()
             }
+            ScreenMsg::Title(title) => {
+                self.display.gl_window().set_title(&title);
+            }
         }
     }
 

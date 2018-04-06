@@ -22,6 +22,7 @@ pub enum WindowMsg<MsgT> where
     Flood(Flood<MsgT>),
     Observe(Sender<MsgT>),
     WindowNote(WindowNote),
+    Title(String),
 }
 
 pub enum WindowNote {
@@ -85,8 +86,12 @@ fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<
     let (window, window_msgs) = channel::<WindowMsg<MsgT>>();
     thread::spawn(move || {
         let mut open_window = OpenWindow::new(range, seed);
+
         while let Ok(msg) = window_msgs.recv() {
             match msg {
+                WindowMsg::Title(string) => {
+                    open_window.set_title(&string);
+                }
                 WindowMsg::Flood(flood) => {
                     open_window.flood = flood;
                     open_window.cycle();
@@ -98,8 +103,7 @@ fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<
                 WindowMsg::WindowNote(window_msg) => {
                     match window_msg {
                         WindowNote::Screen(screen) => {
-                            open_window.screen = Some(screen);
-                            open_window.cycle();
+                            open_window.set_screen(screen);
                         }
                         WindowNote::Range(left, top, width, height) => {
                             open_window.range.left = left;

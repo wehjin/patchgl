@@ -38,7 +38,9 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
         (self.draw_f)(model, palette)
     }
 
-    pub fn run(self, model: MdlT, window: Sender<WindowMsg<MsgT>>) {
+    pub fn run(self, title: &str, model: MdlT, window: Sender<WindowMsg<MsgT>>) {
+        window.send(WindowMsg::Title(title.to_owned())).unwrap();
+
         let mut running_app = RunningApp::new(self, window, model);
         running_app.run();
     }

@@ -67,6 +67,7 @@ pub struct OpenWindow<MsgT> where
     pub observer: Option<Sender<MsgT>>,
     pub signals: HashMap<u64, Signal<MsgT>>,
     pub timeouts: HashMap<u64, Version<Timeout<MsgT>>>,
+    pub title: Option<String>,
 }
 
 impl<MsgT> OpenWindow<MsgT> where
@@ -84,7 +85,24 @@ impl<MsgT> OpenWindow<MsgT> where
             observer: None,
             signals: HashMap::new(),
             timeouts: HashMap::new(),
+            title: None,
         }
+    }
+
+    pub fn set_title(&mut self, title: &str) {
+        self.title = Some(title.into());
+    }
+
+    fn send_title_to_screen(&self) {
+        if let (&Some(ref title), &Some(ref screen)) = (&self.title, &self.screen) {
+            screen.send(ScreenMsg::Title(title.to_owned())).unwrap();
+        }
+    }
+
+    pub fn set_screen(&mut self, screen: Sender<ScreenMsg>) {
+        self.screen = Some(screen);
+        self.send_title_to_screen();
+        self.cycle();
     }
 
     pub fn press_key(&mut self, keycode: VirtualKeyCode) {

@@ -13,7 +13,7 @@ use patchgl::window;
 fn main() {
     window::start(640, 400, |window| {
         let app = App::new(update, draw);
-        app.run(Model::default(), window);
+        app.run("Counter", Model::default(), window);
     });
 }
 

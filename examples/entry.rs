@@ -17,7 +17,7 @@ fn main() {
         use patchgl::app::App;
 
         let app = App::new(update, draw);
-        app.run(Mdl::default(), window);
+        app.run("Entry", Mdl::default(), window);
     });
 }
 

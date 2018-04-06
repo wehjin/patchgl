@@ -45,6 +45,7 @@ pub enum DirectorMsg {
 pub enum ScreenMsg {
     AddBlock(u64, Block),
     Close,
+    Title(String),
 }
 
 #[derive(Copy, Clone, Debug)]
