@@ -1,24 +1,25 @@
-use ::app::Palette;
 use ::Color;
 use ::flood::*;
 use ::flood::Signal;
 use ::flood::VersionCounter;
 use ::TouchMsg;
 use std::sync::Arc;
+use ::material::palette::Palette;
 
 #[derive(Clone)]
-pub struct Button<MsgT> {
+pub struct Button<'a, MsgT> {
     pub id: u64,
     pub kind: Kind,
     pub model: Model,
     pub click_msg: MsgT,
+    pub palette: &'a Palette,
 }
 
-pub fn flood<F, MsgT>(wrap: F, palette: &Palette, button: Button<MsgT>) -> Flood<MsgT> where
+pub fn flood<'a, F, MsgT>(wrap: F, button: Button<MsgT>) -> Flood<MsgT> where
     MsgT: Clone + Send + Sync + 'static,
     F: Fn(Msg) -> MsgT + Send + Sync + 'static
 {
-    let surface = draw(&button, palette);
+    let surface = draw(&button);
     let touch_sensor = {
         let button_id = button.id;
         Sensor::Touch(button_id, Arc::new(move |touch_msg| {
@@ -61,9 +62,10 @@ pub fn update(model: &mut Model, msg: Msg) {
     }
 }
 
-fn draw<MsgT>(button: &Button<MsgT>, palette: &Palette) -> Flood<MsgT> where
+fn draw<MsgT>(button: &Button<MsgT>) -> Flood<MsgT> where
     MsgT: Clone
 {
+    let palette = button.palette;
     match (&button.kind, &button.model.press_state) {
         (&Kind::ColoredFlat(ref label), &PressState::Up) => {
             flat_button_surface(label, palette.secondary)

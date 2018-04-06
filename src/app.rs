@@ -1,6 +1,4 @@
-use ::Color;
 use ::flood::Flood;
-use ::material;
 use ::window::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -9,7 +7,7 @@ pub struct App<MsgT, MdlT> where
     MsgT: Clone
 {
     update_f: Box<Fn(&mut MdlT, MsgT) -> ()>,
-    draw_f: Box<Fn(&MdlT, &Palette) -> Flood<MsgT>>,
+    draw_f: Box<Fn(&MdlT) -> Flood<MsgT>>,
     msg: PhantomData<MsgT>,
     mdl: PhantomData<MdlT>,
 }
@@ -20,7 +18,7 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
 {
     pub fn new<UpdF, DrwF>(update: UpdF, draw: DrwF) -> Self where
         UpdF: Fn(&mut MdlT, MsgT) -> () + 'static,
-        DrwF: Fn(&MdlT, &Palette) -> Flood<MsgT> + 'static,
+        DrwF: Fn(&MdlT) -> Flood<MsgT> + 'static,
     {
         App {
             update_f: Box::new(update),
@@ -34,8 +32,8 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
         (self.update_f)(model, msg);
     }
 
-    pub fn draw(&self, model: &MdlT, palette: &Palette) -> Flood<MsgT> {
-        (self.draw_f)(model, palette)
+    pub fn draw(&self, model: &MdlT) -> Flood<MsgT> {
+        (self.draw_f)(model)
     }
 
     pub fn run(self, title: &str, model: MdlT, window: Sender<WindowMsg<MsgT>>) {
@@ -46,35 +44,11 @@ impl<MsgT, MdlT> App<MsgT, MdlT> where
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Palette {
-    pub primary: Color,
-    pub secondary: Color,
-    pub light_background: Color,
-    pub light_background_raised: Color,
-    pub light_background_text_primary: Color,
-    pub light_background_divider: Color,
-}
-
-impl Default for Palette {
-    fn default() -> Self {
-        Palette {
-            primary: material::Color::Pink500.into(),
-            secondary: material::Color::PurpleA400.into(),
-            light_background: material::Color::LightBackground.into(),
-            light_background_raised: material::Color::LightBackgroundCard.into(),
-            light_background_text_primary: material::Color::LightBackgroundTextPrimary.into(),
-            light_background_divider: material::Color::LightBackgroundDivider.into(),
-        }
-    }
-}
-
 struct RunningApp<MsgT, MdlT> where
     MsgT: Clone
 {
     app_msgs: Receiver<MsgT>,
     app_tx: Sender<MsgT>,
-    palette: Palette,
     window: Sender<WindowMsg<MsgT>>,
     model: MdlT,
     app: App<MsgT, MdlT>,
@@ -87,7 +61,7 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     pub fn new(app: App<MsgT, MdlT>, window: Sender<WindowMsg<MsgT>>, model: MdlT) -> Self
     {
         let (app_sender, app_msgs) = channel::<MsgT>();
-        RunningApp { app_msgs, app_tx: app_sender, palette: Palette::default(), window, model, app }
+        RunningApp { app_msgs, app_tx: app_sender, window, model, app }
     }
 
     pub fn run(&mut self) {
@@ -107,7 +81,7 @@ impl<MsgT, MdlT> RunningApp<MsgT, MdlT> where
     }
 
     fn flood_window(&self) {
-        let flood = self.app.draw(&self.model, &self.palette);
+        let flood = self.app.draw(&self.model);
         let flood_msg = WindowMsg::Flood(flood);
         self.window.send(flood_msg).unwrap();
     }

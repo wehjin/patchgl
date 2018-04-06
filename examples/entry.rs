@@ -4,7 +4,6 @@ extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 
-use patchgl::app::Palette;
 use patchgl::material::entry::Entry;
 use patchgl::material::entry;
 use patchgl::material;
@@ -37,7 +36,7 @@ impl Default for Mdl {
     }
 }
 
-fn draw(mdl: &Mdl, _palette: &Palette) -> Flood<Msg> {
+fn draw(mdl: &Mdl) -> Flood<Msg> {
     let entry = Entry {
         msg_wrap: Msg::EntryMsg,
         id: 26,

@@ -7,7 +7,6 @@ extern crate xml;
 use patchgl::Color;
 use patchgl::window;
 use patchgl::flood::*;
-use patchgl::app::Palette;
 
 fn main() {
     window::start(320, 400, |window| {
@@ -45,7 +44,7 @@ fn update(model: &mut Model, _msg: Msg) {
     model.timer_version_counter.bump();
 }
 
-fn draw(model: &Model, _palette: &Palette) -> Flood<Msg> {
+fn draw(model: &Model) -> Flood<Msg> {
     let color_index = model.active_color % model.colors.len();
     let color = model.colors[color_index].clone();
     let panel = Flood::Color(color);
