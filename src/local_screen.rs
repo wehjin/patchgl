@@ -26,38 +26,7 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
     let mut local_screen = LocalScreen::new(width, height, &events_loop, director.clone());
     events_loop.run_forever(|ev| {
         match ev {
-            Event::WindowEvent { event, .. } => {
-                match event {
-                    WindowEvent::Closed | WindowEvent::KeyboardInput {
-                        input: KeyboardInput { virtual_keycode: Some(VirtualKeyCode::Escape), .. }, ..
-                    } => {
-                        ControlFlow::Break
-                    }
-                    WindowEvent::Resized(width, height) => {
-                        local_screen.on_dimensions(width, height);
-                        director.send(DirectorMsg::ScreenResized(width, height)).unwrap();
-                        ControlFlow::Continue
-                    }
-                    WindowEvent::Refresh => {
-                        local_screen.draw();
-                        ControlFlow::Continue
-                    }
-                    WindowEvent::CursorMoved { position, .. } => {
-                        local_screen.move_tracking(position);
-                        ControlFlow::Continue
-                    }
-                    WindowEvent::MouseInput { state, button: MouseButton::Left, .. } => {
-                        match state {
-                            ElementState::Pressed => local_screen.begin_tracking(),
-                            ElementState::Released => local_screen.end_tracking(),
-                        }
-                        ControlFlow::Continue
-                    }
-                    _ => {
-                        ControlFlow::Continue
-                    }
-                }
-            }
+            Event::WindowEvent { event, .. } => process_window_event(event, &director, &mut local_screen),
             Event::Awakened => {
                 while let Ok(AwakenMessage::ScreenMessage(screen_message)) = awaken_message_receiver.try_recv() {
                     local_screen.update(screen_message);
@@ -75,6 +44,46 @@ pub fn start(width: u32, height: u32, director: Sender<DirectorMsg>) {
         }
     });
     director.send(DirectorMsg::ScreenClosed).unwrap();
+}
+
+fn process_window_event(event: WindowEvent, director: &Sender<DirectorMsg>, local_screen: &mut LocalScreen) -> ControlFlow {
+    match event {
+        WindowEvent::Closed => ControlFlow::Break,
+        WindowEvent::KeyboardInput { input: KeyboardInput { state: ElementState::Pressed, virtual_keycode: Some(keycode), .. }, .. } => {
+            match keycode {
+                VirtualKeyCode::Escape => ControlFlow::Break,
+                _ => {
+                    director.send(DirectorMsg::KeyPressed(keycode)).unwrap();
+                    ControlFlow::Continue
+                }
+            }
+        }
+        WindowEvent::KeyboardInput { input: KeyboardInput { virtual_keycode: Some(VirtualKeyCode::Escape), .. }, .. } => {
+            ControlFlow::Break
+        }
+
+        WindowEvent::Resized(width, height) => {
+            local_screen.on_dimensions(width, height);
+            director.send(DirectorMsg::ScreenResized(width, height)).unwrap();
+            ControlFlow::Continue
+        }
+        WindowEvent::Refresh => {
+            local_screen.draw();
+            ControlFlow::Continue
+        }
+        WindowEvent::CursorMoved { position, .. } => {
+            local_screen.move_tracking(position);
+            ControlFlow::Continue
+        }
+        WindowEvent::MouseInput { state, button: MouseButton::Left, .. } => {
+            match state {
+                ElementState::Pressed => local_screen.begin_tracking(),
+                ElementState::Released => local_screen.end_tracking(),
+            }
+            ControlFlow::Continue
+        }
+        _ => ControlFlow::Continue,
+    }
 }
 
 pub struct LocalScreen<'a> {

@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul};
+use std::ops::{Add, Sub, Mul, Div};
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Length {
@@ -11,6 +11,8 @@ pub enum Length {
     Half,
     Third,
     Full,
+    Min(Box<Length>, Box<Length>),
+    Neg(Box<Length>),
 }
 
 impl Length {
@@ -25,7 +27,13 @@ impl Length {
             &Length::Spacing => 16.0,
             &Length::Sum(ref a, ref b) => a.to_f32(context) + b.to_f32(context),
             &Length::Scale(factor, ref a) => a.to_f32(context) * factor,
+            &Length::Min(ref a, ref b) => a.to_f32(context).min(b.to_f32(context)),
+            &Length::Neg(ref a) => -a.to_f32(context),
         }
+    }
+
+    pub fn min(self, rhs: Length) -> Self {
+        Length::Min(Box::new(self), Box::new(rhs))
     }
 }
 
@@ -34,6 +42,14 @@ impl Add for Length {
 
     fn add(self, rhs: Length) -> <Self as Add<Length>>::Output {
         Length::Sum(Box::new(self), Box::new(rhs))
+    }
+}
+
+impl Sub for Length {
+    type Output = Length;
+
+    fn sub(self, rhs: Length) -> <Self as Sub<Length>>::Output {
+        Length::Sum(Box::new(self), Box::new(Length::Neg(Box::new(rhs))))
     }
 }
 

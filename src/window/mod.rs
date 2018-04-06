@@ -7,6 +7,7 @@ use ::TouchMsg;
 pub use self::blocklist::Blocklist;
 pub use self::blockrange::BlockRange;
 pub use self::open_window::*;
+pub use ::VirtualKeyCode;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::fmt;
@@ -27,6 +28,7 @@ pub enum WindowNote {
     Screen(Sender<ScreenMsg>),
     Range(f32, f32, f32, f32),
     Touch(TouchMsg),
+    Key(VirtualKeyCode),
 }
 
 pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
@@ -55,18 +57,22 @@ pub fn start<MsgT, F>(width: u32, height: u32, on_start: F) where
         match msg {
             DirectorMsg::ScreenReady(next_screen) => {
                 send_window_note(WindowNote::Screen(next_screen));
-                ((), director::ScanFlow::Continue)
+                ((), director::ControlFlow::Continue)
             }
             DirectorMsg::ScreenResized(new_width, new_height) => {
                 send_window_note(WindowNote::Range(0.0, 0.0, new_width as f32, new_height as f32));
-                ((), director::ScanFlow::Continue)
+                ((), director::ControlFlow::Continue)
             }
             DirectorMsg::ScreenClosed => {
-                ((), director::ScanFlow::Break)
+                ((), director::ControlFlow::Break)
             }
             DirectorMsg::TouchMsg(touch_msg) => {
                 send_window_note(WindowNote::Touch(touch_msg));
-                ((), director::ScanFlow::Continue)
+                ((), director::ControlFlow::Continue)
+            }
+            DirectorMsg::KeyPressed(keycode) => {
+                send_window_note(WindowNote::Key(keycode));
+                ((), director::ControlFlow::Continue)
             }
         }
     });
@@ -105,6 +111,9 @@ fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<
                         WindowNote::Touch(touch_msg) => {
                             open_window.touch(touch_msg);
                         }
+                        WindowNote::Key(keycode) => {
+                            open_window.press_key(keycode);
+                        }
                     }
                 }
             }
@@ -134,7 +143,12 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             blocklist.signals.push(signal.clone());
             blocklist
         }
-        &Flood::Ripple(Sensor::Touch(tag, ref msg_adapter), ref flood) => {
+        &Flood::Ripple(Sensor::String(ref adapter), ref flood) => {
+            let mut blocklist = build_blocklist(range, flood);
+            blocklist.string_adapters.push(adapter.clone());
+            blocklist
+        }
+        &Flood::Ripple(Sensor::Touch(tag, ref adapter), ref flood) => {
             let mut blocklist = build_blocklist(range, flood);
             let block = Block {
                 sigil: Sigil::Touch(tag),
@@ -143,7 +157,7 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
                 anchor: Anchor { x: range.left, y: range.top },
                 approach: blocklist.max_approach,
             };
-            let touch_adapter = (tag, msg_adapter.clone());
+            let touch_adapter = (tag, adapter.clone());
             blocklist.push_block(block);
             blocklist.touch_adapters.push(touch_adapter);
             blocklist

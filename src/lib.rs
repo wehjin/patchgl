@@ -12,6 +12,7 @@ pub use block::Block;
 pub use sigil::Sigil;
 use std::sync::mpsc::Sender;
 pub use window::WindowNote;
+pub use glium::glutin::VirtualKeyCode;
 
 pub mod material;
 pub mod rendering;
@@ -36,6 +37,7 @@ pub enum DirectorMsg {
     ScreenReady(Sender<ScreenMsg>),
     ScreenResized(u32, u32),
     ScreenClosed,
+    KeyPressed(VirtualKeyCode),
     TouchMsg(TouchMsg),
 }
 

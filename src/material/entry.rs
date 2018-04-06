@@ -4,17 +4,17 @@ use ::flood::*;
 use ::material;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct Entry<'a, F, MsgT> where
+pub struct Entry<F, MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,
 {
     pub msg_wrap: F,
     pub id: u64,
-    pub mdl: &'a Mdl,
+    pub mdl: Mdl,
     pub label: String,
     pub placeholder: Option<String>,
 }
 
-impl<'a, F, MsgT> Entry<'a, F, MsgT> where
+impl<F, MsgT> Entry<F, MsgT> where
     F: Fn(Msg) -> MsgT, F: Send + Sync + 'static,
 {
     fn placeholder_string(&self) -> String {
@@ -28,6 +28,7 @@ impl<'a, F, MsgT> Entry<'a, F, MsgT> where
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Mdl {
+    pub pretext: Option<String>,
     pub cursor_visibility: CursorVisibility,
     pub blink_timeout_version_counter: VersionCounter,
 }
@@ -35,6 +36,7 @@ pub struct Mdl {
 impl Default for Mdl {
     fn default() -> Self {
         Mdl {
+            pretext: None,
             cursor_visibility: CursorVisibility::Visible,
             blink_timeout_version_counter: VersionCounter::enabled(),
         }
@@ -47,9 +49,10 @@ pub enum CursorVisibility {
     Invisible,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Msg {
     ToggleBlink,
+    InsertString(String),
 }
 
 pub fn update(mdl: &mut Mdl, msg: Msg) {
@@ -61,23 +64,49 @@ pub fn update(mdl: &mut Mdl, msg: Msg) {
             };
             mdl.blink_timeout_version_counter.bump();
         }
+        Msg::InsertString(string) => {
+            mdl.pretext = match &mdl.pretext {
+                &Some(ref pretext) => {
+                    let combined = pretext.to_owned() + &string;
+                    trim_pretext(&combined)
+                }
+                &None => trim_pretext(&string),
+            }
+        }
     }
 }
 
-pub fn flood<'a, F, MsgT>(entry: &Entry<'a, F, MsgT>) -> Flood<MsgT> where
-    MsgT: Clone,
+fn trim_pretext(pretext: &str) -> Option<String> {
+    let pretext = pretext.trim_left().to_owned();
+    if pretext.is_empty() {
+        None
+    } else {
+        Some(pretext.to_owned())
+    }
+}
+
+pub fn flood<F, MsgT>(entry: Entry<F, MsgT>) -> Flood<MsgT> where
+    MsgT: Clone + 'static,
     F: Fn(Msg) -> MsgT, F: Send + Sync + 'static,
 {
+    use std::sync::Arc;
+
+    let surface = draw_focused_entry(&entry);
     let blink_timeout = Timeout {
         id: entry.id,
         msg: (entry.msg_wrap)(Msg::ToggleBlink),
         duration: Duration::Milliseconds(500),
     };
     let versioned_blink = Version::restore(blink_timeout, entry.mdl.blink_timeout_version_counter);
-    draw_focused_entry(entry) + Sensor::Timeout(versioned_blink)
+    let string_wrap = {
+        Arc::new(move |string| (entry.msg_wrap)(Msg::InsertString(string)))
+    };
+    surface
+        + Sensor::Timeout(versioned_blink)
+        + Sensor::String(string_wrap)
 }
 
-fn draw_focused_entry<'a, F, MsgT>(entry: &Entry<'a, F, MsgT>) -> Flood<MsgT> where
+fn draw_focused_entry<F, MsgT>(entry: &Entry<F, MsgT>) -> Flood<MsgT> where
     MsgT: Clone,
     F: Fn(Msg) -> MsgT, F: Send + Sync + 'static,
 {
@@ -93,17 +122,34 @@ fn draw_focused_entry<'a, F, MsgT>(entry: &Entry<'a, F, MsgT>) -> Flood<MsgT> wh
     ;
     let accent_dark_color: Color = material::Color::PinkA700.into();
 
-    let cursor_color: Color = match entry.mdl.cursor_visibility {
-        CursorVisibility::Visible => accent_dark_color,
-        CursorVisibility::Invisible => argb::TRANSPARENT,
+    let placeholder = {
+        if entry.mdl.pretext.is_none() {
+            let placeholder_color: Color = material::Color::LightBackgroundTextDisabled.into();
+            Flood::Text(entry.placeholder_string(), placeholder_color, Placement::Start)
+        } else {
+            Flood::Color(argb::TRANSPARENT)
+        }
     };
-
-    let placeholder_color: Color = material::Color::LightBackgroundTextDisabled.into();
-    let placeholder = Flood::Text(entry.placeholder_string(), placeholder_color, Placement::Start);
-
-    let cursor = Flood::Color(cursor_color);
-    let input = Flood::Color(argb::TRANSPARENT) + (Position::Left(Length::Pixels(1.0)), cursor);
-
+    let input = {
+        let cursor = {
+            let cursor_color: Color = match entry.mdl.cursor_visibility {
+                CursorVisibility::Visible => accent_dark_color,
+                CursorVisibility::Invisible => argb::TRANSPARENT,
+            };
+            Flood::Color(cursor_color)
+        };
+        let runway = Flood::Color(argb::TRANSPARENT);
+        let cursor_and_runway = runway + (Position::Left(Length::Pixels(1.0)), cursor);
+        match entry.mdl.pretext {
+            Some(ref pretext_string) => {
+                let color: Color = material::color::Color::LightBackgroundTextPrimary.into();
+                let flood = Flood::Text(pretext_string.to_owned(), color, Placement::Start);
+                let length = (Length::Spacing * 0.7 * pretext_string.len()).min(Length::Full - Length::Pixels(1.0));
+                cursor_and_runway + (Position::Left(length), flood)
+            }
+            None => cursor_and_runway
+        }
+    };
     let input_and_placeholder = input + (Stratum::JustBelow, placeholder);
 
     let bottom_line = Flood::Color(accent_dark_color);

@@ -21,7 +21,7 @@ fn main() {
     });
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 enum Msg {
     EntryMsg(entry::Msg)
 }
@@ -41,11 +41,11 @@ fn draw(mdl: &Mdl, _palette: &Palette) -> Flood<Msg> {
     let entry = Entry {
         msg_wrap: Msg::EntryMsg,
         id: 26,
-        mdl: &mdl.entry_mdl,
+        mdl: mdl.entry_mdl.clone(),
         label: "Label".into(),
         placeholder: Some("Placeholder".into()),
     };
-    let entry_flood = entry::flood(&entry);
+    let entry_flood = entry::flood(entry);
     entry_flood
         + Padding::Dual(Length::Spacing, Length::Full * 0.35)
         + (Stratum::JustBelow, Flood::Color(material::Color::LightBackground.into()))

@@ -8,6 +8,7 @@ pub struct Blocklist<MsgT> where
     pub max_approach: f32,
     pub blocks: Vec<Block>,
     pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
+    pub string_adapters: Vec<Arc<Fn(String) -> MsgT + Send + Sync>>,
     pub raft_msgs: Vec<MsgT>,
     pub signals: Vec<Signal<MsgT>>,
     pub timeouts: Vec<Version<Timeout<MsgT>>>,
@@ -21,6 +22,7 @@ impl<MsgT> Default for Blocklist<MsgT> where
             max_approach: 0.0,
             blocks: Vec::new(),
             touch_adapters: Vec::new(),
+            string_adapters: Vec::new(),
             raft_msgs: Vec::new(),
             signals: Vec::new(),
             timeouts: Vec::new(),
@@ -43,6 +45,7 @@ impl<MsgT> Blocklist<MsgT> where
         self.max_approach = self.max_approach.max(rhs.max_approach);
         self.blocks.append(&mut rhs.blocks);
         self.touch_adapters.append(&mut rhs.touch_adapters);
+        self.string_adapters.append(&mut rhs.string_adapters);
         self.raft_msgs.append(&mut rhs.raft_msgs);
         self.signals.append(&mut rhs.signals);
         self.timeouts.append(&mut rhs.timeouts);

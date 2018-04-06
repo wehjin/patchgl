@@ -1,11 +1,47 @@
 use ::{Color, ScreenMsg, TouchMsg};
 use ::flood::{Flood, Signal, Timeout, Version, Duration};
-use ::window::BlockRange;
+use ::window::{BlockRange, VirtualKeyCode};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 use std::fmt;
 use super::build_blocklist;
+
+mod keymap {
+    use ::window::VirtualKeyCode;
+
+    pub fn code_to_string(keycode: VirtualKeyCode) -> Option<String> {
+        match keycode {
+            VirtualKeyCode::A => Some("a".into()),
+            VirtualKeyCode::B => Some("b".into()),
+            VirtualKeyCode::C => Some("c".into()),
+            VirtualKeyCode::D => Some("d".into()),
+            VirtualKeyCode::E => Some("e".into()),
+            VirtualKeyCode::F => Some("f".into()),
+            VirtualKeyCode::G => Some("g".into()),
+            VirtualKeyCode::H => Some("h".into()),
+            VirtualKeyCode::I => Some("i".into()),
+            VirtualKeyCode::J => Some("j".into()),
+            VirtualKeyCode::K => Some("k".into()),
+            VirtualKeyCode::L => Some("l".into()),
+            VirtualKeyCode::M => Some("m".into()),
+            VirtualKeyCode::N => Some("n".into()),
+            VirtualKeyCode::O => Some("o".into()),
+            VirtualKeyCode::P => Some("p".into()),
+            VirtualKeyCode::Q => Some("q".into()),
+            VirtualKeyCode::R => Some("r".into()),
+            VirtualKeyCode::S => Some("s".into()),
+            VirtualKeyCode::T => Some("t".into()),
+            VirtualKeyCode::U => Some("u".into()),
+            VirtualKeyCode::V => Some("v".into()),
+            VirtualKeyCode::W => Some("w".into()),
+            VirtualKeyCode::X => Some("x".into()),
+            VirtualKeyCode::Y => Some("y".into()),
+            VirtualKeyCode::Z => Some("z".into()),
+            _ => None,
+        }
+    }
+}
 
 pub struct OpenWindow<MsgT> where
     MsgT: Clone
@@ -15,6 +51,7 @@ pub struct OpenWindow<MsgT> where
     pub screen: Option<Sender<ScreenMsg>>,
     pub flood: Flood<MsgT>,
     pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
+    pub string_adapters: Vec<Arc<Fn(String) -> MsgT + Send + Sync>>,
     pub block_ids: Vec<u64>,
     pub observer: Option<Sender<MsgT>>,
     pub signals: HashMap<u64, Signal<MsgT>>,
@@ -31,10 +68,20 @@ impl<MsgT> OpenWindow<MsgT> where
             screen: None,
             flood: Flood::Color(Color::default()),
             touch_adapters: Vec::new(),
+            string_adapters: Vec::new(),
             block_ids: Vec::new(),
             observer: None,
             signals: HashMap::new(),
             timeouts: HashMap::new(),
+        }
+    }
+
+    pub fn press_key(&mut self, keycode: VirtualKeyCode) {
+        if let (&Some(ref observer), Some(ref string)) = (&self.observer, keymap::code_to_string(keycode)) {
+            self.string_adapters.iter().for_each(|adapter| {
+                let msg = (adapter)(string.to_owned());
+                observer.send(msg).unwrap();
+            });
         }
     }
 
@@ -49,17 +96,21 @@ impl<MsgT> OpenWindow<MsgT> where
 
     pub fn cycle(&mut self) {
         self.touch_adapters.clear();
+        self.string_adapters.clear();
         if let (Some(screen), Some(seed)) = (self.screen.clone(), self.seed.clone()) {
             self.block_ids.clear();
             let mut blocklist = build_blocklist(&self.range, &self.flood);
 
             self.touch_adapters.append(&mut blocklist.touch_adapters);
+            self.string_adapters.append(&mut blocklist.string_adapters);
+
             if let Some(ref observer) = self.observer {
                 blocklist.raft_msgs.into_iter()
                          .for_each(|msg| {
                              observer.send(msg).unwrap();
                          });
             }
+
             let mut block_ids = blocklist.blocks.into_iter()
                                          .enumerate()
                                          .map(|(i, block)| {
@@ -71,7 +122,7 @@ impl<MsgT> OpenWindow<MsgT> where
                                          .collect::<Vec<_>>();
             self.block_ids.append(&mut block_ids);
 
-            // TODO Erase blocks that were not overwritten.
+// TODO Erase blocks that were not overwritten.
 
             self.cycle_signals(blocklist.signals);
             self.cycle_timeouts(blocklist.timeouts);
@@ -135,7 +186,7 @@ fn start_timeout_timer<MsgT>(timeout: &Timeout<MsgT>, observer: Sender<MsgT>) wh
 {
     use std::{thread, time};
 
-    // TODO Use one or a pool of threads for all timeouts.
+// TODO Use one or a pool of threads for all timeouts.
     let msg = timeout.msg.clone();
     let duration = timeout.duration;
     thread::spawn(move || {
