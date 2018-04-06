@@ -30,7 +30,7 @@ impl<'a> GlyphWriter<'a> {
         line.append(&mut self.line);
         self.page.push((line_width, line));
     }
-    pub fn take_glyphs(&mut self, max_width: f32, placement: f32) -> (Vec<PositionedGlyph<'a>>, usize) {
+    pub fn take_lines(&mut self, max_width: f32, placement: f32) -> Vec<(f32, Vec<PositionedGlyph<'a>>)> {
         let mut lines = Vec::new();
         lines.append(&mut self.page);
         if !self.line.is_empty() {
@@ -38,22 +38,18 @@ impl<'a> GlyphWriter<'a> {
             line.append(&mut self.line);
             lines.push((self.caret.x, line));
         }
-
-        let line_count = lines.len();
-        (
-            lines.into_iter().fold(Vec::new(), |mut all, (line_width, line_glyphs)| {
-                let extra = (max_width - line_width) * placement;
-                let repositioned = line_glyphs.into_iter()
-                                              .map(|glyph| {
-                                                  let mut position = glyph.position();
-                                                  position.x += extra;
-                                                  glyph.into_unpositioned().positioned(position)
-                                              })
-                                              .collect::<Vec<_>>();
-                all.extend(repositioned);
-                all
-            }),
-            line_count
-        )
+        lines.into_iter()
+             .map(|(line_width, line_glyphs)| {
+                 let extra = (max_width - line_width) * placement;
+                 let placed_glyphs = line_glyphs.into_iter()
+                                                .map(|glyph| {
+                                                    let mut position = glyph.position();
+                                                    position.x += extra;
+                                                    glyph.into_unpositioned().positioned(position)
+                                                })
+                                                .collect::<Vec<_>>();
+                 (max_width, placed_glyphs)
+             })
+             .collect::<Vec<_>>()
     }
 }

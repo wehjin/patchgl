@@ -10,8 +10,8 @@ pub struct Scribe<'a> {
 }
 
 impl<'a> Scribe<'a> {
-    pub fn fit_glyphs(&'a self, text: &str, scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>> {
-        layout::fit_glyphs(&self.font, text, scale, width, placement)
+    pub fn fit_text(&'a self, text: &str, scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>> {
+        layout::fit_text(&self.font, text, scale, width, placement)
     }
 }
 

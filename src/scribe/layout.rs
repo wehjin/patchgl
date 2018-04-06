@@ -2,12 +2,17 @@ use unicode_normalization::UnicodeNormalization;
 use rusttype::{Font, PositionedGlyph, Scale};
 use super::glyph_writer::GlyphWriter;
 
-pub fn fit_glyphs<'a>(font: &'a Font, text: &str, mut scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>>
+pub fn fit_text<'a>(font: &'a Font, text: &str, mut scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>>
 {
     let mut some_glyphs: Option<Vec<PositionedGlyph>> = None;
     while let None = some_glyphs {
-        let (glyphs, line_count) = layout_glyphs(font, text, scale, width, placement);
+        let lines = break_text(font, text, scale, width, placement);
+        let line_count = lines.len();
         if line_count <= 1 || scale.x <= 1.0 {
+            let glyphs = lines.into_iter().fold(Vec::new(), |mut glyphs, (_, more)| {
+                glyphs.extend(more);
+                glyphs
+            });
             some_glyphs = Some(glyphs);
         } else {
             scale.x = (scale.x * 0.95).max(1.0);
@@ -16,7 +21,7 @@ pub fn fit_glyphs<'a>(font: &'a Font, text: &str, mut scale: Scale, width: u32, 
     some_glyphs.expect("glyphs")
 }
 
-fn layout_glyphs<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, placement: f32) -> (Vec<PositionedGlyph<'a>>, usize) {
+fn break_text<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, placement: f32) -> Vec<(f32, Vec<PositionedGlyph<'a>>)> {
     let mut glyph_writer = GlyphWriter::new(&font.v_metrics(scale));
     let mut last_glyph_id = None;
     for c in text.nfc() {
@@ -53,5 +58,5 @@ fn layout_glyphs<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, place
         glyph_writer.feed_right(glyph.unpositioned().h_metrics().advance_width);
         glyph_writer.add_glyph(glyph);
     }
-    glyph_writer.take_glyphs(width as f32, placement)
+    glyph_writer.take_lines(width as f32, placement)
 }
