@@ -18,6 +18,7 @@ pub struct Step<'a> {
 pub enum StepCondition {
     Active,
     Inactive,
+    Completed,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -42,7 +43,13 @@ impl<'a, MsgT> Into<Flood<MsgT>> for Stepper<'a> where MsgT: Clone {
             let enumerated_steps = self.steps.into_iter().enumerate().collect::<Vec<_>>();
             enumerated_steps.into_iter().fold(Flood::Color(palette.transparent), |flood, (index, step)| {
                 let text = step.label;
-                let condition = if index == active_index { StepCondition::Active } else { StepCondition::Inactive };
+                let condition = if index < active_index {
+                    StepCondition::Completed
+                } else if index == active_index {
+                    StepCondition::Active
+                } else {
+                    StepCondition::Inactive
+                };
                 let badge: Flood<MsgT> = Badge { palette, digit: index as u32 + 1, condition }.into();
                 let gap = Flood::Color(palette.transparent);
                 let label: Flood<MsgT> = Label { palette, text, condition }.into();
@@ -99,7 +106,7 @@ mod label {
     impl<'a, MsgT> Into<Flood<MsgT>> for Label<'a> where MsgT: Clone {
         fn into(self) -> Flood<MsgT> {
             let color = match self.condition {
-                StepCondition::Active => self.palette.light_background_text_primary,
+                StepCondition::Active | StepCondition::Completed => self.palette.light_background_text_primary,
                 StepCondition::Inactive => self.palette.light_background_disabled,
             };
             Flood::Text(self.text.to_owned(), color, Placement::Start)
@@ -122,12 +129,16 @@ mod badge {
 
     impl<'a, MsgT> Into<Flood<MsgT>> for Badge<'a> where MsgT: Clone {
         fn into(self) -> Flood<MsgT> {
-            let digit = Flood::Text(format!("{}", self.digit), self.palette.dark_background_text_primary, Placement::Center)
+            let text = match self.condition {
+                StepCondition::Completed => "✓".to_owned(),
+                StepCondition::Active | StepCondition::Inactive => format!("{}", self.digit),
+            };
+            let digit = Flood::Text(text, self.palette.dark_background_text_primary, Placement::Center)
                 + Padding::Uniform(Length::Full * 0.15);
 
             let badge = {
                 let color = match self.condition {
-                    StepCondition::Active => self.palette.primary,
+                    StepCondition::Active | StepCondition::Completed => self.palette.primary,
                     StepCondition::Inactive => self.palette.light_background_disabled,
                 };
                 Flood::Color(color)

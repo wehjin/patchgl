@@ -32,7 +32,7 @@ fn draw(_mdl: &Mdl) -> Flood<Msg> {
     let stepper: Flood<Msg> = Stepper {
         palette: &palette,
         id: vec![1],
-        active_index: 0,
+        active_index: 1,
         steps: vec![
             Step { label: "Fee" },
             Step { label: "Fi" },
