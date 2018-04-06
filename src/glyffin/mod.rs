@@ -23,7 +23,7 @@ impl<'a> QuipRenderer<'a> {
         self.modelview = modelview;
     }
 
-    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: u32, z: f32, colour: [f32; 4], placement: f32, display: &F) {
+    pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: i32, z: f32, colour: [f32; 4], placement: f32, display: &F) {
         let glyphs = self.scribe.fit_text(text, scale, width, placement);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());

@@ -5,56 +5,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
 use std::fmt;
+use ::scribe::Scribe;
 use super::build_blocklist;
+use super::keymap;
 
-mod keymap {
-    use ::window::VirtualKeyCode;
 
-    pub fn code_to_string(keycode: VirtualKeyCode) -> Option<String> {
-        match keycode {
-            VirtualKeyCode::A => Some("a".into()),
-            VirtualKeyCode::B => Some("b".into()),
-            VirtualKeyCode::C => Some("c".into()),
-            VirtualKeyCode::D => Some("d".into()),
-            VirtualKeyCode::E => Some("e".into()),
-            VirtualKeyCode::F => Some("f".into()),
-            VirtualKeyCode::G => Some("g".into()),
-            VirtualKeyCode::H => Some("h".into()),
-            VirtualKeyCode::I => Some("i".into()),
-            VirtualKeyCode::J => Some("j".into()),
-            VirtualKeyCode::K => Some("k".into()),
-            VirtualKeyCode::L => Some("l".into()),
-            VirtualKeyCode::M => Some("m".into()),
-            VirtualKeyCode::N => Some("n".into()),
-            VirtualKeyCode::O => Some("o".into()),
-            VirtualKeyCode::P => Some("p".into()),
-            VirtualKeyCode::Q => Some("q".into()),
-            VirtualKeyCode::R => Some("r".into()),
-            VirtualKeyCode::S => Some("s".into()),
-            VirtualKeyCode::T => Some("t".into()),
-            VirtualKeyCode::U => Some("u".into()),
-            VirtualKeyCode::V => Some("v".into()),
-            VirtualKeyCode::W => Some("w".into()),
-            VirtualKeyCode::X => Some("x".into()),
-            VirtualKeyCode::Y => Some("y".into()),
-            VirtualKeyCode::Z => Some("z".into()),
-            VirtualKeyCode::Key0 => Some("0".into()),
-            VirtualKeyCode::Key1 => Some("1".into()),
-            VirtualKeyCode::Key2 => Some("2".into()),
-            VirtualKeyCode::Key3 => Some("3".into()),
-            VirtualKeyCode::Key4 => Some("4".into()),
-            VirtualKeyCode::Key5 => Some("5".into()),
-            VirtualKeyCode::Key6 => Some("6".into()),
-            VirtualKeyCode::Key7 => Some("7".into()),
-            VirtualKeyCode::Key8 => Some("8".into()),
-            VirtualKeyCode::Key9 => Some("9".into()),
-            VirtualKeyCode::Space => Some(" ".into()),
-            _ => None,
-        }
-    }
-}
-
-pub struct OpenWindow<MsgT> where
+pub struct OpenWindow<'a, MsgT> where
     MsgT: Clone
 {
     pub seed: Option<u64>,
@@ -68,9 +24,10 @@ pub struct OpenWindow<MsgT> where
     pub signals: HashMap<u64, Signal<MsgT>>,
     pub timeouts: HashMap<u64, Version<Timeout<MsgT>>>,
     pub title: Option<String>,
+    pub scribe: Scribe<'a>,
 }
 
-impl<MsgT> OpenWindow<MsgT> where
+impl<'a, MsgT> OpenWindow<'a, MsgT> where
     MsgT: Clone + fmt::Debug + Send + 'static
 {
     pub fn new(range: BlockRange, seed: Option<u64>) -> Self {
@@ -86,6 +43,7 @@ impl<MsgT> OpenWindow<MsgT> where
             signals: HashMap::new(),
             timeouts: HashMap::new(),
             title: None,
+            scribe: Scribe::default(),
         }
     }
 
@@ -138,7 +96,7 @@ impl<MsgT> OpenWindow<MsgT> where
         self.input_adapters.clear();
         if let (Some(screen), Some(seed)) = (self.screen.clone(), self.seed.clone()) {
             self.block_ids.clear();
-            let mut blocklist = build_blocklist(&self.range, &self.flood);
+            let mut blocklist = build_blocklist(&self.range, &self.flood, &self.scribe);
 
             self.touch_adapters.append(&mut blocklist.touch_adapters);
             self.input_adapters.append(&mut blocklist.input_adapters);

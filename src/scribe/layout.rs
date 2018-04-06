@@ -2,7 +2,7 @@ use unicode_normalization::UnicodeNormalization;
 use rusttype::{Font, PositionedGlyph, Scale};
 use super::glyph_writer::GlyphWriter;
 
-pub fn fit_text<'a>(font: &'a Font, text: &str, mut scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>>
+pub fn fit_text<'a>(font: &'a Font, text: &str, mut scale: Scale, width: i32, placement: f32) -> Vec<PositionedGlyph<'a>>
 {
     let mut some_glyphs: Option<Vec<PositionedGlyph>> = None;
     while let None = some_glyphs {
@@ -21,7 +21,7 @@ pub fn fit_text<'a>(font: &'a Font, text: &str, mut scale: Scale, width: u32, pl
     some_glyphs.expect("glyphs")
 }
 
-fn break_text<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, placement: f32) -> Vec<(f32, Vec<PositionedGlyph<'a>>)> {
+pub fn break_text<'a>(font: &'a Font, text: &str, scale: Scale, max_width: i32, placement: f32) -> Vec<(f32, Vec<PositionedGlyph<'a>>)> {
     let mut glyph_writer = GlyphWriter::new(&font.v_metrics(scale));
     let mut last_glyph_id = None;
     for c in text.nfc() {
@@ -48,7 +48,7 @@ fn break_text<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, placemen
         glyph_writer.feed_right(kerning);
         let mut glyph = base_glyph.scaled(scale).positioned(glyph_writer.position());
         if let Some(bounding_box) = glyph.pixel_bounding_box() {
-            if bounding_box.max.x > width as i32 {
+            if bounding_box.max.x > max_width as i32 {
                 glyph_writer.feed_right(-kerning);
                 glyph_writer.feed_line();
                 glyph = glyph.into_unpositioned().positioned(glyph_writer.position());
@@ -58,5 +58,5 @@ fn break_text<'a>(font: &'a Font, text: &str, scale: Scale, width: u32, placemen
         glyph_writer.feed_right(glyph.unpositioned().h_metrics().advance_width);
         glyph_writer.add_glyph(glyph);
     }
-    glyph_writer.take_lines(width as f32, placement)
+    glyph_writer.take_lines(max_width as f32, placement)
 }

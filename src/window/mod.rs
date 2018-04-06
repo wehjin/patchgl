@@ -11,10 +11,12 @@ pub use ::VirtualKeyCode;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::fmt;
+use ::scribe::Scribe;
 
 mod blockrange;
 mod blocklist;
 mod open_window;
+mod keymap;
 
 pub enum WindowMsg<MsgT> where
     MsgT: Clone
@@ -126,34 +128,34 @@ fn spawn_window<MsgT>(range: BlockRange, seed: Option<u64>) -> Sender<WindowMsg<
     window
 }
 
-pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blocklist<MsgT> where
+pub fn build_blocklist<'a, MsgT>(range: &BlockRange, flood: &Flood<MsgT>, scribe: &Scribe<'a>) -> Blocklist<MsgT> where
     MsgT: Clone
 {
     match flood {
         &Flood::Escape(ref raft) => {
-            let mut blocklist = build_placeholder_blocklist::<MsgT>(range);
+            let mut blocklist = build_placeholder_blocklist::<MsgT>(range, scribe);
             let &Raft::RangeAdapter(tag, ref range_adapter) = raft;
             let raft_msg = range_adapter(tag, &range.with_approach(blocklist.max_approach + 1.0));
             blocklist.raft_msgs.push(raft_msg);
             blocklist
         }
         &Flood::Ripple(Sensor::Timeout(ref versioned_timeout), ref flood) => {
-            let mut blocklist = build_blocklist(range, flood);
+            let mut blocklist = build_blocklist(range, flood, scribe);
             blocklist.timeouts.push(versioned_timeout.clone());
             blocklist
         }
         &Flood::Ripple(Sensor::Signal(ref signal), ref flood) => {
-            let mut blocklist = build_blocklist(range, flood);
+            let mut blocklist = build_blocklist(range, flood, scribe);
             blocklist.signals.push(signal.clone());
             blocklist
         }
         &Flood::Ripple(Sensor::Input(ref adapter), ref flood) => {
-            let mut blocklist = build_blocklist(range, flood);
+            let mut blocklist = build_blocklist(range, flood, scribe);
             blocklist.input_adapters.push(adapter.clone());
             blocklist
         }
         &Flood::Ripple(Sensor::Touch(tag, ref adapter), ref flood) => {
-            let mut blocklist = build_blocklist(range, flood);
+            let mut blocklist = build_blocklist(range, flood, scribe);
             let block = Block {
                 sigil: Sigil::Touch(tag),
                 width: range.width,
@@ -167,57 +169,57 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             blocklist
         }
         &Flood::Sediment(ref silt, ref far_flood, ref near_flood) => {
-            let mut far_blocklist = build_blocklist(range, far_flood);
+            let mut far_blocklist = build_blocklist(range, far_flood, scribe);
             let near_approach = silt.add_to(far_blocklist.max_approach);
-            let mut near_blocklist = build_blocklist(&range.with_approach(near_approach), near_flood);
+            let mut near_blocklist = build_blocklist(&range.with_approach(near_approach), near_flood, scribe);
             far_blocklist.append(&mut near_blocklist)
         }
         &Flood::Vessel(ref thickness, ref flood) => {
             match thickness {
                 &Padding::Behind(ref length) => {
-                    let a_pad = length.to_f32(MAX_APPROACH - 2.0, 0.0);
-                    build_blocklist(&range.with_more_approach(a_pad), flood)
+                    let a_pad = length.to_f32(MAX_APPROACH - 2.0, 0.0, scribe);
+                    build_blocklist(&range.with_more_approach(a_pad), flood, scribe)
                 }
                 &Padding::Uniform(ref length) => {
-                    let pad = length.to_f32(range.width.max(range.height), range.width.min(range.height));
-                    build_blocklist(&range.with_padding(pad, pad), flood)
+                    let pad = length.to_f32(range.width.max(range.height), range.width.min(range.height), scribe);
+                    build_blocklist(&range.with_padding(pad, pad), flood, scribe)
                 }
                 &Padding::Dual(ref h_length, ref v_length) => {
-                    let h_pad = h_length.to_f32(range.width, range.height);
-                    let v_pad = v_length.to_f32(range.height, range.width);
-                    build_blocklist(&range.with_padding(h_pad, v_pad), flood)
+                    let h_pad = h_length.to_f32(range.width, range.height, scribe);
+                    let v_pad = v_length.to_f32(range.height, range.width, scribe);
+                    build_blocklist(&range.with_padding(h_pad, v_pad), flood, scribe)
                 }
                 &Padding::Horizontal(ref length) => {
-                    let h_pad = length.to_f32(range.width, range.height);
-                    build_blocklist(&range.with_padding(h_pad, 0.0), flood)
+                    let h_pad = length.to_f32(range.width, range.height, scribe);
+                    build_blocklist(&range.with_padding(h_pad, 0.0), flood, scribe)
                 }
                 &Padding::Vertical(ref length) => {
-                    let v_pad = length.to_f32(range.height, range.width);
-                    build_blocklist(&range.with_padding(0.0, v_pad), flood)
+                    let v_pad = length.to_f32(range.height, range.width, scribe);
+                    build_blocklist(&range.with_padding(0.0, v_pad), flood, scribe)
                 }
             }
         }
         &Flood::Barrier(ref position, ref a_flood, ref b_flood) => {
             match position {
                 &Position::Left(ref length) => {
-                    let left_width = length.to_f32(range.width, range.height);
+                    let left_width = length.to_f32(range.width, range.height, scribe);
                     let (left_range, right_range) = range.split_width(range.width - left_width);
-                    build_blocklist(&right_range, a_flood).append(&mut build_blocklist(&left_range, b_flood))
+                    build_blocklist(&right_range, a_flood, scribe).append(&mut build_blocklist(&left_range, b_flood, scribe))
                 }
                 &Position::Top(ref length) => {
-                    let top_height = length.to_f32(range.height, range.width);
+                    let top_height = length.to_f32(range.height, range.width, scribe);
                     let (top_range, bottom_range) = range.split_height(range.height - top_height);
-                    build_blocklist(&bottom_range, a_flood).append(&mut build_blocklist(&top_range, b_flood))
+                    build_blocklist(&bottom_range, a_flood, scribe).append(&mut build_blocklist(&top_range, b_flood, scribe))
                 }
                 &Position::Right(ref length) => {
-                    let right_width = length.to_f32(range.width, range.height);
+                    let right_width = length.to_f32(range.width, range.height, scribe);
                     let (left_range, right_range) = range.split_width(right_width);
-                    build_blocklist(&left_range, a_flood).append(&mut build_blocklist(&right_range, b_flood))
+                    build_blocklist(&left_range, a_flood, scribe).append(&mut build_blocklist(&right_range, b_flood, scribe))
                 }
                 &Position::Bottom(ref length) => {
-                    let bottom_height = length.to_f32(range.height, range.width);
+                    let bottom_height = length.to_f32(range.height, range.width, scribe);
                     let (top_range, bottom_range) = range.split_height(bottom_height);
-                    build_blocklist(&top_range, a_flood).append(&mut build_blocklist(&bottom_range, b_flood))
+                    build_blocklist(&top_range, a_flood, scribe).append(&mut build_blocklist(&bottom_range, b_flood, scribe))
                 }
             }
         }
@@ -247,11 +249,11 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
     }
 }
 
-fn build_placeholder_blocklist<MsgT>(range: &BlockRange) -> Blocklist<MsgT> where
+fn build_placeholder_blocklist<'a, MsgT>(range: &BlockRange, scribe: &Scribe<'a>) -> Blocklist<MsgT> where
     MsgT: Clone
 {
     let placeholder_flood = Flood::Color(Color::grey());
-    let mut blocklist = build_blocklist(range, &placeholder_flood);
+    let mut blocklist = build_blocklist(range, &placeholder_flood, scribe);
     blocklist.update_max_approach(range.approach);
     blocklist
 }

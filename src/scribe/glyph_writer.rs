@@ -48,7 +48,7 @@ impl<'a> GlyphWriter<'a> {
                                                     glyph.into_unpositioned().positioned(position)
                                                 })
                                                 .collect::<Vec<_>>();
-                 (max_width, placed_glyphs)
+                 (line_width, placed_glyphs)
              })
              .collect::<Vec<_>>()
     }

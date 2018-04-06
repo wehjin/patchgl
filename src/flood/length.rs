@@ -1,4 +1,5 @@
 use std::ops::{Add, Sub, Mul, Div};
+use scribe::Scribe;
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Length {
@@ -16,10 +17,11 @@ pub enum Length {
     Transverse,
     Inverse(Box<Length>),
     Product(Box<Length>, Box<Length>),
+    Text(String),
 }
 
 impl Length {
-    pub fn to_f32(&self, context: f32, alt_context: f32) -> f32 {
+    pub fn to_f32<'a>(&self, context: f32, alt_context: f32, scribe: &Scribe<'a>) -> f32 {
         match self {
             &Length::Zero => 0.0,
             &Length::Full => context,
@@ -28,13 +30,14 @@ impl Length {
             &Length::FingerTip => 44.0,
             &Length::Pixels(pixels) => pixels,
             &Length::Spacing => 16.0,
-            &Length::Sum(ref a, ref b) => a.to_f32(context, alt_context) + b.to_f32(context, alt_context),
-            &Length::Scale(factor, ref a) => a.to_f32(context, alt_context) * factor,
-            &Length::Min(ref a, ref b) => a.to_f32(context, alt_context).min(b.to_f32(context, alt_context)),
-            &Length::Negative(ref a) => -a.to_f32(context, alt_context),
-            &Length::Inverse(ref a) => 1.0 / a.to_f32(context, alt_context),
+            &Length::Sum(ref a, ref b) => a.to_f32(context, alt_context, scribe) + b.to_f32(context, alt_context, scribe),
+            &Length::Scale(factor, ref a) => a.to_f32(context, alt_context, scribe) * factor,
+            &Length::Min(ref a, ref b) => a.to_f32(context, alt_context, scribe).min(b.to_f32(context, alt_context, scribe)),
+            &Length::Negative(ref a) => -a.to_f32(context, alt_context, scribe),
+            &Length::Inverse(ref a) => 1.0 / a.to_f32(context, alt_context, scribe),
             &Length::Transverse => alt_context,
-            &Length::Product(ref a, ref b) => a.to_f32(context, alt_context) * b.to_f32(context, alt_context),
+            &Length::Product(ref a, ref b) => a.to_f32(context, alt_context, scribe) * b.to_f32(context, alt_context, scribe),
+            &Length::Text(ref text) => alt_context * scribe.size_text(text),
         }
     }
 

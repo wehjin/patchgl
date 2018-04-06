@@ -210,7 +210,7 @@ impl<'a> LocalScreen<'a> {
                     text,
                     block.anchor.into(),
                     Scale::uniform(line_height * dpi_factor),
-                    block.width as u32,
+                    block.width as i32,
                     block.approach,
                     color.to_gl(),
                     placement,

@@ -10,8 +10,18 @@ pub struct Scribe<'a> {
 }
 
 impl<'a> Scribe<'a> {
-    pub fn fit_text(&'a self, text: &str, scale: Scale, width: u32, placement: f32) -> Vec<PositionedGlyph<'a>> {
+    pub fn fit_text(&'a self, text: &str, scale: Scale, width: i32, placement: f32) -> Vec<PositionedGlyph<'a>> {
         layout::fit_text(&self.font, text, scale, width, placement)
+    }
+
+    pub fn size_text(&self, text: &str) -> f32 {
+        let lines = layout::break_text(&self.font, text, Scale::uniform(1.0), 60000i32, 0.0);
+        if lines.is_empty() {
+            0.0
+        } else {
+            let (width, _) = lines[0];
+            width
+        }
     }
 }
 
