@@ -1,5 +1,5 @@
 use ::{Color, ScreenMsg, TouchMsg};
-use ::flood::{Flood, Signal, Timeout, Version, Duration};
+use ::flood::{Flood, Signal, Timeout, Version, Duration, Input};
 use ::window::{BlockRange, VirtualKeyCode};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -38,6 +38,7 @@ mod keymap {
             VirtualKeyCode::X => Some("x".into()),
             VirtualKeyCode::Y => Some("y".into()),
             VirtualKeyCode::Z => Some("z".into()),
+            VirtualKeyCode::Space => Some(" ".into()),
             _ => None,
         }
     }
@@ -51,7 +52,7 @@ pub struct OpenWindow<MsgT> where
     pub screen: Option<Sender<ScreenMsg>>,
     pub flood: Flood<MsgT>,
     pub touch_adapters: Vec<(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>)>,
-    pub string_adapters: Vec<Arc<Fn(String) -> MsgT + Send + Sync>>,
+    pub input_adapters: Vec<Arc<Fn(Input) -> MsgT + Send + Sync>>,
     pub block_ids: Vec<u64>,
     pub observer: Option<Sender<MsgT>>,
     pub signals: HashMap<u64, Signal<MsgT>>,
@@ -68,7 +69,7 @@ impl<MsgT> OpenWindow<MsgT> where
             screen: None,
             flood: Flood::Color(Color::default()),
             touch_adapters: Vec::new(),
-            string_adapters: Vec::new(),
+            input_adapters: Vec::new(),
             block_ids: Vec::new(),
             observer: None,
             signals: HashMap::new(),
@@ -77,12 +78,22 @@ impl<MsgT> OpenWindow<MsgT> where
     }
 
     pub fn press_key(&mut self, keycode: VirtualKeyCode) {
-        if let (&Some(ref observer), Some(ref string)) = (&self.observer, keymap::code_to_string(keycode)) {
-            self.string_adapters.iter().for_each(|adapter| {
-                let msg = (adapter)(string.to_owned());
-                observer.send(msg).unwrap();
-            });
+        if let Some(ref observer) = self.observer {
+            if let Some(ref string) = keymap::code_to_string(keycode) {
+                self.send_input_msg(Input::Insert(string.to_owned()), observer);
+            } else if keycode == VirtualKeyCode::Back {
+                self.send_input_msg(Input::DeleteBack, observer);
+            } else {
+                println!("Ignored key {:?}", keycode);
+            }
         }
+    }
+
+    fn send_input_msg(&self, input_msg: Input, observer: &Sender<MsgT>) {
+        self.input_adapters.iter().for_each(|adapter| {
+            let msg = (adapter)(input_msg.clone());
+            observer.send(msg).unwrap();
+        });
     }
 
     pub fn touch(&mut self, touch_msg: TouchMsg) {
@@ -96,13 +107,13 @@ impl<MsgT> OpenWindow<MsgT> where
 
     pub fn cycle(&mut self) {
         self.touch_adapters.clear();
-        self.string_adapters.clear();
+        self.input_adapters.clear();
         if let (Some(screen), Some(seed)) = (self.screen.clone(), self.seed.clone()) {
             self.block_ids.clear();
             let mut blocklist = build_blocklist(&self.range, &self.flood);
 
             self.touch_adapters.append(&mut blocklist.touch_adapters);
-            self.string_adapters.append(&mut blocklist.string_adapters);
+            self.input_adapters.append(&mut blocklist.input_adapters);
 
             if let Some(ref observer) = self.observer {
                 blocklist.raft_msgs.into_iter()

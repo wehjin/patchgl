@@ -63,6 +63,12 @@ mod timeout {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub enum Input {
+    Insert(String),
+    DeleteBack,
+}
+
 #[derive(Clone)]
 pub enum Sensor<MsgT> where
     MsgT: Clone
@@ -70,7 +76,7 @@ pub enum Sensor<MsgT> where
     Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>),
     Signal(Signal<MsgT>),
     Timeout(Version<Timeout<MsgT>>),
-    String(Arc<Fn(String) -> MsgT + Send + Sync>),
+    Input(Arc<Fn(Input) -> MsgT + Send + Sync>),
 }
 
 impl<MsgT> fmt::Debug for Sensor<MsgT> where MsgT: Clone + fmt::Debug
@@ -78,7 +84,7 @@ impl<MsgT> fmt::Debug for Sensor<MsgT> where MsgT: Clone + fmt::Debug
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             &Sensor::Touch(tag, _) => write!(f, "Sensor::Touch({})", tag),
-            &Sensor::String(_) => write!(f, "Sensor::String()"),
+            &Sensor::Input(_) => write!(f, "Sensor::String()"),
             &Sensor::Signal(ref signal) => write!(f, "Sensor::Signal({:?})", signal),
             &Sensor::Timeout(ref versioned_timeout) => write!(f, "Sensor::Timeout({:?})", versioned_timeout),
         }

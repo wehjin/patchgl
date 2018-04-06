@@ -143,9 +143,9 @@ pub fn build_blocklist<MsgT>(range: &BlockRange, flood: &Flood<MsgT>) -> Blockli
             blocklist.signals.push(signal.clone());
             blocklist
         }
-        &Flood::Ripple(Sensor::String(ref adapter), ref flood) => {
+        &Flood::Ripple(Sensor::Input(ref adapter), ref flood) => {
             let mut blocklist = build_blocklist(range, flood);
-            blocklist.string_adapters.push(adapter.clone());
+            blocklist.input_adapters.push(adapter.clone());
             blocklist
         }
         &Flood::Ripple(Sensor::Touch(tag, ref adapter), ref flood) => {

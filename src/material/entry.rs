@@ -52,7 +52,7 @@ pub enum CursorVisibility {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Msg {
     ToggleBlink,
-    InsertString(String),
+    Input(Input),
 }
 
 pub fn update(mdl: &mut Mdl, msg: Msg) {
@@ -64,13 +64,29 @@ pub fn update(mdl: &mut Mdl, msg: Msg) {
             };
             mdl.blink_timeout_version_counter.bump();
         }
-        Msg::InsertString(string) => {
-            mdl.pretext = match &mdl.pretext {
-                &Some(ref pretext) => {
-                    let combined = pretext.to_owned() + &string;
-                    trim_pretext(&combined)
+        Msg::Input(input) => {
+            match input {
+                Input::Insert(string) => {
+                    mdl.pretext = match &mdl.pretext {
+                        &Some(ref pretext) => {
+                            let combined = pretext.to_owned() + &string;
+                            trim_pretext(&combined)
+                        }
+                        &None => trim_pretext(&string),
+                    }
                 }
-                &None => trim_pretext(&string),
+                Input::DeleteBack => {
+                    mdl.pretext = match &mdl.pretext {
+                        &Some(ref pretext) => {
+                            if pretext.len() > 1 {
+                                trim_pretext(&pretext[..pretext.len() - 1])
+                            } else {
+                                None
+                            }
+                        }
+                        &None => None
+                    }
+                }
             }
         }
     }
@@ -98,12 +114,12 @@ pub fn flood<F, MsgT>(entry: Entry<F, MsgT>) -> Flood<MsgT> where
         duration: Duration::Milliseconds(500),
     };
     let versioned_blink = Version::restore(blink_timeout, entry.mdl.blink_timeout_version_counter);
-    let string_wrap = {
-        Arc::new(move |string| (entry.msg_wrap)(Msg::InsertString(string)))
+    let input_wrap = {
+        Arc::new(move |input| (entry.msg_wrap)(Msg::Input(input)))
     };
     surface
         + Sensor::Timeout(versioned_blink)
-        + Sensor::String(string_wrap)
+        + Sensor::Input(input_wrap)
 }
 
 fn draw_focused_entry<F, MsgT>(entry: &Entry<F, MsgT>) -> Flood<MsgT> where
