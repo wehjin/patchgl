@@ -117,7 +117,7 @@ mod spacer {
 
     impl<'a, MsgT> Into<Flood<MsgT>> for Spacer<'a> where MsgT: Clone {
         fn into(self) -> Flood<MsgT> {
-            Flood::Color(self.palette.light_background_disabled) + Padding::Dual(Length::Cross / 3, Length::Full * (0.5 * 23.0 / 24.0))
+            Flood::Color(self.palette.light_background_text_disabled) + Padding::Dual(Length::Cross / 3, Length::Full * (0.5 * 23.0 / 24.0))
         }
     }
 }
@@ -138,7 +138,7 @@ mod label {
         fn into(self) -> Flood<MsgT> {
             let color = match self.condition {
                 StepCondition::Active | StepCondition::Completed => self.palette.light_background_text_primary,
-                StepCondition::Inactive => self.palette.light_background_disabled,
+                StepCondition::Inactive => self.palette.light_background_text_disabled,
             };
             Flood::Text(self.text.to_owned(), color, Placement::Start)
         }
@@ -170,7 +170,7 @@ mod badge {
             let badge = {
                 let color = match self.condition {
                     StepCondition::Active | StepCondition::Completed => self.palette.primary,
-                    StepCondition::Inactive => self.palette.light_background_disabled,
+                    StepCondition::Inactive => self.palette.light_background_text_disabled,
                 };
                 Flood::Color(color)
             };

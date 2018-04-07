@@ -1,6 +1,7 @@
 use ::button;
 pub use ::button::Kind;
 use ::flood::Flood;
+pub use ::window::TouchMsg;
 pub use self::color::*;
 pub use self::model::Model;
 pub use self::palette::Palette;

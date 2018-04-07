@@ -92,6 +92,7 @@ impl Counter {
     pub fn enabled() -> Self {
         Counter { number: 1, enabled: Enabled::True }
     }
+    pub fn enabled_after_bump() -> Self { Counter { number: 0, enabled: Enabled::False } }
 
     pub fn upgrades(&self, other: &Self) -> bool {
         match (self.enabled, other.enabled) {

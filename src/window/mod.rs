@@ -3,7 +3,7 @@ use ::{screen, ScreenMsg};
 use ::{Anchor, Block, Color, Sigil};
 use ::flood::*;
 pub use ::screen::MAX_APPROACH;
-use ::TouchMsg;
+pub use ::TouchMsg;
 pub use self::blocklist::Blocklist;
 pub use self::blockrange::BlockRange;
 pub use self::open_window::*;
