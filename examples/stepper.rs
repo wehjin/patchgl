@@ -28,11 +28,11 @@ fn draw(_mdl: &Mdl) -> Flood<Msg> {
     use patchgl::material::components::stepper::*;
 
     let palette = Palette::default();
-
     let stepper: Flood<Msg> = Stepper {
         palette: &palette,
         id: vec![1],
         active_index: 1,
+        active_content: Flood::Color(palette.primary),
         steps: vec![
             Step { label: "Fee" },
             Step { label: "Fi" },
@@ -40,10 +40,7 @@ fn draw(_mdl: &Mdl) -> Flood<Msg> {
             Step { label: "Fum" },
         ],
     }.into();
-
-    Flood::Color(palette.light_background_raised) + Padding::Behind(Length::CardApproach)
-        + (Position::Top(Length::Spacing / 2), Flood::Color(palette.transparent))
-        + (Position::Top(Length::Full * 0.10), stepper)
+    stepper
         + Padding::Uniform(Length::Spacing * 1.5)
         + (Stratum::JustBelow, Flood::Color(palette.light_background))
 }

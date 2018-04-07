@@ -1,11 +1,12 @@
 use ::flood::*;
 use ::material;
 
-#[derive(Clone, PartialEq, Debug)]
-pub struct Stepper<'a> {
+#[derive(Clone, Debug)]
+pub struct Stepper<'a, MsgT> where MsgT: Clone {
     pub palette: &'a material::Palette,
     pub id: Vec<u64>,
     pub active_index: usize,
+    pub active_content: Flood<MsgT>,
     pub steps: Vec<Step<'a>>,
 }
 
@@ -27,51 +28,81 @@ pub enum StepperMsg {}
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default)]
 pub struct StepperMdl {}
 
-impl<'a, MsgT> Into<Flood<MsgT>> for Stepper<'a> where MsgT: Clone {
+impl<'a, MsgT> Into<Flood<MsgT>> for Stepper<'a, MsgT> where MsgT: Clone {
     fn into(self) -> Flood<MsgT> {
-        use self::badge::Badge;
-        use self::label::Label;
-        use self::spacer::Spacer;
-
+        use self::bar::Bar;
         let palette = self.palette;
-        let flood = if self.steps.is_empty() {
-            let spacer: Flood<MsgT> = Spacer { palette }.into();
-            spacer
-        } else {
-            let active_index = self.active_index;
-            let last_index = self.steps.len() - 1;
-            let enumerated_steps = self.steps.into_iter().enumerate().collect::<Vec<_>>();
-            enumerated_steps.into_iter().fold(Flood::Color(palette.transparent), |flood, (index, step)| {
-                let text = step.label;
-                let condition = if index < active_index {
-                    StepCondition::Completed
-                } else if index == active_index {
-                    StepCondition::Active
-                } else {
-                    StepCondition::Inactive
-                };
-                let badge: Flood<MsgT> = Badge { palette, digit: index as u32 + 1, condition }.into();
-                let gap = Flood::Color(palette.transparent);
-                let label: Flood<MsgT> = Label { palette, text, condition }.into();
-                let flood = if index < last_index {
-                    let spacer: Flood<MsgT> = Spacer { palette }.into();
-                    let segment = spacer
-                        + (Position::Left(Length::Text(text.to_owned())), label)
-                        + (Position::Left(Length::Cross / 3), gap)
-                        + (Position::Left(Length::Cross), badge);
-                    flood + (Position::Right(Length::Full / (index + 1)), segment)
-                } else {
-                    flood
-                        + (Position::Right(Length::Cross), badge)
-                        + (Position::Right(Length::Cross / 3), gap)
-                        + (Position::Right(Length::Text(text.to_owned())), label)
-                };
-                flood
-            })
-        };
-        flood + Padding::Uniform(Length::Cross * 0.3)
+        let active_index = self.active_index;
+        let steps = self.steps;
+        let bar: Flood<MsgT> = Bar { palette, active_index, steps }.into();
+
+        let raised_details = self.active_content
             + (Stratum::JustBelow, Flood::Color(palette.light_background_raised))
-            + Padding::Behind(Length::CardApproach)
+            + Padding::Behind(Length::CardApproach);
+
+        raised_details
+            + (Position::Top(Length::Spacing / 2), Flood::Color(palette.transparent))
+            + (Position::Top(Length::Full * 0.10), bar)
+    }
+}
+
+mod bar {
+    use ::material::Palette;
+    use ::flood::*;
+    use super::badge::Badge;
+    use super::label::Label;
+    use super::spacer::Spacer;
+    use super::{StepCondition, Step};
+
+    #[derive(Clone, PartialEq, Debug)]
+    pub struct Bar<'a> {
+        pub palette: &'a Palette,
+        pub active_index: usize,
+        pub steps: Vec<Step<'a>>,
+    }
+
+    impl<'a, MsgT> Into<Flood<MsgT>> for Bar<'a> where MsgT: Clone {
+        fn into(self) -> Flood<MsgT> {
+            let palette = self.palette;
+            let flood = if self.steps.is_empty() {
+                let spacer: Flood<MsgT> = Spacer { palette }.into();
+                spacer
+            } else {
+                let active_index = self.active_index;
+                let last_index = self.steps.len() - 1;
+                let enumerated_steps = self.steps.into_iter().enumerate().collect::<Vec<_>>();
+                enumerated_steps.into_iter().fold(Flood::Color(palette.transparent), |flood, (index, step)| {
+                    let text = step.label;
+                    let condition = if index < active_index {
+                        StepCondition::Completed
+                    } else if index == active_index {
+                        StepCondition::Active
+                    } else {
+                        StepCondition::Inactive
+                    };
+                    let badge: Flood<MsgT> = Badge { palette, digit: index as u32 + 1, condition }.into();
+                    let gap = Flood::Color(palette.transparent);
+                    let label: Flood<MsgT> = Label { palette, text, condition }.into();
+                    let flood = if index < last_index {
+                        let spacer: Flood<MsgT> = Spacer { palette }.into();
+                        let segment = spacer
+                            + (Position::Left(Length::Text(text.to_owned())), label)
+                            + (Position::Left(Length::Cross / 3), gap)
+                            + (Position::Left(Length::Cross), badge);
+                        flood + (Position::Right(Length::Full / (index + 1)), segment)
+                    } else {
+                        flood
+                            + (Position::Right(Length::Cross), badge)
+                            + (Position::Right(Length::Cross / 3), gap)
+                            + (Position::Right(Length::Text(text.to_owned())), label)
+                    };
+                    flood
+                })
+            };
+            flood + Padding::Uniform(Length::Cross * 0.3)
+                + (Stratum::JustBelow, Flood::Color(palette.light_background_raised))
+                + Padding::Behind(Length::CardApproach)
+        }
     }
 }
 
