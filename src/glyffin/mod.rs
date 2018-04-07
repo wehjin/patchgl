@@ -24,6 +24,8 @@ impl<'a> QuipRenderer<'a> {
     }
 
     pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: i32, z: f32, colour: [f32; 4], placement: f32, display: &F) {
+        const MAX_SCALE_LIMIT: f32 = 512.0;  // Do determine this dynamically and align text when limit is hit.
+        let scale = Scale { x: scale.x.min(MAX_SCALE_LIMIT), y: scale.y.min(MAX_SCALE_LIMIT) };
         let glyphs = self.scribe.fit_text(text, scale, width, placement);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
