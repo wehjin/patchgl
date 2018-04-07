@@ -49,7 +49,7 @@ pub enum ScreenMsg {
     Title(String),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum TouchMsg {
     Begin(u64, f64, f64),
     Cancel(u64),

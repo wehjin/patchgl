@@ -21,7 +21,7 @@ pub struct ButtonBar<'a, MsgT, F> where
     pub buttons: Vec<Button<MsgT>>,
 }
 
-pub use self::button_bar::ButtonBarMsg;
+pub use self::button_bar::*;
 use ::material::Palette;
 use ::flood::*;
 use std::sync::Arc;
@@ -37,58 +37,60 @@ impl<'a, MsgT, F> Into<Flood<MsgT>> for ButtonBar<'a, MsgT, F> where
         let default_button_mdl = ButtonMdl::default();
         use self::button::ButtonMdl;
 
-        self.buttons.into_iter().fold(Flood::Color(self.palette.transparent), |bar, button| {
-            let button_mdl = match button_mdls.get(&button.id) {
-                Some(button_mdl) => button_mdl,
-                None => &default_button_mdl,
-            };
+        self.buttons.into_iter().rev()
+            .fold(Flood::Color(self.palette.transparent), |bar, button| {
+                let button_mdl = match button_mdls.get(&button.id) {
+                    Some(button_mdl) => button_mdl,
+                    None => &default_button_mdl,
+                };
 
-            let string = button.label.to_uppercase();
-            let surface_padding_length: Length = Length::Spacing / 2;
+                let string = button.label.to_uppercase();
+                let surface_padding_length: Length = Length::Spacing;
 
-            let full_button = {
-                let surface = {
-                    let text_color = match button.intent {
-                        ButtonIntent::Call => palette.secondary,
-                        ButtonIntent::Provide => palette.light_background,
-                        ButtonIntent::Inform => palette.light_background_text_disabled,
+                let full_button = {
+                    let surface = {
+                        let text_color = match button.intent {
+                            ButtonIntent::Call => palette.secondary,
+                            ButtonIntent::Provide => palette.light_background_text_primary,
+                            ButtonIntent::Inform => palette.light_background_text_disabled,
+                        };
+                        let text = Flood::Text(string.clone(), text_color, Placement::Center);
+                        text + Padding::Vertical(Length::Full / 4)
                     };
-                    let text = Flood::Text(string.clone(), text_color, Placement::Center);
-                    text + Padding::Uniform(surface_padding_length.clone())
-                };
 
-                let feedback = match button_mdl.activation {
-                    ButtonActivation::Pressed => Flood::Color(palette.light_background_divider),
-                    ButtonActivation::Released => Flood::Color(palette.transparent),
-                };
-                use self::button::ButtonActivation;
+                    let feedback = match button_mdl.activation {
+                        ButtonActivation::Pressed => Flood::Color(palette.light_background_divider),
+                        ButtonActivation::Released => Flood::Color(palette.transparent),
+                    };
+                    use self::button::ButtonActivation;
 
-                let touch_sensor = {
-                    let button_id = button.id;
-                    let msg_wrap = msg_wrap.clone();
-                    Sensor::Touch(button_id, Arc::new(move |touch_msg| {
-                        let button_bar_msg = ButtonBarMsg::Touch(button_id, touch_msg);
-                        let owner_msg = msg_wrap(button_bar_msg);
-                        owner_msg
-                    }))
-                };
-                use std::sync::Arc;
+                    let touch_sensor = {
+                        let button_id = button.id;
+                        let msg_wrap = msg_wrap.clone();
+                        Sensor::Touch(button_id, Arc::new(move |touch_msg| {
+                            let button_bar_msg = ButtonBarMsg::Touch(button_id, touch_msg);
+                            let owner_msg = msg_wrap(button_bar_msg);
+                            owner_msg
+                        }))
+                    };
+                    use std::sync::Arc;
 
-                let signal_sensor = {
-                    let button_id = button.id;
-                    let versioned_click_msg: Version<MsgT> = (button.click_msg, button_mdl.click_msg_version_counter).into();
-                    Sensor::Signal(Signal::from((button_id, versioned_click_msg)))
+                    let signal_sensor = {
+                        let button_id = button.id;
+                        let versioned_click_msg: Version<MsgT> = (button.click_msg, button_mdl.click_msg_version_counter).into();
+                        Sensor::Signal(Signal::from((button_id, versioned_click_msg)))
+                    };
+                    surface + feedback + touch_sensor + signal_sensor
                 };
-                surface + feedback + touch_sensor + signal_sensor
-            };
-            let full_button_length = Length::Text(string.clone()) + (surface_padding_length.clone() * 2);
-            let spacer = Flood::Color(palette.transparent);
-            bar + (Position::Right(full_button_length), full_button) + (Position::Right(Length::Spacing / 2), spacer)
-        })
+                let full_button_length = Length::Text(string.clone()) / 2 + (surface_padding_length.clone() * 2);
+                let spacer = Flood::Color(palette.transparent);
+                bar + (Position::Left(full_button_length), full_button) + (Position::Left(Length::Spacing / 2), spacer)
+            })
     }
 }
 
 pub mod button_bar {
+    #[derive(Clone, PartialEq, Debug)]
     pub struct ButtonBarMdl {
         pub button_mdls: HashMap<u64, ButtonMdl>,
     }
@@ -96,7 +98,13 @@ pub mod button_bar {
     use std::collections::HashMap;
     use super::button::ButtonMdl;
 
-    pub fn update_button_bar_mdl(mdl: &mut ButtonBarMdl, msg: ButtonBarMsg) {
+    impl Default for ButtonBarMdl {
+        fn default() -> Self {
+            ButtonBarMdl { button_mdls: HashMap::new() }
+        }
+    }
+
+    pub fn update_button_bar(mdl: &mut ButtonBarMdl, msg: ButtonBarMsg) {
         match msg {
             ButtonBarMsg::Touch(button_id, touch_msg) => {
                 let button_msg = ButtonMsg::Touch(touch_msg);
@@ -115,6 +123,7 @@ pub mod button_bar {
 
     use super::button::{update_button_mdl, ButtonMsg};
 
+    #[derive(Clone, PartialEq, Debug)]
     pub enum ButtonBarMsg {
         Touch(u64, TouchMsg)
     }
@@ -122,7 +131,8 @@ pub mod button_bar {
     use material::TouchMsg;
 }
 
-pub mod button {
+mod button {
+    #[derive(Clone, PartialEq, Debug)]
     pub struct ButtonMdl {
         pub activation: ButtonActivation,
         pub click_msg_version_counter: VersionCounter,
@@ -168,6 +178,7 @@ pub mod button {
 
     use material::TouchMsg;
 
+    #[derive(Clone, PartialEq, Debug)]
     pub enum ButtonMsg {
         Touch(TouchMsg)
     }
