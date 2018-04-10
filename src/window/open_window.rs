@@ -1,11 +1,12 @@
 use ::{Color, ScreenMsg, TouchMsg};
-use ::flood::{Flood, Signal, Timeout, Version, Duration, Input};
+use ::flood::{Duration, Flood, Input, Signal, Timeout, Version};
+use ::scribe::Scribe;
 use ::window::{BlockRange, VirtualKeyCode};
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fmt;
 use std::sync::Arc;
 use std::sync::mpsc::Sender;
-use std::fmt;
-use ::scribe::Scribe;
 use super::build_blocklist;
 use super::keymap;
 
@@ -95,7 +96,8 @@ impl<'a, MsgT> OpenWindow<'a, MsgT> where
         self.touch_adapters.clear();
         self.input_adapters.clear();
         if let (Some(screen), Some(seed)) = (self.screen.clone(), self.seed.clone()) {
-            self.block_ids.clear();
+            let mut old_blocks: HashSet<u64> = self.block_ids.drain(..).collect();
+
             let mut blocklist = build_blocklist(&self.range, &self.flood, &self.scribe);
 
             self.touch_adapters.append(&mut blocklist.touch_adapters);
@@ -103,23 +105,29 @@ impl<'a, MsgT> OpenWindow<'a, MsgT> where
 
             if let Some(ref observer) = self.observer {
                 blocklist.raft_msgs.into_iter()
-                         .for_each(|msg| {
-                             observer.send(msg).unwrap();
-                         });
+                    .for_each(|msg| {
+                        observer.send(msg).unwrap();
+                    });
             }
 
             let mut block_ids = blocklist.blocks.into_iter()
-                                         .enumerate()
-                                         .map(|(i, block)| {
-                                             let block_id = seed + (i as u64);
-                                             let msg = ScreenMsg::AddBlock(block_id, block);
-                                             screen.send(msg).unwrap();
-                                             block_id
-                                         })
-                                         .collect::<Vec<_>>();
+                .enumerate()
+                .map(|(i, block)| {
+                    let block_id = seed + (i as u64);
+                    let msg = ScreenMsg::AddBlock(block_id, block);
+                    screen.send(msg).unwrap();
+                    old_blocks.remove(&block_id);
+                    block_id
+                })
+                .collect::<Vec<_>>();
             self.block_ids.append(&mut block_ids);
 
-// TODO Erase blocks that were not overwritten.
+            // TODO Optimize with start- and end-cycle ScreenMsgs.
+            old_blocks.into_iter().for_each(|it| {
+                use Block;
+                let msg = ScreenMsg::AddBlock(it, Block::default());
+                screen.send(msg).unwrap();
+            });
 
             self.cycle_signals(blocklist.signals);
             self.cycle_timeouts(blocklist.timeouts);
@@ -154,9 +162,9 @@ impl<'a, MsgT> OpenWindow<'a, MsgT> where
         });
         if let Some(ref observer) = self.observer {
             go_msgs.into_iter()
-                   .for_each(|msg| {
-                       observer.send(msg).unwrap();
-                   });
+                .for_each(|msg| {
+                    observer.send(msg).unwrap();
+                });
         }
     }
 
@@ -167,9 +175,9 @@ impl<'a, MsgT> OpenWindow<'a, MsgT> where
 
     fn find_touch_adapter(&self, recipient_tag: u64) -> Option<Arc<Fn(TouchMsg) -> MsgT>> {
         let some_adapter = self.touch_adapters.iter()
-                               .find(|&&(tag, _)| {
-                                   tag == recipient_tag
-                               });
+            .find(|&&(tag, _)| {
+                tag == recipient_tag
+            });
         if let Some(&(_, ref adapter)) = some_adapter {
             Some(adapter.clone())
         } else {

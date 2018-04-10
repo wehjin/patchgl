@@ -68,7 +68,7 @@ impl Draw<AppMsg> for AppMdl {
         let palette = patchgl::material::Palette::default();
         let button = button::flood(AppMsg::ButtonMsg, button::Button {
             id: 11,
-            kind: button::Kind::PlainFlat("Toggle".into()),
+            kind: button::Kind::ColoredFlat("Toggle".into()),
             model: self.button_mdl.clone(),
             click_msg: AppMsg::Toggle,
             palette: &palette,
