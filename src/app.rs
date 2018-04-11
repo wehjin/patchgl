@@ -1,7 +1,23 @@
-use ::flood::Flood;
-use ::window::WindowMsg;
 use std::marker::PhantomData;
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::fmt;
+use traits::{Update, Draw};
+use flood::Flood;
+use window::WindowMsg;
+
+
+pub fn run<MdlT, MsgT>(width: u32, height: u32, title: &str, model: MdlT)
+    where
+        MdlT: Update<MsgT> + Draw<MsgT> + Send + Sync + 'static + Clone + PartialEq + fmt::Debug,
+        MsgT: Send + Sync + 'static + Clone + PartialEq + fmt::Debug,
+{
+    use window;
+    let title = title.to_owned();
+    window::start(width, height, move |window| {
+        let app = App::new(MdlT::update, MdlT::draw);
+        app.run(&title, model.clone(), window);
+    });
+}
 
 pub struct App<MsgT, MdlT> where
     MsgT: Clone
