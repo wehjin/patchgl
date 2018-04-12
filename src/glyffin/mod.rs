@@ -2,7 +2,7 @@ use arrayvec;
 use arrayvec::ArrayVec;
 use glium;
 use glium::backend::Facade;
-use rusttype::{point, Rect, vector};
+use rusttype::{point, Rect};
 use rusttype::gpu_cache::Cache;
 use std::borrow::Cow;
 use scribe::{Scribe, Scale};
@@ -25,7 +25,10 @@ impl<'a> QuipRenderer<'a> {
 
     pub fn layout_paragraph<F: Facade>(&mut self, text: &str, (x, y): (f32, f32), scale: Scale, width: i32, z: f32, colour: [f32; 4], placement: f32, display: &F) {
         const MAX_SCALE_LIMIT: f32 = 512.0;  // Do determine this dynamically and align text when limit is hit.
-        let scale = Scale { x: scale.x.min(MAX_SCALE_LIMIT), y: scale.y.min(MAX_SCALE_LIMIT) };
+        let scale = Scale {
+            x: scale.x.min(MAX_SCALE_LIMIT),
+            y: scale.y.min(MAX_SCALE_LIMIT),
+        };
         let glyphs = self.scribe.fit_text(text, scale, width, placement);
         for glyph in &glyphs {
             self.cache.queue_glyph(0, glyph.clone());
@@ -46,18 +49,18 @@ impl<'a> QuipRenderer<'a> {
         }).expect("cache_queued");
 
         implement_vertex!(Vertex, position, tex_coords, colour);
-        let origin = point(x, y);
-        let vertices: Vec<Vertex> = glyphs.iter().flat_map(|g| {
-            if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
-                let gl_rect = Rect {
-                    min: origin + vector(screen_rect.min.x as f32, screen_rect.min.y as f32),
-                    max: origin + vector(screen_rect.max.x as f32, screen_rect.max.y as f32),
-                };
-                layout_vertices(z, &uv_rect, &gl_rect, &colour)
-            } else {
-                arrayvec::ArrayVec::new()
-            }
-        }).collect();
+        let vertices: Vec<Vertex> = glyphs.iter()
+            .flat_map(|g| {
+                if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
+                    let gl_rect = Rect {
+                        min: point((x + screen_rect.min.x as f32).floor(), (y + screen_rect.min.y as f32).floor()),
+                        max: point((x + screen_rect.max.x as f32).ceil(), (y + screen_rect.max.y as f32).ceil()),
+                    };
+                    layout_vertices(z, &uv_rect, &gl_rect, &colour)
+                } else {
+                    arrayvec::ArrayVec::new()
+                }
+            }).collect();
         self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).expect("VertexBuffer::new");
     }
 
@@ -70,7 +73,7 @@ impl<'a> QuipRenderer<'a> {
                    &self.program,
                    &uniforms,
                    &self.draw_parameters)
-             .expect("frame.draw");
+            .expect("frame.draw");
     }
 
     pub fn new<F: Facade>(cache_dpi_factor: f32, modelview: [[f32; 4]; 4], display: &F) -> Self {
