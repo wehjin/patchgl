@@ -4,7 +4,7 @@ extern crate patchgl;
 extern crate rusttype;
 extern crate xml;
 
-use patchgl::button;
+use patchgl::material::components::button;
 use patchgl::Color;
 use patchgl::flood::*;
 use patchgl::traits::*;

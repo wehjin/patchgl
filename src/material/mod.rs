@@ -1,5 +1,5 @@
-use ::button;
-pub use ::button::Kind;
+use self::components::button;
+pub use self::components::button::Kind;
 use ::flood::Flood;
 pub use ::window::TouchMsg;
 pub use self::color::*;
@@ -12,7 +12,6 @@ mod length;
 pub mod entry;
 pub mod palette;
 pub mod components;
-
 
 pub struct Button<'a, F, MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,
@@ -57,7 +56,7 @@ pub fn update(model: &mut Model, msg: Msg) {
 }
 
 mod model {
-    use ::button;
+    use super::components::button;
     use std::collections::HashMap;
     use super::Palette;
 
