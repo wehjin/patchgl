@@ -106,6 +106,7 @@ impl<'a> QuipRenderer<'a> {
                     ..Default::default()
                 },
                 blend: glium::Blend::alpha_blending(),
+                smooth: Some(glium::Smooth::Nicest),
                 ..Default::default()
             },
             scribe: Scribe::default(),

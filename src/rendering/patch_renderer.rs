@@ -25,6 +25,7 @@ impl PatchRenderer {
         let color = Color::white().to_gl();
         let draw_parameters = glium::DrawParameters {
             depth: glium::Depth { test: glium::DepthTest::IfLess, write: true, ..Default::default() },
+            smooth: Some(glium::Smooth::Nicest),
             ..Default::default()
         };
         PatchRenderer { program, vertex_buffer, indices, modelview, color, draw_parameters }
