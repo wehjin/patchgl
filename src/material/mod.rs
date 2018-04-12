@@ -5,11 +5,14 @@ pub use ::window::TouchMsg;
 pub use self::color::*;
 pub use self::model::Model;
 pub use self::palette::Palette;
+pub use self::length::*;
 
 mod color;
+mod length;
 pub mod entry;
 pub mod palette;
 pub mod components;
+
 
 pub struct Button<'a, F, MsgT> where
     F: Fn(Msg) -> MsgT + Send + Sync + 'static,
