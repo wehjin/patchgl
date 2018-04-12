@@ -1,3 +1,4 @@
+extern crate rand;
 extern crate arrayvec;
 extern crate cage;
 #[macro_use]
@@ -29,6 +30,7 @@ pub mod app;
 pub mod button;
 pub mod scribe;
 pub mod traits;
+pub mod id;
 mod sigil;
 mod local_screen;
 mod anchor;
