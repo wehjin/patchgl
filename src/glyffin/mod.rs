@@ -49,17 +49,16 @@ impl<'a> QuipRenderer<'a> {
         }).expect("cache_queued");
 
         implement_vertex!(Vertex, position, tex_coords, colour);
+        let (x, y) = (x.round(), y.round());
         let vertices: Vec<Vertex> = glyphs.iter()
-            .flat_map(|g| {
-                if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
-                    let gl_rect = Rect {
-                        min: point((x + screen_rect.min.x as f32).floor(), (y + screen_rect.min.y as f32).floor()),
-                        max: point((x + screen_rect.max.x as f32).ceil(), (y + screen_rect.max.y as f32).ceil()),
-                    };
-                    layout_vertices(z, &uv_rect, &gl_rect, &colour)
-                } else {
-                    arrayvec::ArrayVec::new()
-                }
+            .flat_map(|g| if let Ok(Some((uv_rect, screen_rect))) = self.cache.rect_for(0, g) {
+                let gl_rect = Rect {
+                    min: point(x + screen_rect.min.x as f32, y + screen_rect.min.y as f32),
+                    max: point(x + screen_rect.max.x as f32, y + screen_rect.max.y as f32),
+                };
+                layout_vertices(z, &uv_rect, &gl_rect, &colour)
+            } else {
+                arrayvec::ArrayVec::new()
             }).collect();
         self.vertex_buffer = glium::VertexBuffer::new(display, &vertices).expect("VertexBuffer::new");
     }
