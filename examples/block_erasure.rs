@@ -13,7 +13,6 @@ use patchgl::window;
 fn main() {
     window::start(320, 400, |window| {
         use patchgl::app::App;
-
         let app = App::new(AppMdl::update, AppMdl::draw);
         app.run("Block Erasure", AppMdl::default(), window);
     });
@@ -21,7 +20,7 @@ fn main() {
 
 #[derive(Clone, PartialEq, Debug)]
 struct AppMdl {
-    pub button_mdl: button::Model,
+    pub button_mdl: button::ButtonMdl,
     pub state: State,
 }
 
@@ -35,13 +34,13 @@ enum State {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 enum AppMsg {
     Toggle,
-    ButtonMsg(button::Msg),
+    ButtonMsg(button::ButtonMsg),
 }
 
 impl Default for AppMdl {
     fn default() -> Self {
         AppMdl {
-            button_mdl: button::Model::default(),
+            button_mdl: button::ButtonMdl::default(),
             state: State::MultiBlock,
         }
     }
@@ -57,7 +56,7 @@ impl Update<AppMsg> for AppMdl {
                 }
             }
             AppMsg::ButtonMsg(msg) => {
-                button::update(&mut self.button_mdl, msg);
+                self.button_mdl.update(msg);
             }
         }
     }
@@ -66,12 +65,14 @@ impl Update<AppMsg> for AppMdl {
 impl Draw<AppMsg> for AppMdl {
     fn draw(&self) -> Flood<AppMsg> {
         let palette = patchgl::material::Palette::default();
-        let button = button::flood(AppMsg::ButtonMsg, button::Button {
+        let button = Flood::<AppMsg>::from(button::Button {
+            msg_wrap: AppMsg::ButtonMsg,
             id: 11,
-            kind: button::Kind::ColoredFlat("Toggle".into()),
-            model: self.button_mdl.clone(),
-            click_msg: AppMsg::Toggle,
             palette: &palette,
+            mdl: &self.button_mdl,
+            kind: button::ButtonKind::ColoredFlat("Toggle".into()),
+            placement: Placement::Center,
+            click_msg: AppMsg::Toggle,
         });
         match self.state {
             State::MultiBlock => {

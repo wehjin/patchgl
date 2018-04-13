@@ -51,8 +51,7 @@ mod timeout {
 
     impl<MsgT> fmt::Debug for Timeout<MsgT> where MsgT: fmt::Debug {
         fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-            write!(f, "Timeout {{ id={:?}, msg={:?}, duration={:?} }}",
-                   self.id, self.msg, self.duration)
+            write!(f, "Timeout {{ id={:?}, msg={:?}, duration={:?} }}", self.id, self.msg, self.duration)
         }
     }
 
@@ -74,9 +73,9 @@ pub enum Sensor<MsgT> where
     MsgT: Clone
 {
     Touch(u64, Arc<Fn(TouchMsg) -> MsgT + Send + Sync>),
+    Input(Arc<Fn(Input) -> MsgT + Send + Sync>),
     Signal(Signal<MsgT>),
     Timeout(Version<Timeout<MsgT>>),
-    Input(Arc<Fn(Input) -> MsgT + Send + Sync>),
 }
 
 impl<MsgT> fmt::Debug for Sensor<MsgT> where MsgT: Clone + fmt::Debug

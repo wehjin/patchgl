@@ -1,7 +1,9 @@
+use flood::Flood;
+use traits::Update;
+pub use window::TouchMsg;
+pub use flood::Placement;
 use self::components::button;
-pub use self::components::button::Kind;
-use ::flood::Flood;
-pub use ::window::TouchMsg;
+pub use self::components::button::ButtonKind;
 pub use self::color::*;
 pub use self::model::Model;
 pub use self::palette::Palette;
@@ -19,7 +21,7 @@ pub struct Button<'a, F, MsgT> where
     pub msg_wrap: F,
     pub id: u64,
     pub model: &'a Model,
-    pub kind: Kind,
+    pub kind: ButtonKind,
     pub click_msg: MsgT,
 }
 
@@ -31,17 +33,19 @@ pub fn button<'a, F, MsgT>(button: Button<'a, F, MsgT>) -> Flood<MsgT> where
     let button_wrap = {
         let button_id = button.id;
         let button_msg_wrap = button.msg_wrap;
-        move |msg: button::Msg| {
+        move |msg: button::ButtonMsg| {
             (button_msg_wrap)(Msg::ButtonMsg(button_id, msg))
         }
     };
-    button::flood(button_wrap, button::Button {
+    button::Button {
+        msg_wrap: button_wrap,
         id: button.id,
-        kind: button.kind,
-        model: button_model,
-        click_msg: button.click_msg,
         palette: &button.model.palette,
-    })
+        mdl: &button_model,
+        kind: button.kind,
+        placement: Placement::Center,
+        click_msg: button.click_msg,
+    }.into()
 }
 
 pub fn update(model: &mut Model, msg: Msg) {
@@ -49,7 +53,7 @@ pub fn update(model: &mut Model, msg: Msg) {
         Msg::None => {}
         Msg::ButtonMsg(button_id, button_msg) => {
             let mut button_model = model.get_button_model(button_id);
-            button::update(&mut button_model, button_msg);
+            button_model.update(button_msg);
             model.set_button_model(button_id, button_model);
         }
     }
@@ -62,18 +66,18 @@ mod model {
 
     #[derive(Clone, PartialEq, Debug, Default)]
     pub struct Model {
-        pub button_models: HashMap<u64, button::Model>,
+        pub button_models: HashMap<u64, button::ButtonMdl>,
         pub palette: Palette,
     }
 
     impl Model {
-        pub fn get_button_model(&self, tag: u64) -> button::Model {
+        pub fn get_button_model(&self, tag: u64) -> button::ButtonMdl {
             match self.button_models.get(&tag) {
                 Some(model) => *model,
-                None => button::Model::default(),
+                None => button::ButtonMdl::default(),
             }
         }
-        pub fn set_button_model(&mut self, tag: u64, button_model: button::Model) {
+        pub fn set_button_model(&mut self, tag: u64, button_model: button::ButtonMdl) {
             let button_models = &mut self.button_models;
             button_models.insert(tag, button_model);
         }
@@ -83,5 +87,5 @@ mod model {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Msg {
     None,
-    ButtonMsg(u64, button::Msg),
+    ButtonMsg(u64, button::ButtonMsg),
 }

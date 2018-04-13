@@ -11,6 +11,10 @@ pub enum Length {
     Body1Text,
     CaptionText,
     ButtonText,
+    NavApproach,
+    ListItemHeight,
+    ListItemPadding,
+    ListGroupPadding,
 }
 
 use flood;
@@ -29,6 +33,10 @@ impl Into<flood::Length> for Length {
             Length::Body1Text => flood::Length::Pixels(14.0),
             Length::CaptionText => flood::Length::Pixels(12.0),
             Length::ButtonText => flood::Length::Pixels(140.0),
+            Length::NavApproach => flood::Length::Pixels(8.0),
+            Length::ListItemHeight => flood::Length::Pixels(48.0),
+            Length::ListItemPadding => flood::Length::Spacing,
+            Length::ListGroupPadding => flood::Length::Pixels(8.0),
         }
     }
 }
