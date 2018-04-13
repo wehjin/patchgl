@@ -18,7 +18,7 @@ pub struct NavTrack<'a, MsgT, F, G> where
     pub id: u64,
     pub palette: &'a Palette,
     pub mdl: &'a NavTrackMdl,
-    pub item_selected_msg_wrap: G,
+    pub nav_track_evt_wrap: G,
     pub items: Vec<NavTrackItem>,
 }
 
@@ -122,7 +122,7 @@ impl<'a, MsgT, F, G> From<NavTrack<'a, MsgT, F, G>> for Flood<MsgT> where
                 panel + (Position::Top(material::Length::ListItemHeight.into()), item)
             });
 
-        let item_selected_msg = (nav_track.item_selected_msg_wrap)(NavTrackEvt::ItemSelected(nav_track_mdl.selected_index.clone()));
+        let item_selected_msg = (nav_track.nav_track_evt_wrap)(NavTrackEvt::ItemSelected(nav_track_mdl.selected_index.clone()));
         let versioned_item_selected_msg = Version { value: item_selected_msg, counter: nav_track_mdl.item_selected_version_counter.clone() };
         buttons
             + Padding::Vertical(material::Length::ListGroupPadding.into())

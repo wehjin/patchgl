@@ -67,8 +67,8 @@ impl Draw<AppMsg> for AppMdl {
             id: 11,
             palette,
             mdl: &self.nav_track_mdl,
-            item_selected_msg_wrap: |nav_track_event| {
-                match nav_track_event {
+            nav_track_evt_wrap: |nav_track_evt| {
+                match nav_track_evt {
                     NavTrackEvt::ItemSelected(selection) => AppMsg::ItemSelected(selection),
                 }
             },
