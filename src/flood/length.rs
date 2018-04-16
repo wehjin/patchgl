@@ -18,6 +18,7 @@ pub enum Length {
     Inverse(Box<Length>),
     Product(Box<Length>, Box<Length>),
     Text(String),
+    TextUnit(String),
     CardApproach,
 }
 
@@ -39,6 +40,7 @@ impl Length {
             &Length::Cross => alt_context,
             &Length::Product(ref a, ref b) => a.to_f32(context, alt_context, scribe) * b.to_f32(context, alt_context, scribe),
             &Length::Text(ref text) => alt_context * scribe.size_text(text),
+            &Length::TextUnit(ref text) => scribe.size_text(text),
             &Length::CardApproach => 2.0,
         }
     }
@@ -71,6 +73,15 @@ impl Sub for Length {
         Length::Sum(Box::new(self), Box::new(Length::Negative(Box::new(rhs))))
     }
 }
+
+impl Mul for Length {
+    type Output = Length;
+
+    fn mul(self, rhs: Length) -> <Self as Mul<Length>>::Output {
+        Length::Product(Box::new(self), Box::new(rhs))
+    }
+}
+
 
 impl Mul<usize> for Length {
     type Output = Length;
