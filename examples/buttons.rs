@@ -58,8 +58,10 @@ impl Draw<AppMsg> for AppMdl {
             id: 11,
             palette: &palette,
             mdl: &self.button_mdl,
-            kind: ButtonKind::PlainFlat(button_label.into()),
-            placement: Placement::Center,
+            style: vec![
+                From::from(ButtonKind::LightPlainFlat(button_label.into())),
+                From::from(Placement::Center),
+            ],
             click_msg: AppMsg::None,
         });
         let light_panel = light_plain_flat
@@ -72,8 +74,10 @@ impl Draw<AppMsg> for AppMdl {
             id: 11,
             palette: &palette,
             mdl: &self.button_mdl,
-            kind: ButtonKind::PlainFlat(button_label.into()),
-            placement: Placement::Center,
+            style: vec![
+                From::from(ButtonKind::DarkPlainFlat(button_label.into())),
+                From::from(Placement::Center),
+            ],
             click_msg: AppMsg::None,
         });
         let dark_panel = dark_plain_flat

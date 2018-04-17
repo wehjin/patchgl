@@ -69,21 +69,21 @@ fn draw(model: &Model) -> Flood<AppMsg> {
             msg_wrap: AppMsg::MaterialMsg,
             id: 32,
             model: &model.material,
-            kind: material::ButtonKind::ColoredFlat("Down".into()),
+            style: vec![From::from(material::ButtonKind::LightColoredFlat("Down".into()))],
             click_msg: AppMsg::Down,
         }));
         buttons.push(material::button(material::Button {
             msg_wrap: AppMsg::MaterialMsg,
             id: 33,
             model: &model.material,
-            kind: material::ButtonKind::PlainFlat("Reset".into()),
+            style: vec![From::from(material::ButtonKind::LightPlainFlat("Reset".into()))],
             click_msg: AppMsg::Reset,
         }));
         buttons.push(material::button(material::Button {
             msg_wrap: AppMsg::MaterialMsg,
             id: 34,
             model: &model.material,
-            kind: material::ButtonKind::ColoredFlat("Up".into()),
+            style: vec![From::from(material::ButtonKind::LightColoredFlat("Up".into()))],
             click_msg: AppMsg::Up,
         }));
         draw_bar(buttons)

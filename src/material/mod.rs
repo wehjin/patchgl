@@ -3,7 +3,7 @@ use traits::Update;
 pub use window::TouchMsg;
 pub use flood::Placement;
 use self::components::button;
-pub use self::components::button::ButtonKind;
+pub use self::components::button::{ButtonStyle, ButtonKind};
 pub use self::color::*;
 pub use self::model::Model;
 pub use self::palette::Palette;
@@ -21,7 +21,7 @@ pub struct Button<'a, F, MsgT> where
     pub msg_wrap: F,
     pub id: u64,
     pub model: &'a Model,
-    pub kind: ButtonKind,
+    pub style: Vec<ButtonStyle>,
     pub click_msg: MsgT,
 }
 
@@ -42,8 +42,7 @@ pub fn button<'a, F, MsgT>(button: Button<'a, F, MsgT>) -> Flood<MsgT> where
         id: button.id,
         palette: &button.model.palette,
         mdl: &button_model,
-        kind: button.kind,
-        placement: Placement::Center,
+        style: button.style,
         click_msg: button.click_msg,
     }.into()
 }

@@ -70,8 +70,10 @@ impl Draw<AppMsg> for AppMdl {
             id: 11,
             palette: &palette,
             mdl: &self.button_mdl,
-            kind: button::ButtonKind::ColoredFlat("Toggle".into()),
-            placement: Placement::Center,
+            style: vec![
+                From::from(button::ButtonKind::LightColoredFlat("Toggle".into())),
+                From::from(Placement::Center),
+            ],
             click_msg: AppMsg::Toggle,
         });
         match self.state {

@@ -5,6 +5,7 @@ use material::Palette;
 use material;
 use material::components::button::*;
 use material::components::button::Placement;
+use material::components::button::ButtonStyle;
 use id::*;
 use traits::Update;
 use flood::{Version, VersionCounter, Sensor, Signal};
@@ -105,13 +106,13 @@ impl<'a, MsgT, F, G> From<NavTrack<'a, MsgT, F, G>> for Flood<MsgT> where
                 let kind = {
                     let label = item.label.to_owned();
                     match nav_track_mdl.selected_index {
-                        Some(selected_index) if selected_index == i => ButtonKind::ColoredFlat(label),
-                        _ => ButtonKind::PlainFlat(label),
+                        Some(selected_index) if selected_index == i => ButtonKind::DarkColoredFlat(label),
+                        _ => ButtonKind::DarkPlainFlat(label),
                     }
                 };
-                let placement = Placement::Start;
+                let style = vec![ButtonStyle::Kind(kind), ButtonStyle::Placement(Placement::Start)];
                 let click_msg = (track_msg_wrap)(NavTrackMsg::SelectItem(i));
-                Button { msg_wrap, id, palette, mdl, kind, placement, click_msg }
+                Button { msg_wrap, id, palette, mdl, style, click_msg }
             })
             .rev()
             .collect::<Vec<_>>();
@@ -126,7 +127,7 @@ impl<'a, MsgT, F, G> From<NavTrack<'a, MsgT, F, G>> for Flood<MsgT> where
         let versioned_item_selected_msg = Version { value: item_selected_msg, counter: nav_track_mdl.item_selected_version_counter.clone() };
         buttons
             + Padding::Vertical(material::Length::ListGroupPadding.into())
-            + Flood::Color(palette.light_background_raised)
+            + Flood::Color(palette.dark_background_raised)
             + Padding::Behind(material::Length::NavApproach.into())
             + Sensor::Signal(Signal { id: nav_track.id, version: versioned_item_selected_msg })
     }

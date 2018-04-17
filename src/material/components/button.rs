@@ -16,8 +16,7 @@ pub struct Button<'a, MsgT, F> where
     pub id: u64,
     pub palette: &'a Palette,
     pub mdl: &'a ButtonMdl,
-    pub kind: ButtonKind,
-    pub placement: Placement,
+    pub style: Vec<ButtonStyle>,
     pub click_msg: MsgT,
 }
 
@@ -50,6 +49,60 @@ impl<'a, MsgT, F> From<Button<'a, MsgT, F>> for Flood<MsgT> where
             Sensor::Signal(signal)
         };
         surface + touch_sensor + signal_sensor
+    }
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub enum ButtonStyle {
+    Placement(Placement),
+    Kind(ButtonKind),
+}
+
+impl From<Placement> for ButtonStyle {
+    fn from(placement: Placement) -> Self {
+        ButtonStyle::Placement(placement)
+    }
+}
+
+impl From<ButtonKind> for ButtonStyle {
+    fn from(kind: ButtonKind) -> Self {
+        ButtonStyle::Kind(kind)
+    }
+}
+
+impl ButtonStyle {
+    fn is_kind(&self) -> bool {
+        match self {
+            &ButtonStyle::Kind(_) => true,
+            _ => false,
+        }
+    }
+
+    fn is_placement(&self) -> bool {
+        match self {
+            &ButtonStyle::Placement(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl<'a> From<&'a Vec<ButtonStyle>> for ButtonKind {
+    fn from(style: &'a Vec<ButtonStyle>) -> Self {
+        if let Some(&ButtonStyle::Kind(ref value)) = style.iter().find(|it| it.is_kind()) {
+            value.clone()
+        } else {
+            ButtonKind::LightPlainFlat("Button".into())
+        }
+    }
+}
+
+impl<'a> From<&'a Vec<ButtonStyle>> for Placement {
+    fn from(style: &'a Vec<ButtonStyle>) -> Self {
+        if let Some(&ButtonStyle::Placement(value)) = style.iter().find(|it| it.is_placement()) {
+            value.clone()
+        } else {
+            Placement::Center
+        }
     }
 }
 
@@ -93,21 +146,20 @@ fn draw<MsgT, F>(button: &Button<MsgT, F>) -> Flood<MsgT> where
     F: Fn(ButtonMsg) -> MsgT + Send + Sync + 'static,
 {
     let palette = button.palette;
-    match (&button.kind, &button.mdl.press_state) {
-        (&ButtonKind::ColoredFlat(ref label), &PressState::Up) => {
-            flat_button_surface(label, palette.secondary, button.placement)
+    let kind: ButtonKind = From::from(&button.style);
+    let placement: Placement = From::from(&button.style);
+    match &button.mdl.press_state {
+        &PressState::Up => {
+            let label = kind.label();
+            let text_color = text_color(&kind, palette);
+            flat_button_surface(label, text_color, placement)
         }
-        (&ButtonKind::ColoredFlat(ref label), &PressState::Down) => {
-            let surface = flat_button_surface(label, palette.secondary, button.placement);
-            let background = Flood::Color(palette.light_background_divider);
-            surface + background
-        }
-        (&ButtonKind::PlainFlat(ref label), &PressState::Up) => {
-            flat_button_surface(label, palette.light_background_text_primary, button.placement)
-        }
-        (&ButtonKind::PlainFlat(ref label), &PressState::Down) => {
-            let surface = flat_button_surface(label, palette.light_background_text_primary, button.placement);
-            let background = Flood::Color(palette.light_background_divider);
+        &PressState::Down => {
+            let label = kind.label();
+            let text_color = text_color(&kind, palette);
+            let backing_color = backing_color(&kind, palette);
+            let surface = flat_button_surface(label, text_color, placement);
+            let background = Flood::Color(backing_color);
             surface + background
         }
     }
@@ -121,6 +173,25 @@ fn flat_button_surface<MsgT>(label: &str, text_color: Color, placement: Placemen
     text + padding
 }
 
+fn text_color(kind: &ButtonKind, palette: &Palette) -> Color {
+    let text_color = match kind {
+        &ButtonKind::LightPlainFlat(_) => palette.light_background_text_primary,
+        &ButtonKind::LightColoredFlat(_) => palette.secondary,
+        &ButtonKind::DarkPlainFlat(_) => palette.dark_background_text_primary,
+        &ButtonKind::DarkColoredFlat(_) => palette.secondary_light,
+    };
+    text_color
+}
+
+fn backing_color(kind: &ButtonKind, palette: &Palette) -> Color {
+    let text_color = match kind {
+        &ButtonKind::LightPlainFlat(_) => palette.light_background_divider,
+        &ButtonKind::LightColoredFlat(_) => palette.light_background_divider,
+        &ButtonKind::DarkPlainFlat(_) => palette.dark_background_divider,
+        &ButtonKind::DarkColoredFlat(_) => palette.dark_background_divider,
+    };
+    text_color
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ButtonMsg {
@@ -138,6 +209,19 @@ pub enum PressState {
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum ButtonKind {
-    PlainFlat(String),
-    ColoredFlat(String),
+    LightPlainFlat(String),
+    LightColoredFlat(String),
+    DarkPlainFlat(String),
+    DarkColoredFlat(String),
+}
+
+impl ButtonKind {
+    fn label(&self) -> &str {
+        match *self {
+            ButtonKind::LightPlainFlat(ref label) => label.as_str(),
+            ButtonKind::LightColoredFlat(ref label) => label.as_str(),
+            ButtonKind::DarkPlainFlat(ref label) => label.as_str(),
+            ButtonKind::DarkColoredFlat(ref label) => label.as_str(),
+        }
+    }
 }
